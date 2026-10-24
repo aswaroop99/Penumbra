@@ -1,0 +1,36 @@
+{
+  "name": "penumbra",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "stdb:start": "spacetime start",
+    "stdb:build": "spacetime build --module-path spacetimedb",
+    "stdb:publish": "spacetime publish --server local --module-path spacetimedb penumbra --yes",
+    "stdb:generate": "spacetime generate --lang typescript --out-dir src/generated --module-path spacetimedb --yes",
+    "test:backend": "vitest run --config vitest.backend.config.ts"
+  },
+  "dependencies": {
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.2",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "spacetimedb": "2.13",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.186.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
