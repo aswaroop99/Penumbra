@@ -1,0 +1,16 @@
+# Raw survey data (~2.4 GB). Fetch with: bash get_dark_matter_data.sh --planck
+dark_universe_data/
+
+# Large data formats, in case they land elsewhere
+*.fits
+*.npy
+*.zip
+
+# Mac / editor / Python junk
+.DS_Store
+__MACOSX/
+__pycache__/
+.ipynb_checkpoints/
+.venv/
+venv/
+node_modules/
