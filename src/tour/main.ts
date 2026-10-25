@@ -1,11 +1,10 @@
 import './tour.css';
-import { mountGuide } from '../guide/panel';
 import { drawLensingField } from './lensing';
+import teamStatus from './team_status.json';
 
 interface Stop {
   short: string;
   body: string[];
-  asks: string[];
 }
 
 const STOPS: Stop[] = [
@@ -15,7 +14,6 @@ const STOPS: Stop[] = [
       'Add up everything that shines, from stars to glowing gas, and it accounts for only about a sixth of the matter that gravity says is out there. The rest is dark matter: it has mass and pulls on things, but gives off no light.',
       'Galaxies spin too fast for what we can see in them. Clusters of galaxies bend light more strongly than their visible mass can. The leftover glow of the Big Bang carries its fingerprint too. Nobody yet knows what it is made of.',
     ],
-    asks: ["If we can't see it, how do we know it's there?", 'Could gravity just work differently instead?', "What's the difference between dark matter and dark energy?"],
   },
   {
     short: 'Seeing by bending',
@@ -23,7 +21,6 @@ const STOPS: Stop[] = [
       "Mass bends light. When light from a distant galaxy passes a clump of dark matter on its way to us, the galaxy's image gets stretched by about one percent.",
       'That is far too small to notice in one galaxy, since galaxies are already oval. Measure a hundred million of them and the stretches line up into a pattern around the hidden mass, like the field at the top of this page, which exaggerates the effect about 30 times.',
     ],
-    asks: ['How do you measure a 1% stretch?', 'Why does mass bend light?', 'Is this the same as the arcs in Hubble pictures?'],
   },
   {
     short: 'The map',
@@ -31,7 +28,6 @@ const STOPS: Stop[] = [
       'The Dark Energy Survey measured those stretches across 4,143 square degrees of the southern sky, about a tenth of the whole sky, and turned them into a mass map. Bright spots are most likely galaxy clusters; dark patches are voids.',
       'One catch: the map is flattened. Each spot adds up all the mass along one line of sight, like a shadow puppet, so it shows where mass sits on the sky but not how far away it is. You can explore the layers in the Layer viewer.',
     ],
-    asks: ["What's in the brightest spots?", "Why can't you make a true 3D map?", 'How noisy is the map?'],
   },
   {
     short: 'Reading the recipe',
@@ -39,7 +35,6 @@ const STOPS: Stop[] = [
       "The universe's recipe, how much matter there is (Ωm) and how clumpy it became (S8), leaves fingerprints in the map: how many bright peaks it has, and how much it varies at each size.",
       'The team takes thousands of simulated universes with known recipes, makes each one look exactly like the DES map, and trains a small neural network to learn which recipe makes which fingerprints. Then it reads the real map. Before trusting it, they quiz it on simulated universes it has never seen.',
     ],
-    asks: ['Why not just train a big AI on the map?', 'What does the trust check show?', 'What could make the answer wrong?'],
   },
   {
     short: 'The clumpiness puzzle',
@@ -47,7 +42,6 @@ const STOPS: Stop[] = [
       'The Planck satellite photographed the baby universe. Run the standard model forward and it predicts how clumpy the universe should be today: S8 of about 0.83. Try the S8 slider on the Cosmic web page to see what that number does.',
       'Lensing surveys weigh today’s universe directly, and for years they found it a few percent smoother. The newest data have narrowed that gap, and the surveys now disagree with each other about its size. The chart below shows where each one lands.',
     ],
-    asks: ['Is the standard model of cosmology broken?', 'What could cause the difference?', "Where will this project's number land?"],
   },
   {
     short: 'Citizen science',
@@ -55,7 +49,6 @@ const STOPS: Stop[] = [
       'Galaxy Zoo volunteers have classified huge numbers of galaxy images online, and a model trained on their votes extends that to millions more. Some galaxies are caught mid-collision.',
       'Mergers should happen more often in crowded places, so the team asks whether the fraction of merging galaxies is higher where the mass map is brightest. Shuffled-label and noise-map checks guard against fooling themselves, and finding no detectable difference would still be a real result.',
     ],
-    asks: ['Why use the fraction and not the count?', 'How can I help Galaxy Zoo?', "What if there's no signal?"],
   },
   {
     short: "What's next",
@@ -63,7 +56,6 @@ const STOPS: Stop[] = [
       "DES released results from its full six-year survey in January 2026. Much bigger maps are arriving: the Rubin Observatory began its ten-year survey on 29 June 2026, and Euclid's first public images arrive in November 2026.",
       "Meanwhile DESI's 3D galaxy map hints that dark energy might be changing. The tools in this project are the kind that will read those new maps.",
     ],
-    asks: ['What will Rubin and Euclid change?', 'Is dark energy really changing?', 'How could I get into cosmology?'],
   },
 ];
 
@@ -93,13 +85,6 @@ const store = {
 
 let cur = Math.min(Math.max(Number(store.get('pg-stop')) || 0, 0), STOPS.length - 1);
 
-const guide = mountGuide({
-  page: 'tour',
-  container: $('chat'),
-  getStop: () => cur + 1,
-  getContext: () => ({ tour_stop: `${cur + 1}. ${STOPS[cur]!.short}` }),
-});
-
 function renderStops() {
   const ol = $('stops');
   ol.replaceChildren(
@@ -120,13 +105,6 @@ function renderStop() {
   const s = STOPS[cur]!;
   const body = h('div', 'body');
   s.body.forEach((t) => body.append(h('p', '', t)));
-  const asks = h('div', 'asks');
-  s.asks.forEach((q) => {
-    const b = h('button', 'ask', q);
-    b.type = 'button';
-    b.onclick = () => guide.ask(q);
-    asks.append(b);
-  });
   const nav = h('div', 'stop-nav');
   const prev = h('button', 'ghost', cur > 0 ? `← ${STOPS[cur - 1]!.short}` : '←');
   const next = h('button', 'ghost', cur < STOPS.length - 1 ? `${STOPS[cur + 1]!.short} →` : '→');
@@ -135,7 +113,7 @@ function renderStop() {
   prev.onclick = () => go(cur - 1);
   next.onclick = () => go(cur + 1);
   nav.append(prev, next);
-  $('stop').replaceChildren(h('div', 'eyebrow', `Stop ${cur + 1} of ${STOPS.length}`), h('h2', '', s.short), body, asks, nav);
+  $('stop').replaceChildren(h('div', 'eyebrow', `Stop ${cur + 1} of ${STOPS.length}`), h('h2', '', s.short), body, nav);
 }
 
 function go(i: number) {
@@ -163,14 +141,15 @@ interface Status {
   mergers?: { verdict?: string } | null;
 }
 
-let status: Status | null = null;
+// Team progress lives in team_status.json next to this file: edit it as the project moves.
+const status: Status | null = teamStatus as Status;
 
 function renderStatus() {
   const res = $('results');
   res.replaceChildren();
   const row = (text: string) => res.append(h('div', 'r', text));
   if (!status) {
-    $('projsummary').textContent = 'The team’s live status comes from the guide server, which isn’t running right now.';
+    $('projsummary').textContent = '';
     $('milestones').replaceChildren();
     $('projlive').textContent = '';
     drawChart();
@@ -199,20 +178,10 @@ function renderStatus() {
       return li;
     })
   );
-  $('projlive').textContent = `Live from the team${status.updated ? ` · updated ${status.updated}` : ''}${
+  $('projlive').textContent = `From the team's notes${status.updated ? ` · updated ${status.updated}` : ''}${
     status.stage_label ? ` · ${status.stage_label}` : ''
   }`;
   drawChart();
-}
-
-async function loadStatus() {
-  try {
-    const r = await fetch('/api/guide/status', { cache: 'no-store' });
-    status = r.ok ? ((await r.json()) as Status) : null;
-  } catch {
-    status = null;
-  }
-  renderStatus();
 }
 
 // ---------------------------------------------------------------- S8 chart (one linear scale)
@@ -269,9 +238,7 @@ function drawChart() {
 }
 
 // ---------------------------------------------------------------- boot
-document.querySelectorAll<HTMLButtonElement>('.card .ask').forEach((b) => (b.onclick = () => guide.ask(b.dataset.q ?? '')));
 renderStops();
 renderStop();
 renderStatus();
-void loadStatus();
 drawLensingField($<HTMLCanvasElement>('sky'), $<HTMLButtonElement>('reveal'));

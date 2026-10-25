@@ -85,9 +85,7 @@ function penumbraData(): Plugin {
 
 export default defineConfig({
   plugins: [penumbraData()],
-  // /api/* goes to the guide server (python guide/server.py), which holds the API key.
-  server: { port: 5173, proxy: { '/api': 'http://127.0.0.1:8787' } },
-  preview: { proxy: { '/api': 'http://127.0.0.1:8787' } },
+  server: { port: 5173 },
   build: {
     rollupOptions: {
       // Three pages: the cosmic-web app (index.html), the sky-layer viewer (layers.html) and the tour (guide.html).

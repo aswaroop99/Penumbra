@@ -1,5 +1,5 @@
 /* Tour page: the site's night palette (cosmic page blue + layer viewer amber), a scrolling page
-   rather than a full-screen scene. Layout: lensing hero, then tour stops beside the docked guide,
+   rather than a full-screen scene. Layout: lensing hero, then the tour stops,
    then the 2026 status board and the team's live progress. */
 :root {
   color-scheme: dark;
@@ -64,7 +64,7 @@ button { font: inherit; color: inherit; }
 }
 .field figcaption button[aria-pressed='true'] { background: rgba(255, 179, 71, 0.25); border-color: var(--accent); }
 
-.work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr); gap: 24px; align-items: start; padding-block: 12px 36px; }
+.work { padding-block: 12px 36px; }
 .tour { padding: 20px; }
 .stops { list-style: none; margin: 14px 0 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .stops button {
@@ -85,7 +85,6 @@ button { font: inherit; color: inherit; }
 .ghost { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 4px 0; font-size: 14px; }
 .ghost:hover { color: var(--text); }
 .ghost:disabled { visibility: hidden; }
-.chat { position: sticky; top: 60px; height: min(720px, calc(100vh - 76px)); min-height: 480px; overflow: hidden; }
 
 .board { padding-block: 8px 36px; }
 .board-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
@@ -142,8 +141,7 @@ footer li { break-inside: avoid; margin-bottom: 4px; }
 
 @media (max-width: 900px) {
   .hero, .work, .board-grid, .project { grid-template-columns: minmax(0, 1fr); }
-  .chat { position: static; height: min(640px, 80vh); min-height: 440px; }
-  .stops { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .stops { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   footer ul { columns: 1; }
 }
 @media (max-width: 480px) {
