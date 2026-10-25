@@ -1,6 +1,5 @@
 /// <reference types="vitest/config" />
 import { defineConfig, type Plugin } from 'vite';
-import react from '@vitejs/plugin-react';
 import { createReadStream, existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -85,7 +84,7 @@ function penumbraData(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), penumbraData()],
+  plugins: [penumbraData()],
   server: { port: 5173 },
   test: {
     environment: 'node',

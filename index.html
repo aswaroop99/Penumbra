@@ -7,7 +7,86 @@
     <title>Penumbra — dark matter, together</title>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div id="app">
+      <div id="loading" class="fullscreen-msg">Loading layers…</div>
+
+      <!-- Viewer controls (from the viewer branch) -->
+      <div id="panel" hidden>
+        <div class="row head">
+          <h1>Penumbra</h1>
+          <button id="collapse" aria-expanded="true">Hide</button>
+        </div>
+        <div id="panelBody">
+          <div class="sub" id="source"></div>
+
+          <h2>Layers (looking deeper →)</h2>
+          <div id="layers"></div>
+          <div class="row"><span>Spacing</span><input id="spacing" type="range" min="0" max="8" step="0.1" value="3" /></div>
+          <div class="row"><span>Opacity</span><input id="opacity" type="range" min="0.1" max="1" step="0.05" value="0.7" /></div>
+          <div class="row">
+            <label><input id="showPeaks" type="checkbox" checked /> Show peaks</label>
+            <button id="reset">Reset view</button>
+          </div>
+
+          <h2>Fly to a peak (top S/N)</h2>
+          <ul id="peaks"></ul>
+        </div>
+      </div>
+
+      <!-- Collaboration (backed by SpacetimeDB) -->
+      <aside id="collab" aria-label="Collaboration" hidden>
+        <section>
+          <h2>Room <span id="dot" class="dot connecting"></span><span id="status" class="status">Connecting…</span></h2>
+          <p id="offline" class="small error-text" hidden></p>
+          <form id="roomForm" class="row">
+            <input id="roomInput" aria-label="Room name" maxlength="40" />
+            <button id="roomJoin" type="submit">Join</button>
+          </form>
+          <p id="roomInvalid" class="small error-text" hidden>Use 1–32 letters, numbers or dashes.</p>
+          <button id="copyLink" class="wide">Copy invite link</button>
+          <p id="actionError" class="small error-text" role="alert" hidden>
+            <span id="actionErrorText"></span> <button id="dismissError" class="link">dismiss</button>
+          </p>
+        </section>
+
+        <section>
+          <h2>You</h2>
+          <div class="row">
+            <input id="nameInput" aria-label="Display name" maxlength="32" />
+            <input id="colorInput" type="color" aria-label="Colour" />
+          </div>
+        </section>
+
+        <section>
+          <h2>People (<span id="peopleCount">0</span>)</h2>
+          <ul id="people" class="people"></ul>
+          <div class="row">
+            <button id="share">Share my view</button>
+            <button id="follow" aria-pressed="false">Follow presenter</button>
+          </div>
+          <p id="presenterNote" class="dim small" hidden></p>
+        </section>
+
+        <section>
+          <h2>Flags (<span id="flagCount">0</span>)</h2>
+          <button id="annotate" class="wide" aria-pressed="false">Add a flag</button>
+          <p id="notice" class="small error-text" hidden></p>
+          <form id="composer" class="composer" hidden>
+            <p id="draftInfo" class="small dim"></p>
+            <textarea id="flagText" placeholder="What do you see here?" maxlength="280" rows="3"></textarea>
+            <div class="row">
+              <button id="postFlag" type="submit" disabled>Post flag</button>
+              <button id="cancelFlag" type="button">Cancel</button>
+            </div>
+          </form>
+          <ul id="flags" class="flags"></ul>
+        </section>
+      </aside>
+
+      <div id="readout">Hover over a layer to read κ</div>
+      <div id="note"></div>
+      <div id="toast" class="toast" hidden></div>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
