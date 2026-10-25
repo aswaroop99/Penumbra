@@ -22,7 +22,7 @@ emcee>=3.1           # classic MCMC baseline
 scikit-learn>=1.4
 
 # --- Vision map reader (des_map/map_reader) ---
-anthropic>=1,<3
+anthropic>=1,<2       # reader is tested against the 1.x SDK
 openai>=2,<4
 jsonschema>=4.20,<5
 
