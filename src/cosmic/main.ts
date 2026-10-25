@@ -1,4 +1,6 @@
 import './cosmic.css';
+import { cosmicContext } from '../guide/context';
+import { mountGuide } from '../guide/panel';
 import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from '../collab/client';
 import { initialProfile, saveProfile } from '../collab/profile';
 import type { Annotation } from '../generated/types';
@@ -75,6 +77,7 @@ async function start() {
     return;
   }
   $('loading').remove();
+  mountGuide({ page: 'cosmic', getContext: cosmicContext });
   if (import.meta.env.DEV) (window as unknown as { __cosmic?: CosmicApp }).__cosmic = app; // debugging only
 
   // -------------------------------------------------------------- backend

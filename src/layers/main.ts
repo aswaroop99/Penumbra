@@ -1,4 +1,6 @@
 import './styles.css';
+import { layersContextTracker } from '../guide/context';
+import { mountGuide } from '../guide/panel';
 import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from '../collab/client';
 import { initialProfile, saveProfile } from '../collab/profile';
 import type { Annotation } from '../generated/types';
@@ -85,6 +87,7 @@ async function start() {
     return;
   }
   $('loading').remove();
+  mountGuide({ page: 'layers', getContext: layersContextTracker(), launcherBottom: 56 });
   if (import.meta.env.DEV) (window as unknown as { __viewer?: FlyViewer }).__viewer = viewer; // debugging only
   $('panel').hidden = false;
   $('collab').hidden = false;

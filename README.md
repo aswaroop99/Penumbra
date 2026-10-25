@@ -14,6 +14,7 @@ The viewer puts three datasets on one shared sky:
 |---|---|
 | `index.html`, `src/cosmic/` | **The app's frontend**: the cosmic web simulator (live Zel'dovich simulation, Massey-style 3D clump map, survey layers as line-of-sight slices) with SpacetimeDB rooms, presenter/follow and flags |
 | `layers.html`, `src/layers/`, `src/viewer/` | The sky-sphere layer viewer, also backed by SpacetimeDB (its own default room) |
+| `guide.html`, `src/tour/`, `src/guide/`, `guide/` | The tour page and the "Ask the guide" AI panel on every page; the Python guide server holds the API key. See `guide/README.md` |
 | `src/collab/`, `spacetimedb/` | SpacetimeDB client and server module (shared by both pages) |
 | `viewer/index.html`, `viewer/cosmic-web.html` | The original standalone viewer pages from the viewer branch: no build step, no multiplayer, three from a CDN. Kept as reference |
 | `data/` | Exported viewer layers: PNGs, float16 grids, and `manifest.json`. See `data/README_for_frontend.md` |
@@ -55,7 +56,8 @@ npm run stdb:publish    # once: publish the module as database "penumbra"
 npm run dev             # terminal 2: http://localhost:5173
 ```
 
-- `/` is the cosmic web app. `/layers.html` is the layer viewer.
+- `/` is the cosmic web app. `/layers.html` is the layer viewer. `/guide.html` is the tour.
+- The "Ask the guide" panel needs the guide server: `ANTHROPIC_API_KEY=... python guide/server.py` (terminal 3). Without it the pages still work.
 - Without SpacetimeDB both pages still work locally; the room panel shows "Offline".
 - Open two tabs on the same `?room=` to try multiplayer: one tab clicks **Share my view**, the other **Follow presenter**.
 - The two pages use different shared-view encodings, so they never share a room: the cosmic web joins `penumbra-demo`, the layer viewer `penumbra-demo-layers`.
