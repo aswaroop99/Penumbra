@@ -102,6 +102,17 @@ def main():
     p.add_argument("--analysis", required=True, help="An analyze --out directory")
     p.add_argument("--manifest", help="Site manifest.json, used to decide whether pins match site peaks")
     p.add_argument("--out", required=True)
+    p = sub.add_parser("site-des", help="Analyse the DES layers the website shows and refresh data/reader.json")
+    p.add_argument("--manifest", default="../data/manifest.json")
+    p.add_argument("--out", default="reader_runs/des_site")
+    p.add_argument("--site-out", default="../data/reader.json")
+    p.add_argument("--nside", type=int, default=512)
+    p.add_argument("--smoothing", nargs="+", type=float, default=[15, 20])
+    p.add_argument("--top-k", type=int, default=6)
+    p.add_argument("--model", help="Vision model; omit for local measurements only")
+    p.add_argument("--provider", choices=["openai", "anthropic"], default="anthropic")
+    p.add_argument("--question", default="Describe the most prominent projected-mass peaks, troughs and any "
+                   "bridge-like structures in each layer of this DES Y3 map. What is uncertain?")
     p = sub.add_parser("demo", help="Small reproducible TOY demonstration; not a DES result")
     p.add_argument("--out", default="reader_runs/toy")
     a = ap.parse_args()
@@ -141,8 +152,27 @@ def main():
         payload = export_site(a.analysis, a.out, a.manifest)
         aligned = "matched to site peaks" if payload["alignment"]["aligned"] else "standalone pins (map differs from site)"
         print(f"Saved {a.out}: status={payload['status']}, {len(payload['features'])} feature(s), {aligned}")
+    elif a.cmd == "site-des":
+        from .viewer_source import viewer_to_map
+        from .export_site import export_site
+        out = Path(a.out)
+        out.mkdir(parents=True, exist_ok=True)
+        obs = viewer_to_map(a.manifest, out / "des_site.npz", nside=a.nside)
+        cfg = freeze_config([str(obs)], a.smoothing, n_ell=6, display_only=True)
+        write_json(out / "config.json", cfg)
+        analysis = out / "analysis"
+        try:
+            analyze(str(obs), cfg, analysis, a.model, a.question, a.top_k, provider=a.provider)
+        finally:
+            # Refresh the site even if the model call fails, so it never shows stale toy text.
+            if (analysis / "analysis.json").exists():
+                payload = export_site(analysis, a.site_out, a.manifest)
+                aligned = "linked to site peaks" if payload["alignment"]["aligned"] else "standalone pins"
+                print(f"Saved {a.site_out}: status={payload['status']}, {len(payload['features'])} feature(s), {aligned}")
     elif a.cmd == "batch":
         cfg = json.loads(Path(a.config).read_text())
+        if cfg.get("map_reader", {}).get("display_only"):
+            raise ValueError("This config is display-only (scaled from an observed map) and cannot be used for SBI")
         paths = expand(a.maps)
         rows, theta = [], []
         for path in paths:

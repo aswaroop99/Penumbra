@@ -40,7 +40,7 @@ const TAB_KEY = 'cw-tab';
  */
 export class CosmicApp {
   private readonly renderer: THREE.WebGLRenderer;
-  private readonly params: Params = { s8: 0.8, om: 0.315 };
+  private readonly params: Params = { s8: 0.76, om: 0.3 }; // S8 from our DES Y3 shear fit; Omega_m = DES Y3 published
   private readonly views: Record<Tab, View>;
   private readonly built = new Set<Tab>();
   private active: View | null = null;
@@ -106,6 +106,7 @@ export class CosmicApp {
     const token = ++this.showToken;
     const next = this.views[tab];
     if (this.active) {
+      if (this.active !== next) this.active.onHide?.();
       this.active.controls.enabled = false;
       this.active.labels.domElement.style.display = 'none';
     }
@@ -116,7 +117,7 @@ export class CosmicApp {
     document
       .querySelectorAll<HTMLElement>('nav button')
       .forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-    next.controls.enabled = !(tab === 'sim' && $<HTMLInputElement>('fly').checked);
+    next.controls.enabled = next.orbitEnabled?.() ?? true;
     next.labels.domElement.style.display = '';
     $('caption').textContent = next.caption;
     $('cursorHint').hidden = !(this.annotateMode && tab === 'slices');

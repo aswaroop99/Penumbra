@@ -11,6 +11,7 @@ import {
   type KField,
   type Vec3,
 } from './physics';
+import { createShipRig } from './ship';
 import { $, getCam, label, makeBase, nextFrame, serial, type Ctx, type View } from './viewKit';
 import { UNIVERSE_SEEDS, type CosmicView } from './viewCodec';
 
@@ -203,8 +204,10 @@ export function createSimView(ctx: Ctx): View {
   };
 
   const flyDir = new THREE.Vector3(1, 0.37, 0.21).normalize();
-  $<HTMLInputElement>('fly').onchange = (e) => {
-    fly = (e.target as HTMLInputElement).checked;
+  const flyBox = () => $<HTMLInputElement>('fly');
+  function setFly(on: boolean) {
+    fly = on;
+    flyBox().checked = on;
     base.controls.enabled = !fly;
     boxLines.visible = scaleBar.visible = !fly;
     mat.uniforms.uFade.value = fly ? 1 : 0;
@@ -213,9 +216,60 @@ export function createSimView(ctx: Ctx): View {
     } else {
       base.camera.position.copy(HOME);
       base.controls.target.set(0, 0, 0);
+      base.camera.lookAt(0, 0, 0);
       mat.uniforms.uCenter.value.set(0, 0, 0);
     }
+  }
+  flyBox().onchange = (e) => {
+    ship.exit();
+    setFly((e.target as HTMLInputElement).checked);
   };
+
+  // Spaceship: the box is periodic, so there are no walls and the web repeats forever.
+  let orbitCam = getCam(base);
+  const shipButton = () => $<HTMLButtonElement>('shipSim');
+  const syncShipButton = () => (shipButton().textContent = ship.active ? 'Leave the spaceship' : '🚀 Fly a spaceship');
+  const ship = createShipRig({
+    scene: base.scene,
+    camera: base.camera,
+    controls: base.controls,
+    dom: ctx.renderer.domElement,
+    onInput: () => ctx.interacted(),
+    onEnter: () => {
+      boxLines.visible = scaleBar.visible = false;
+      mat.uniforms.uFade.value = 1;
+      syncShipButton();
+    },
+    onExit: () => {
+      boxLines.visible = scaleBar.visible = true;
+      mat.uniforms.uFade.value = 0;
+      mat.uniforms.uCenter.value.set(0, 0, 0);
+      syncShipButton();
+    },
+  });
+  shipButton().onclick = () => {
+    if (ship.active) return ship.exit();
+    if (fly) setFly(false);
+    orbitCam = getCam(base);
+    ship.enter({
+      start: new THREE.Vector3(-L / 2, 0, 0),
+      size: 2.4,
+      speed: 22,
+      dust: false,
+      compass: [
+        { dir: [1, 0, 0], label: '+x' },
+        { dir: [-1, 0, 0], label: '−x' },
+        { dir: [0, 1, 0], label: '+y' },
+        { dir: [0, -1, 0], label: '−y' },
+        { dir: [0, 0, 1], label: '+z' },
+        { dir: [0, 0, -1], label: '−z' },
+      ],
+      describe: () =>
+        `<b>Simulated universe</b>A periodic box ${(L / H) | 0} million parsecs wide: fly out one side and you come back in the other. ` +
+        'Every point in the box is shown at the same cosmic time (use the redshift slider).',
+    });
+  };
+  syncShipButton();
 
   let last = performance.now();
   return {
@@ -224,6 +278,8 @@ export function createSimView(ctx: Ctx): View {
     caption:
       'A small simulation, built live in your browser. It starts from tiny random ripples in an almost smooth early universe, and gravity draws matter into sheets, filaments and knots. Purple shows dark matter; white shows the densest knots, where galaxies form. Method: Zel’dovich approximation (first-order perturbation theory), not a full N-body run.',
     onShow: () => {},
+    onHide: () => ship.exit(),
+    orbitEnabled: () => !fly && !ship.active,
     tick(now) {
       const dt = Math.min(0.1, (now - last) / 1000);
       last = now;
@@ -232,6 +288,8 @@ export function createSimView(ctx: Ctx): View {
         setZ(s);
         if (s >= 1) setPlaying(false);
       }
+      ship.tick(now);
+      if (ship.active) mat.uniforms.uCenter.value.copy(base.camera.position);
       if (fly) {
         base.camera.position.addScaledVector(flyDir, 14 * dt);
         base.camera.lookAt(base.camera.position.clone().add(flyDir));
@@ -248,10 +306,10 @@ export function createSimView(ctx: Ctx): View {
     },
     source: () =>
       '<b class="sim">Simulated</b>Generated in your browser from random initial conditions. No telescope data. Defaults: Planck 2018 (Ω<sub>m</sub>) and DES Y3 (S8).',
-    cameraShared: () => !fly,
+    cameraShared: () => !fly && !ship.active,
     getView: (): CosmicView => ({
       tab: 'sim',
-      cam: getCam(base),
+      cam: ship.active ? orbitCam : getCam(base),
       s8: ctx.params.s8,
       om: ctx.params.om,
       time: zs,

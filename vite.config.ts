@@ -94,11 +94,13 @@ export default defineConfig({
   server: { port: 5173, watch: { ignored: ['**/venv/**', '**/.venv*/**', '**/myenv/**', '**/data/**', '**/des_map/reader_runs/**', '**/inference/work/**'] } },
   build: {
     rollupOptions: {
-      // Three pages: the cosmic-web app (index.html), the sky-layer viewer (layers.html) and the tour (guide.html).
+      // Pages: the cosmic-web app (index.html), the sky-layer viewer (layers.html), the tour
+      // (guide.html) and the DES filament map (web.html).
       input: {
         main: resolve(ROOT, 'index.html'),
         layers: resolve(ROOT, 'layers.html'),
         guide: resolve(ROOT, 'guide.html'),
+        web: resolve(ROOT, 'web.html'),
       },
     },
   },
