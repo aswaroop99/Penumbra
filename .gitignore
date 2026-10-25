@@ -47,3 +47,8 @@ dark_universe_data/
 *.zip
 
 .cursor/
+
+# Inference scratch space (toy sims, summaries, trained flows); published results go to data/
+inference/work/
+*.pkl
+sbi-logs/
