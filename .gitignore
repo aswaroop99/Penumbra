@@ -10,9 +10,11 @@ dist/
 .ipynb_checkpoints/
 __MACOSX/
 
-# Virtual environments
+# Virtual environments (conda env "penumbra" lives outside the repo; see README)
 .venv/
+.venv-*/
 venv/
+myenv/
 env/
 ENV/
 .env
@@ -49,8 +51,6 @@ dark_universe_data/
 .cursor/
 
 # Map reader (Python)
-.venv-map-reader/
-myenv/
 .env.*
 !.env.example
 des_map/reader_runs/

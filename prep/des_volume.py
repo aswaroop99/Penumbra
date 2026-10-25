@@ -17,7 +17,7 @@ Outputs to data/des_volume/:
   mask.u8.bin    uint8 (ny, nx), 255 inside the DES footprint
   volume.json    grid, scales, z <-> distance table, 3D peaks, depth resolution
 
-Usage:  .venv/bin/python prep/des_volume.py [--res 0.25] [--nchi 32] [--nz des_2pt.fits]
+Usage:  bin/penumbra-python prep/des_volume.py [--res 0.25] [--nchi 32] [--nz des_2pt.fits]
 """
 import argparse
 import json

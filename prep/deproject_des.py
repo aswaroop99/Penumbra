@@ -20,9 +20,9 @@ Outputs (does not touch the viewer's main manifest):
   data/deproj/diagnostics.png               kernels, Q, resolution matrix, maps
 
 Usage:
-  .venv/bin/python prep/deproject_des.py
-  .venv/bin/python prep/deproject_des.py --edges 0 0.3 0.55 1.4 --smoothing 30
-  .venv/bin/python prep/deproject_des.py --nz path/to/des_y3_2pt.fits   # official n(z)
+  bin/penumbra-python prep/deproject_des.py
+  bin/penumbra-python prep/deproject_des.py --edges 0 0.3 0.55 1.4 --smoothing 30
+  bin/penumbra-python prep/deproject_des.py --nz path/to/des_y3_2pt.fits   # official n(z)
 """
 import argparse
 import json

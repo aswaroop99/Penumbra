@@ -6,7 +6,7 @@ the SBI handoff, see [MAP_READER.md](MAP_READER.md).
 Run on a laptop with internet (our cloud sandbox can't reach the DES or Zenodo servers).
 
 ```bash
-pip install healpy numpy scipy matplotlib
+conda env create -f ../environment.yml && conda activate penumbra   # or: pip install -r ../requirements.txt
 
 # 1. See what's available (downloads nothing)
 python get_des_data.py list

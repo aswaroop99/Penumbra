@@ -1,13 +1,23 @@
-# Conda environment for Penumbra (Python analysis + Node for the viewer).
-#   conda env create -f environment.yml
+# One conda environment for every Python lane in Penumbra:
+#   prep/      (DES export, COSMOS 3D rebuild)
+#   inference/ (SBI + emcee: Omega_m, S8)
+#   des_map/   (science pipeline + the Claude/OpenAI vision map reader)
+# plus Node for the viewer.
+#
+#   conda env create -f environment.yml        # or, on Apple Silicon, the pre-solved lock:
+#   conda create -n penumbra --file penumbra-osx-arm64.lock
 #   conda activate penumbra
-# Everything comes from conda-forge (no pip section) so one solver keeps
-# numpy / astropy / torch / sbi consistent. Verified to solve on osx-arm64.
+#
+# Everything comes from conda-forge and there is no pip section, so one solver keeps
+# numpy / astropy / torch / sbi consistent. Do not `pip install` into this env: a pip
+# torch next to conda's OpenMP is what makes training abort on macOS.
+# After changing this file, regenerate the lock (see README "Python environments").
 name: penumbra
 channels:
   - conda-forge
 dependencies:
   - python=3.11
+  # core numerics / sky maps
   - numpy
   - scipy
   - healpy
@@ -15,9 +25,16 @@ dependencies:
   - pandas
   - pillow
   - matplotlib
+  # inference
   - scikit-learn
   - emcee
-  - pytest
   - pytorch
   - sbi
+  # vision map reader (des_map/map_reader)
+  - anthropic
+  - openai
+  - jsonschema
+  # tests
+  - pytest
+  # viewer
   - nodejs=22

@@ -66,7 +66,7 @@ npm run dev             # terminal 2: http://localhost:5173
 - Without SpacetimeDB both pages still work locally; the room panel shows "Offline".
 - Open two tabs on the same `?room=` to try multiplayer: one tab clicks **Share my view**, the other **Follow presenter**.
 - The two pages use different shared-view encodings, so they never share a room: the cosmic web joins `penumbra-demo`, the layer viewer `penumbra-demo-layers`.
-- The standalone pages in `viewer/` still work with `python3 -m http.server 8000` from the repo root (open `/viewer/`).
+- The standalone pages in `viewer/` still work with `python3 serve.py` from the repo root (open http://localhost:8000/viewer/).
 
 ### Cosmology result (Ωm, S8)
 
@@ -85,6 +85,56 @@ would imply is not a scientific result. Details and the real-data cutover: `infe
 ### How the cosmic web page uses the backend
 
 The SpacetimeDB module is unchanged. The cosmic web view is carried in the existing `update_view` fields (see `src/cosmic/viewCodec.ts`): `active_layer` is the tab (plus the universe number on Simulate), `view_ra`/`view_dec` are S8/Ωm (Simulate, 3D map) or the sky patch centre (Survey slices), `spread` is time, clump volume or slice spacing, and `view_yaw`/`view_pitch`/`view_zoom` are the orbit camera. Panning and the Survey slices Zoom slider are not shared. Flags are sky-anchored `(ra, dec, bin)`, so they are placed on the Survey slices tab.
+
+## Python environments
+
+All Python in the repo (`prep/`, `inference/`, `des_map/` and the map reader) runs in **one** environment: the conda env `penumbra`, all from conda-forge.
+
+```bash
+conda env create -f environment.yml
+```
+
+On Apple Silicon you can skip the solver with the pre-solved lock:
+
+```bash
+conda create -n penumbra --file penumbra-osx-arm64.lock
+```
+
+Run scripts through `bin/penumbra-python` (or `conda activate penumbra` and use `python`). The launchers `run-reader` and `run-vlm-demo` already use it:
+
+```bash
+bin/penumbra-python prep/cosmos_3d.py
+```
+
+`bin/penumbra-python` uses the first of: `$PENUMBRA_PYTHON`, the active `penumbra` conda env, the `penumbra` env even when not activated, then a repo venv (`.venv-map-reader/`, `.venv/`, `venv/`). It clears `PYTHONPATH`, `PYTHONHOME` and `~/.local` site-packages first. Run `bin/penumbra-python --which` to see which one it picked.
+
+Rules that avoid conda/venv clashes:
+
+- Don't `pip install` into the conda env. A pip `torch` next to conda's OpenMP is what aborts SBI training on macOS.
+- Don't create a venv while a conda env is active (the venv would be built on conda's Python). Run `conda deactivate` first.
+- No conda? Use one venv with the pip superset, and the launcher finds it:
+
+  ```bash
+  python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+  ```
+
+- Narrower pinned sets: `inference/requirements.txt` (SBI lane, same versions as the conda env) and `des_map/requirements-reader.txt` (reader only).
+- After editing `environment.yml`: `conda env update -n penumbra -f environment.yml --prune`, then regenerate the lock with `conda list -n penumbra --explicit --md5` (keep the header lines).
+
+## Rebuilding the viewer data
+`data/` is committed, so you only need this after changing the prep scripts or the raw data. Use the `penumbra` environment (see [Python environments](#python-environments)):
+
+```bash
+conda activate penumbra
+python prep/cosmos_3d.py
+```
+
+The DES layers in `data/` come from the `des_map/` pipeline (`des_map/make_des_map.py` on the KaRMMa samples, 10′ smoothing). `python prep/export_des.py` writes the same files with 20′ smoothing and an extra `post_snr` per peak. After changing the DES layers, run `./run-vlm-demo` again so `data/reader.json` matches the map.
+
+What the prep scripts do:
+
+- **`export_des.py`** averages the 100 KaRMMa samples per bin, smooths the result (20′ by default) inside the survey mask, and writes plate-carrée PNGs, float16 grids and `manifest.json` (bounds and the top 40 peaks per bin). In the manifest, `snr` is peak height in units of the map's spread, and `post_snr` is peak height over the spread across the 100 samples. `post_snr` is the better measure of how certain a peak is (the top peaks are about 2–4σ).
+- **`cosmos_3d.py`** splits galaxies into 7 photo-z slices and makes a Kaiser–Squires mass map per slice. It picks the shear sign convention from the data with an E/B-mode test, then runs a tomographic matched filter per sky pixel to find lenses in depth. Values in the grid are detection significance (σ), and each detected lens is drawn at its most likely redshift. Check: the strongest structure is at RA 149.93°, Dec 2.51°, z ≈ 0.7 (4.2σ), matching the known COSMOS cluster at z ≈ 0.73. Depth resolution is poor, so treat redshifts as approximate. `METHOD=wiener` gives a regularised density estimate instead, but it pulls structures toward low redshift.
 
 ## Data sources
 
@@ -150,8 +200,8 @@ analysis uses HEALPix map contracts; viewer PNGs do not replace those inputs.
 
 ## Local quick start
 
-The `run-reader` launcher loads the ignored `.env` file and uses the repository's
-`.venv-map-reader` environment. Keep your API key in `.env` (see `.env.example`).
+The `run-reader` launcher loads the ignored `.env` file and runs the reader with
+`bin/penumbra-python` (see [Python environments](#python-environments)). Keep your API key in `.env` (see `.env.example`).
 
 ```bash
 ./run-reader demo --out reader_runs/toy

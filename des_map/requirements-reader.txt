@@ -4,4 +4,4 @@ healpy>=1.17,<2
 matplotlib>=3.8,<4
 openai>=2,<4
 jsonschema>=4.20,<5
-anthropic>=1,<2
+anthropic>=1,<3

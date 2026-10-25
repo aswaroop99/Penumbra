@@ -17,7 +17,7 @@ weak-lensing catalog:
 Line-of-sight resolution of 3D lensing is poor: clumps come out stretched along redshift.
 That's physics, not a bug; the viewer says so.
 
-Usage:  .venv/bin/python prep/cosmos_3d.py
+Usage:  bin/penumbra-python prep/cosmos_3d.py
 """
 import json
 import os

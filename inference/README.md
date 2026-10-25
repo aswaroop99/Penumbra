@@ -35,10 +35,20 @@ intervals), and `sigma8` derived per posterior sample from S8 = σ8·√(Ωm/0.3
 
 ## Install
 
+Use the repo's conda env, which has torch, sbi and emcee from conda-forge (one OpenMP runtime):
+
 ```bash
-python3.11 -m venv venv && source venv/bin/activate
-pip install -r inference/requirements.txt
+conda env create -f environment.yml && conda activate penumbra
 ```
+
+Without conda, a venv with the pinned set works too (the versions match the conda env):
+
+```bash
+python3.11 -m venv .venv && .venv/bin/pip install -r inference/requirements.txt
+```
+
+Don't pip-install torch into a conda env, and don't run a venv's Python while a different conda
+env's libraries are on the path; `bin/penumbra-python` picks one environment and runs it cleanly.
 
 Tests (these do not need torch): `python -m pytest inference/tests/test_contracts.py inference/tests/test_preprocess.py inference/tests/test_run_inference.py`.
 `tests/test_pipeline_smoke.py` trains a real flow and needs a working torch/sbi install.

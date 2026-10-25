@@ -7,8 +7,8 @@ mean per bin, smooths it inside the survey mask, and writes for each bin:
 plus data/manifest.json (same schema as the toy export, so the viewer needs no changes).
 
 Usage:
-  .venv/bin/python prep/export_des.py                 # defaults below
-  .venv/bin/python prep/export_des.py --smoothing 20 --res 0.08
+  bin/penumbra-python prep/export_des.py                 # defaults below
+  bin/penumbra-python prep/export_des.py --smoothing 20 --res 0.08
 """
 import argparse
 import glob
