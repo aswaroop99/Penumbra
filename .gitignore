@@ -1,0 +1,9 @@
+.venv/
+.venv-map-reader/
+__pycache__/
+.pytest_cache/
+.env
+.env.*
+!.env.example
+.DS_Store
+des_map/reader_runs/
