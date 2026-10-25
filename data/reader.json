@@ -1,164 +1,452 @@
 {
  "schema": "penumbra.reader/1",
- "generated_at": "2026-10-25T04:22:31+00:00",
- "source": "TOY held-out map; not DES",
- "is_toy": true,
+ "generated_at": "2026-10-25T06:46:37+00:00",
+ "source": "DES Y3 weak-lensing mass map (KaRMMa reconstruction, mean of 100 posterior samples; Fiedorowicz et al. 2024)",
+ "is_toy": false,
  "coord": "C",
- "map_sha256": "0d30f8f94c61eca7bf3b43ffc039d286035af6ff233e23166cfd549a2382bd0a",
- "config_sha256": "355e1eb85b07dbff4e8f4daab9529fc8160fa892d39f93464f6a0347c0072cfb",
+ "map_sha256": "becf6cbd27a7941bf515876ba66b249b7eb2e244d0398b0c5766befb280c8176",
+ "config_sha256": "5401326adc2e80cda1a784b25303799ea7b8e8dc3ff7fadab4587f2872c99744",
  "alignment": {
-  "aligned": false,
-  "reasons": [
-   "Reader analysed 'TOY held-out map; not DES', site shows 'toy_sims (not physics)'"
-  ]
+  "aligned": true,
+  "reasons": []
  },
  "objects": [
   {
    "id": "peak:bin0:0",
    "type": "peak",
    "bin": 0,
-   "ra": 57.65625,
-   "dec": -41.81031,
-   "kappa": 0.042385404285155075,
-   "kappa_over_reference_rms": 5.546395954692685
+   "ra": 49.45361,
+   "dec": -44.49893,
+   "kappa": 0.008891633163407792,
+   "kappa_over_reference_rms": 8.532718381012133
   },
   {
    "id": "peak:bin0:1",
    "type": "peak",
    "bin": 0,
-   "ra": 71.71875,
-   "dec": -24.62432,
-   "kappa": 0.021729742263814453,
-   "kappa_over_reference_rms": 2.8434730450535373
+   "ra": 55.81841,
+   "dec": -53.66841,
+   "kappa": 0.008651778361573229,
+   "kappa_over_reference_rms": 8.302545426418106
   },
   {
    "id": "peak:bin0:2",
    "type": "peak",
    "bin": 0,
-   "ra": 66.09375,
-   "dec": -35.68533,
-   "kappa": 0.02142650267779564,
-   "kappa_over_reference_rms": 2.803792243570974
+   "ra": 5.44922,
+   "dec": -0.82067,
+   "kappa": 0.00842080674324366,
+   "kappa_over_reference_rms": 8.080897081620952
   },
   {
    "id": "peak:bin0:3",
    "type": "peak",
    "bin": 0,
-   "ra": 52.82609,
-   "dec": -55.87335,
-   "kappa": 0.019386246383664915,
-   "kappa_over_reference_rms": 2.5368119127907804
+   "ra": 1.40625,
+   "dec": -34.68125,
+   "kappa": 0.008118409391635203,
+   "kappa_over_reference_rms": 7.79070613547873
   },
   {
    "id": "peak:bin0:4",
    "type": "peak",
    "bin": 0,
-   "ra": 333.28125,
-   "dec": -22.02431,
-   "kappa": 0.017992207272094787,
-   "kappa_over_reference_rms": 2.354393152854499
+   "ra": 50.48554,
+   "dec": -44.59799,
+   "kappa": 0.0067746044154028216,
+   "kappa_over_reference_rms": 6.501144453111814
   },
   {
    "id": "peak:bin0:5",
    "type": "peak",
    "bin": 0,
-   "ra": 64.6875,
-   "dec": -25.94448,
-   "kappa": 0.017888153011709526,
-   "kappa_over_reference_rms": 2.340777000346276
-  },
-  {
-   "id": "peak:bin0:6",
-   "type": "peak",
-   "bin": 0,
-   "ra": 35.68966,
-   "dec": -46.57185,
-   "kappa": 0.017199405241220347,
-   "kappa_over_reference_rms": 2.2506500353574648
-  },
-  {
-   "id": "peak:bin0:7",
-   "type": "peak",
-   "bin": 0,
-   "ra": 41.08696,
-   "dec": -55.87335,
-   "kappa": 0.0170220127490622,
-   "kappa_over_reference_rms": 2.227437115308867
+   "ra": 8.87695,
+   "dec": -2.23869,
+   "kappa": 0.005903698052715954,
+   "kappa_over_reference_rms": 5.665392618497149
   },
   {
    "id": "trough:bin0:0",
    "type": "trough",
    "bin": 0,
-   "ra": 81.5625,
-   "dec": -31.38817,
-   "kappa": -0.017372751397837095,
-   "kappa_over_reference_rms": -2.2733334670254126
+   "ra": 41.66016,
+   "dec": -11.94843,
+   "kappa": -0.0023391769395208553,
+   "kappa_over_reference_rms": -2.244755007486122
   },
   {
    "id": "trough:bin0:1",
    "type": "trough",
    "bin": 0,
-   "ra": 24.10714,
-   "dec": -48.14121,
-   "kappa": -0.01660348723462032,
-   "kappa_over_reference_rms": -2.1726704271201895
+   "ra": 355.38724,
+   "dec": -49.02035,
+   "kappa": -0.0021715944020718404,
+   "kappa_over_reference_rms": -2.083937014733953
   },
   {
    "id": "trough:bin0:2",
    "type": "trough",
    "bin": 0,
-   "ra": 348.33333,
-   "dec": -49.70239,
-   "kappa": -0.015160537507037067,
-   "kappa_over_reference_rms": -1.983851406354221
+   "ra": 68.11523,
+   "dec": -40.4239,
+   "kappa": -0.0021400993998181737,
+   "kappa_over_reference_rms": -2.053713322449184
   },
   {
    "id": "trough:bin0:3",
    "type": "trough",
    "bin": 0,
-   "ra": 352.96875,
-   "dec": -24.62432,
-   "kappa": -0.01322467968901251,
-   "kappa_over_reference_rms": -1.730532270867949
+   "ra": 64.03846,
+   "dec": -43.60575,
+   "kappa": -0.0021014537941959318,
+   "kappa_over_reference_rms": -2.0166276641254357
   },
   {
    "id": "trough:bin0:4",
    "type": "trough",
    "bin": 0,
-   "ra": 33.75,
-   "dec": -37.1689,
-   "kappa": -0.011297178695142802,
-   "kappa_over_reference_rms": -1.4783066782289909
+   "ra": 63.36364,
+   "dec": -43.50632,
+   "kappa": -0.002089494571193976,
+   "kappa_over_reference_rms": -2.0051511805530637
   },
   {
    "id": "trough:bin0:5",
    "type": "trough",
    "bin": 0,
-   "ra": 8.4375,
-   "dec": -37.1689,
-   "kappa": -0.011254571404718595,
-   "kappa_over_reference_rms": -1.4727312470815284
+   "ra": 44.82422,
+   "dec": -19.07605,
+   "kappa": -0.0020438328101128733,
+   "kappa_over_reference_rms": -1.9613325770495442
   },
   {
-   "id": "trough:bin0:6",
-   "type": "trough",
-   "bin": 0,
-   "ra": 91.40625,
-   "dec": -30.0,
-   "kappa": -0.011111403938166588,
-   "kappa_over_reference_rms": -1.4539968862627557
+   "id": "peak:bin1:0",
+   "type": "peak",
+   "bin": 1,
+   "ra": 1.31836,
+   "dec": -34.77202,
+   "kappa": 0.014560794509153478,
+   "kappa_over_reference_rms": 7.9168621629912295
   },
   {
-   "id": "trough:bin0:7",
+   "id": "peak:bin1:1",
+   "type": "peak",
+   "bin": 1,
+   "ra": 49.45361,
+   "dec": -44.49893,
+   "kappa": 0.013846176553942933,
+   "kappa_over_reference_rms": 7.528316617139045
+  },
+  {
+   "id": "peak:bin1:2",
+   "type": "peak",
+   "bin": 1,
+   "ra": 55.58824,
+   "dec": -53.66841,
+   "kappa": 0.01371267045143481,
+   "kappa_over_reference_rms": 7.455727898796062
+  },
+  {
+   "id": "peak:bin1:3",
+   "type": "peak",
+   "bin": 1,
+   "ra": 5.44922,
+   "dec": -0.82067,
+   "kappa": 0.012119222082222079,
+   "kappa_over_reference_rms": 6.589352709243734
+  },
+  {
+   "id": "peak:bin1:4",
+   "type": "peak",
+   "bin": 1,
+   "ra": 50.48554,
+   "dec": -44.59799,
+   "kappa": 0.011266905554886283,
+   "kappa_over_reference_rms": 6.125938953770776
+  },
+  {
+   "id": "peak:bin1:5",
+   "type": "peak",
+   "bin": 1,
+   "ra": 8.87695,
+   "dec": -2.23869,
+   "kappa": 0.010355606450731886,
+   "kappa_over_reference_rms": 5.630455730495263
+  },
+  {
+   "id": "trough:bin1:0",
    "type": "trough",
-   "bin": 0,
-   "ra": 9.84375,
-   "dec": -41.81031,
-   "kappa": -0.011058936683099995,
-   "kappa_over_reference_rms": -1.44713121690881
+   "bin": 1,
+   "ra": 41.66016,
+   "dec": -11.94843,
+   "kappa": -0.004261306038816834,
+   "kappa_over_reference_rms": -2.3169183881021853
+  },
+  {
+   "id": "trough:bin1:1",
+   "type": "trough",
+   "bin": 1,
+   "ra": 64.03846,
+   "dec": -43.60575,
+   "kappa": -0.004092034986703587,
+   "kappa_over_reference_rms": -2.2248838781087477
+  },
+  {
+   "id": "trough:bin1:2",
+   "type": "trough",
+   "bin": 1,
+   "ra": 63.36364,
+   "dec": -43.50632,
+   "kappa": -0.004002761833704668,
+   "kappa_over_reference_rms": -2.1763450949603578
+  },
+  {
+   "id": "trough:bin1:3",
+   "type": "trough",
+   "bin": 1,
+   "ra": 68.20312,
+   "dec": -40.52197,
+   "kappa": -0.003981761511955692,
+   "kappa_over_reference_rms": -2.164926991878098
+  },
+  {
+   "id": "trough:bin1:4",
+   "type": "trough",
+   "bin": 1,
+   "ra": 355.38724,
+   "dec": -49.02035,
+   "kappa": -0.003959832327866908,
+   "kappa_over_reference_rms": -2.153003856250532
+  },
+  {
+   "id": "trough:bin1:5",
+   "type": "trough",
+   "bin": 1,
+   "ra": 331.2251,
+   "dec": -42.8093,
+   "kappa": -0.0038050920573903858,
+   "kappa_over_reference_rms": -2.0688698900952858
+  },
+  {
+   "id": "peak:bin2:0",
+   "type": "peak",
+   "bin": 2,
+   "ra": 1.31836,
+   "dec": -34.77202,
+   "kappa": 0.02207057543860707,
+   "kappa_over_reference_rms": 7.784579018631105
+  },
+  {
+   "id": "peak:bin2:1",
+   "type": "peak",
+   "bin": 2,
+   "ra": 55.58824,
+   "dec": -53.66841,
+   "kappa": 0.018854384512468993,
+   "kappa_over_reference_rms": 6.650186647522799
+  },
+  {
+   "id": "peak:bin2:2",
+   "type": "peak",
+   "bin": 2,
+   "ra": 50.48554,
+   "dec": -44.59799,
+   "kappa": 0.01595621181506801,
+   "kappa_over_reference_rms": 5.62796344200129
+  },
+  {
+   "id": "peak:bin2:3",
+   "type": "peak",
+   "bin": 2,
+   "ra": 8.87695,
+   "dec": -2.23869,
+   "kappa": 0.015471346644013185,
+   "kappa_over_reference_rms": 5.456945189760532
+  },
+  {
+   "id": "peak:bin2:4",
+   "type": "peak",
+   "bin": 2,
+   "ra": 5.36133,
+   "dec": -0.89528,
+   "kappa": 0.015106431390545055,
+   "kappa_over_reference_rms": 5.328234833583895
+  },
+  {
+   "id": "peak:bin2:5",
+   "type": "peak",
+   "bin": 2,
+   "ra": 94.07368,
+   "dec": -45.48795,
+   "kappa": 0.0143686446767794,
+   "kappa_over_reference_rms": 5.068007863599311
+  },
+  {
+   "id": "trough:bin2:0",
+   "type": "trough",
+   "bin": 2,
+   "ra": 64.03846,
+   "dec": -43.60575,
+   "kappa": -0.0068199612441360215,
+   "kappa_over_reference_rms": -2.4054890347856395
+  },
+  {
+   "id": "trough:bin2:1",
+   "type": "trough",
+   "bin": 2,
+   "ra": 41.66016,
+   "dec": -11.94843,
+   "kappa": -0.006712023778499193,
+   "kappa_over_reference_rms": -2.3674180867644625
+  },
+  {
+   "id": "trough:bin2:2",
+   "type": "trough",
+   "bin": 2,
+   "ra": 63.30972,
+   "dec": -43.60575,
+   "kappa": -0.00662328134464934,
+   "kappa_over_reference_rms": -2.3361174761151635
+  },
+  {
+   "id": "trough:bin2:3",
+   "type": "trough",
+   "bin": 2,
+   "ra": 68.20312,
+   "dec": -40.52197,
+   "kappa": -0.006495504078253436,
+   "kappa_over_reference_rms": -2.291048772319447
+  },
+  {
+   "id": "trough:bin2:4",
+   "type": "trough",
+   "bin": 2,
+   "ra": 355.38724,
+   "dec": -49.02035,
+   "kappa": -0.00630214540440653,
+   "kappa_over_reference_rms": -2.222848653129716
+  },
+  {
+   "id": "trough:bin2:5",
+   "type": "trough",
+   "bin": 2,
+   "ra": 70.22461,
+   "dec": -29.14222,
+   "kappa": -0.006274499968855693,
+   "kappa_over_reference_rms": -2.2130977484399583
+  },
+  {
+   "id": "peak:bin3:0",
+   "type": "peak",
+   "bin": 3,
+   "ra": 1.31836,
+   "dec": -34.77202,
+   "kappa": 0.02357282854381921,
+   "kappa_over_reference_rms": 7.277011414502191
+  },
+  {
+   "id": "peak:bin3:1",
+   "type": "peak",
+   "bin": 3,
+   "ra": 55.58824,
+   "dec": -53.66841,
+   "kappa": 0.019549091673840953,
+   "kappa_over_reference_rms": 6.03487031644281
+  },
+  {
+   "id": "peak:bin3:2",
+   "type": "peak",
+   "bin": 3,
+   "ra": 50.48554,
+   "dec": -44.59799,
+   "kappa": 0.016755614356169884,
+   "kappa_over_reference_rms": 5.172514477852733
+  },
+  {
+   "id": "peak:bin3:3",
+   "type": "peak",
+   "bin": 3,
+   "ra": 8.87695,
+   "dec": -2.23869,
+   "kappa": 0.016581166995234202,
+   "kappa_over_reference_rms": 5.118661991105164
+  },
+  {
+   "id": "peak:bin3:4",
+   "type": "peak",
+   "bin": 3,
+   "ra": 94.07368,
+   "dec": -45.48795,
+   "kappa": 0.015391696054073825,
+   "kappa_over_reference_rms": 4.751468313012923
+  },
+  {
+   "id": "peak:bin3:5",
+   "type": "peak",
+   "bin": 3,
+   "ra": 5.36133,
+   "dec": -0.89528,
+   "kappa": 0.01530914859531302,
+   "kappa_over_reference_rms": 4.725985634999808
+  },
+  {
+   "id": "trough:bin3:0",
+   "type": "trough",
+   "bin": 3,
+   "ra": 64.03846,
+   "dec": -43.60575,
+   "kappa": -0.008346671437814493,
+   "kappa_over_reference_rms": -2.5766455312381757
+  },
+  {
+   "id": "trough:bin3:1",
+   "type": "trough",
+   "bin": 3,
+   "ra": 63.30972,
+   "dec": -43.60575,
+   "kappa": -0.008138095205993545,
+   "kappa_over_reference_rms": -2.512257347319837
+  },
+  {
+   "id": "trough:bin3:2",
+   "type": "trough",
+   "bin": 3,
+   "ra": 41.74805,
+   "dec": -11.87219,
+   "kappa": -0.007957351535779566,
+   "kappa_over_reference_rms": -2.456461168732223
+  },
+  {
+   "id": "trough:bin3:3",
+   "type": "trough",
+   "bin": 3,
+   "ra": 68.20312,
+   "dec": -40.52197,
+   "kappa": -0.007825773842290343,
+   "kappa_over_reference_rms": -2.4158426924371494
+  },
+  {
+   "id": "trough:bin3:4",
+   "type": "trough",
+   "bin": 3,
+   "ra": 70.22461,
+   "dec": -29.14222,
+   "kappa": -0.007614754666944569,
+   "kappa_over_reference_rms": -2.3507003636404353
+  },
+  {
+   "id": "trough:bin3:5",
+   "type": "trough",
+   "bin": 3,
+   "ra": 355.38724,
+   "dec": -49.02035,
+   "kappa": -0.0075943372529574055,
+   "kappa_over_reference_rms": -2.3443974393068956
   }
  ],
  "measurement_limitations": [
+  "Resampled from the website's display grids (float16, plate carree, already smoothed 10 arcmin), not the original HEALPix release files.",
+  "A posterior-mean map is smoother and lower in amplitude than any single realization; small or faint features are suppressed.",
   "Projected convergence map; source-redshift layers overlap and are not independent 3D slices.",
   "Extrema are map features, not confirmed clusters or voids; apparent bridges are not confirmed filaments.",
   "Reference RMS is not a noise-only uncertainty; no detection significance is measured.",
@@ -170,23 +458,76 @@
  "model": {
   "provider": "anthropic",
   "model": "claude-sonnet-5-5",
-  "response_id": "msg_011CgN6ZD3SXHNsHFqpH3rCJ"
+  "response_id": "msg_011CgNWGyLYJLJv2mSzRApQV"
  },
- "overview": "Toy held-out projected convergence map (bin 0, 240 arcmin smoothing, uncalibrated, not DES). The strongest positive extremum is peak:bin0:0, which sits in a red clump in the lower left of the footprint. Other red peaks lie nearby, and there are blue troughs on the left and elsewhere. Gray areas are unobserved, not voids. Extrema are map features only, and the reference RMS is not a noise-only sigma or a detection significance.",
+ "overview": "Four source-redshift layers of a DES Y3 KaRMMa posterior-mean projected convergence map (15 arcmin smoothing, display scale from each map's own RMS, uncalibrated) look broadly similar. Red clumpy positive regions concentrate in the southern part of the footprint near RA ~45-95 deg and in the northern strip, with blue diffuse regions across the interior. The top-ranked peaks recur at the same sky locations across layers, and the deepest troughs are much shallower in |kappa/RMS| than the peaks. Extrema are map features only, not confirmed clusters or voids, and bridge-like morphology is only a visual impression. Gray is unobserved, not void.",
  "features": [
   {
    "kind": "measured_extremum",
-   "text": "Highest positive convergence extremum in the map, in the red clump at lower left. Its kappa/reference-RMS ratio is the largest listed, but it is not a significance and not a confirmed cluster.",
+   "text": "Bin 0: the highest listed peaks are in the southern region near the clump around RA ~50 deg, Dec ~-44.5 (peak 0, with a close neighbour, peak 4), plus peak 1 further south, peak 2 in the northern strip and peak 3 at the edge of the observed region. Values are in units of the map-derived reference RMS, not significance.",
    "requires_followup": true,
    "targets": [
     {
      "id": "peak:bin0:0",
      "type": "peak",
      "bin": 0,
-     "ra": 57.65625,
-     "dec": -41.81031,
-     "kappa": 0.042385404285155075,
-     "kappa_over_reference_rms": 5.546395954692685
+     "ra": 49.45361,
+     "dec": -44.49893,
+     "kappa": 0.008891633163407792,
+     "kappa_over_reference_rms": 8.532718381012133,
+     "site_peak": {
+      "index": 0,
+      "sep_deg": 0.0993
+     }
+    },
+    {
+     "id": "peak:bin0:1",
+     "type": "peak",
+     "bin": 0,
+     "ra": 55.81841,
+     "dec": -53.66841,
+     "kappa": 0.008651778361573229,
+     "kappa_over_reference_rms": 8.302545426418106,
+     "site_peak": null
+    },
+    {
+     "id": "peak:bin0:2",
+     "type": "peak",
+     "bin": 0,
+     "ra": 5.44922,
+     "dec": -0.82067,
+     "kappa": 0.00842080674324366,
+     "kappa_over_reference_rms": 8.080897081620952,
+     "site_peak": {
+      "index": 2,
+      "sep_deg": 0.0746
+     }
+    },
+    {
+     "id": "peak:bin0:3",
+     "type": "peak",
+     "bin": 0,
+     "ra": 1.40625,
+     "dec": -34.68125,
+     "kappa": 0.008118409391635203,
+     "kappa_over_reference_rms": 7.79070613547873,
+     "site_peak": {
+      "index": 3,
+      "sep_deg": 0.0908
+     }
+    },
+    {
+     "id": "peak:bin0:4",
+     "type": "peak",
+     "bin": 0,
+     "ra": 50.48554,
+     "dec": -44.59799,
+     "kappa": 0.0067746044154028216,
+     "kappa_over_reference_rms": 6.501144453111814,
+     "site_peak": {
+      "index": 7,
+      "sep_deg": 0.0662
+     }
     }
    ],
    "refs": [
@@ -198,239 +539,778 @@
   },
   {
    "kind": "measured_extremum",
-   "text": "A group of secondary positive extrema (peak:bin0:1, peak:bin0:2, peak:bin0:5) in the same left-hand red region, with a fourth (peak:bin0:3) further south. Peak:bin0:4 is isolated in the upper right and peak:bin0:6 is mid-field. These are map maxima only.",
-   "requires_followup": true,
-   "targets": [
-    {
-     "id": "peak:bin0:1",
-     "type": "peak",
-     "bin": 0,
-     "ra": 71.71875,
-     "dec": -24.62432,
-     "kappa": 0.021729742263814453,
-     "kappa_over_reference_rms": 2.8434730450535373
-    },
-    {
-     "id": "peak:bin0:2",
-     "type": "peak",
-     "bin": 0,
-     "ra": 66.09375,
-     "dec": -35.68533,
-     "kappa": 0.02142650267779564,
-     "kappa_over_reference_rms": 2.803792243570974
-    },
-    {
-     "id": "peak:bin0:5",
-     "type": "peak",
-     "bin": 0,
-     "ra": 64.6875,
-     "dec": -25.94448,
-     "kappa": 0.017888153011709526,
-     "kappa_over_reference_rms": 2.340777000346276
-    },
-    {
-     "id": "peak:bin0:3",
-     "type": "peak",
-     "bin": 0,
-     "ra": 52.82609,
-     "dec": -55.87335,
-     "kappa": 0.019386246383664915,
-     "kappa_over_reference_rms": 2.5368119127907804
-    },
-    {
-     "id": "peak:bin0:4",
-     "type": "peak",
-     "bin": 0,
-     "ra": 333.28125,
-     "dec": -22.02431,
-     "kappa": 0.017992207272094787,
-     "kappa_over_reference_rms": 2.354393152854499
-    },
-    {
-     "id": "peak:bin0:6",
-     "type": "peak",
-     "bin": 0,
-     "ra": 35.68966,
-     "dec": -46.57185,
-     "kappa": 0.017199405241220347,
-     "kappa_over_reference_rms": 2.2506500353574648
-    },
-    {
-     "id": "peak:bin0:7",
-     "type": "peak",
-     "bin": 0,
-     "ra": 41.08696,
-     "dec": -55.87335,
-     "kappa": 0.0170220127490622,
-     "kappa_over_reference_rms": 2.227437115308867
-    }
-   ],
-   "refs": []
-  },
-  {
-   "kind": "measured_extremum",
-   "text": "Negative convergence extrema (troughs) are listed, with the deepest, trough:bin0:0, in a blue region at left near trough:bin0:6. Others (trough:bin0:1, trough:bin0:2, trough:bin0:3) are scattered across the field. They are not confirmed voids, and gray is not a void.",
+   "text": "Bin 0: the listed troughs are shallow relative to the peaks. They include one in the northern-central region (trough 0), one in the southeast (trough 1), and a group of close troughs near RA ~63-68 deg, Dec ~-40 to -44 (troughs 2, 3, 4). Trough 5 lies in the central region. These are lowest-value pixels, not confirmed voids.",
    "requires_followup": true,
    "targets": [
     {
      "id": "trough:bin0:0",
      "type": "trough",
      "bin": 0,
-     "ra": 81.5625,
-     "dec": -31.38817,
-     "kappa": -0.017372751397837095,
-     "kappa_over_reference_rms": -2.2733334670254126
-    },
-    {
-     "id": "trough:bin0:6",
-     "type": "trough",
-     "bin": 0,
-     "ra": 91.40625,
-     "dec": -30.0,
-     "kappa": -0.011111403938166588,
-     "kappa_over_reference_rms": -1.4539968862627557
+     "ra": 41.66016,
+     "dec": -11.94843,
+     "kappa": -0.0023391769395208553,
+     "kappa_over_reference_rms": -2.244755007486122,
+     "site_peak": null
     },
     {
      "id": "trough:bin0:1",
      "type": "trough",
      "bin": 0,
-     "ra": 24.10714,
-     "dec": -48.14121,
-     "kappa": -0.01660348723462032,
-     "kappa_over_reference_rms": -2.1726704271201895
+     "ra": 355.38724,
+     "dec": -49.02035,
+     "kappa": -0.0021715944020718404,
+     "kappa_over_reference_rms": -2.083937014733953,
+     "site_peak": null
     },
     {
      "id": "trough:bin0:2",
      "type": "trough",
      "bin": 0,
-     "ra": 348.33333,
-     "dec": -49.70239,
-     "kappa": -0.015160537507037067,
-     "kappa_over_reference_rms": -1.983851406354221
+     "ra": 68.11523,
+     "dec": -40.4239,
+     "kappa": -0.0021400993998181737,
+     "kappa_over_reference_rms": -2.053713322449184,
+     "site_peak": null
     },
     {
      "id": "trough:bin0:3",
      "type": "trough",
      "bin": 0,
-     "ra": 352.96875,
-     "dec": -24.62432,
-     "kappa": -0.01322467968901251,
-     "kappa_over_reference_rms": -1.730532270867949
+     "ra": 64.03846,
+     "dec": -43.60575,
+     "kappa": -0.0021014537941959318,
+     "kappa_over_reference_rms": -2.0166276641254357,
+     "site_peak": null
     },
     {
      "id": "trough:bin0:4",
      "type": "trough",
      "bin": 0,
-     "ra": 33.75,
-     "dec": -37.1689,
-     "kappa": -0.011297178695142802,
-     "kappa_over_reference_rms": -1.4783066782289909
+     "ra": 63.36364,
+     "dec": -43.50632,
+     "kappa": -0.002089494571193976,
+     "kappa_over_reference_rms": -2.0051511805530637,
+     "site_peak": null
     },
     {
      "id": "trough:bin0:5",
      "type": "trough",
      "bin": 0,
-     "ra": 8.4375,
-     "dec": -37.1689,
-     "kappa": -0.011254571404718595,
-     "kappa_over_reference_rms": -1.4727312470815284
-    },
-    {
-     "id": "trough:bin0:7",
-     "type": "trough",
-     "bin": 0,
-     "ra": 9.84375,
-     "dec": -41.81031,
-     "kappa": -0.011058936683099995,
-     "kappa_over_reference_rms": -1.44713121690881
+     "ra": 44.82422,
+     "dec": -19.07605,
+     "kappa": -0.0020438328101128733,
+     "kappa_over_reference_rms": -1.9613325770495442,
+     "site_peak": null
     }
    ],
-   "refs": []
+   "refs": [
+    {
+     "id": "image:bin0",
+     "label": "image:bin0"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Bin 1: the highest peak is at the edge of the observed region (peak 0). The clump near RA ~50 deg, Dec ~-44.5 (peaks 1 and 4), the southern peak 2, and the northern-strip peaks 3 and 5 follow. The same locations recur from bin 0, but the ranking changes.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin1:0",
+     "type": "peak",
+     "bin": 1,
+     "ra": 1.31836,
+     "dec": -34.77202,
+     "kappa": 0.014560794509153478,
+     "kappa_over_reference_rms": 7.9168621629912295,
+     "site_peak": {
+      "index": 50,
+      "sep_deg": 0.0722
+     }
+    },
+    {
+     "id": "peak:bin1:1",
+     "type": "peak",
+     "bin": 1,
+     "ra": 49.45361,
+     "dec": -44.49893,
+     "kappa": 0.013846176553942933,
+     "kappa_over_reference_rms": 7.528316617139045,
+     "site_peak": {
+      "index": 52,
+      "sep_deg": 0.0993
+     }
+    },
+    {
+     "id": "peak:bin1:2",
+     "type": "peak",
+     "bin": 1,
+     "ra": 55.58824,
+     "dec": -53.66841,
+     "kappa": 0.01371267045143481,
+     "kappa_over_reference_rms": 7.455727898796062,
+     "site_peak": {
+      "index": 53,
+      "sep_deg": 0.0975
+     }
+    },
+    {
+     "id": "peak:bin1:3",
+     "type": "peak",
+     "bin": 1,
+     "ra": 5.44922,
+     "dec": -0.82067,
+     "kappa": 0.012119222082222079,
+     "kappa_over_reference_rms": 6.589352709243734,
+     "site_peak": {
+      "index": 56,
+      "sep_deg": 0.0746
+     }
+    },
+    {
+     "id": "peak:bin1:4",
+     "type": "peak",
+     "bin": 1,
+     "ra": 50.48554,
+     "dec": -44.59799,
+     "kappa": 0.011266905554886283,
+     "kappa_over_reference_rms": 6.125938953770776,
+     "site_peak": {
+      "index": 57,
+      "sep_deg": 0.0662
+     }
+    },
+    {
+     "id": "peak:bin1:5",
+     "type": "peak",
+     "bin": 1,
+     "ra": 8.87695,
+     "dec": -2.23869,
+     "kappa": 0.010355606450731886,
+     "kappa_over_reference_rms": 5.630455730495263,
+     "site_peak": {
+      "index": 58,
+      "sep_deg": 0.0878
+     }
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin1",
+     "label": "image:bin1"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Bin 1: the deepest listed troughs are trough 0 (north-central) and the close pair at RA ~63-64 deg, Dec ~-43.5 (troughs 1 and 2). Trough 3 is nearby, trough 4 is in the southeast, and trough 5 is in the far eastern strip (RA wraps to negative on the plot).",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "trough:bin1:0",
+     "type": "trough",
+     "bin": 1,
+     "ra": 41.66016,
+     "dec": -11.94843,
+     "kappa": -0.004261306038816834,
+     "kappa_over_reference_rms": -2.3169183881021853,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin1:1",
+     "type": "trough",
+     "bin": 1,
+     "ra": 64.03846,
+     "dec": -43.60575,
+     "kappa": -0.004092034986703587,
+     "kappa_over_reference_rms": -2.2248838781087477,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin1:2",
+     "type": "trough",
+     "bin": 1,
+     "ra": 63.36364,
+     "dec": -43.50632,
+     "kappa": -0.004002761833704668,
+     "kappa_over_reference_rms": -2.1763450949603578,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin1:3",
+     "type": "trough",
+     "bin": 1,
+     "ra": 68.20312,
+     "dec": -40.52197,
+     "kappa": -0.003981761511955692,
+     "kappa_over_reference_rms": -2.164926991878098,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin1:4",
+     "type": "trough",
+     "bin": 1,
+     "ra": 355.38724,
+     "dec": -49.02035,
+     "kappa": -0.003959832327866908,
+     "kappa_over_reference_rms": -2.153003856250532,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin1:5",
+     "type": "trough",
+     "bin": 1,
+     "ra": 331.2251,
+     "dec": -42.8093,
+     "kappa": -0.0038050920573903858,
+     "kappa_over_reference_rms": -2.0688698900952858,
+     "site_peak": null
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin1",
+     "label": "image:bin1"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Bin 2: the highest peak is again at the edge-adjacent location (peak 0), followed by the southern peak 1, the RA ~50 deg clump (peak 2), and northern-strip peaks (3, 4). Peak 5 is at the far western edge of the footprint, near RA ~94 deg, so it is vulnerable to boundary effects.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin2:0",
+     "type": "peak",
+     "bin": 2,
+     "ra": 1.31836,
+     "dec": -34.77202,
+     "kappa": 0.02207057543860707,
+     "kappa_over_reference_rms": 7.784579018631105,
+     "site_peak": {
+      "index": 100,
+      "sep_deg": 0.0722
+     }
+    },
+    {
+     "id": "peak:bin2:1",
+     "type": "peak",
+     "bin": 2,
+     "ra": 55.58824,
+     "dec": -53.66841,
+     "kappa": 0.018854384512468993,
+     "kappa_over_reference_rms": 6.650186647522799,
+     "site_peak": {
+      "index": 103,
+      "sep_deg": 0.0975
+     }
+    },
+    {
+     "id": "peak:bin2:2",
+     "type": "peak",
+     "bin": 2,
+     "ra": 50.48554,
+     "dec": -44.59799,
+     "kappa": 0.01595621181506801,
+     "kappa_over_reference_rms": 5.62796344200129,
+     "site_peak": {
+      "index": 109,
+      "sep_deg": 0.0662
+     }
+    },
+    {
+     "id": "peak:bin2:3",
+     "type": "peak",
+     "bin": 2,
+     "ra": 8.87695,
+     "dec": -2.23869,
+     "kappa": 0.015471346644013185,
+     "kappa_over_reference_rms": 5.456945189760532,
+     "site_peak": {
+      "index": 107,
+      "sep_deg": 0.0878
+     }
+    },
+    {
+     "id": "peak:bin2:4",
+     "type": "peak",
+     "bin": 2,
+     "ra": 5.36133,
+     "dec": -0.89528,
+     "kappa": 0.015106431390545055,
+     "kappa_over_reference_rms": 5.328234833583895,
+     "site_peak": {
+      "index": 108,
+      "sep_deg": 0.0879
+     }
+    },
+    {
+     "id": "peak:bin2:5",
+     "type": "peak",
+     "bin": 2,
+     "ra": 94.07368,
+     "dec": -45.48795,
+     "kappa": 0.0143686446767794,
+     "kappa_over_reference_rms": 5.068007863599311,
+     "site_peak": null
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin2",
+     "label": "image:bin2"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Bin 2: the troughs again concentrate near the RA ~63-68 deg, Dec ~-40 to -44 area (troughs 0, 2, 3) and include the north-central trough 1, the southeastern trough 4, and trough 5 at lower RA ~70 deg, Dec ~-29. Troughs are all shallow in RMS-relative terms.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "trough:bin2:0",
+     "type": "trough",
+     "bin": 2,
+     "ra": 64.03846,
+     "dec": -43.60575,
+     "kappa": -0.0068199612441360215,
+     "kappa_over_reference_rms": -2.4054890347856395,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin2:1",
+     "type": "trough",
+     "bin": 2,
+     "ra": 41.66016,
+     "dec": -11.94843,
+     "kappa": -0.006712023778499193,
+     "kappa_over_reference_rms": -2.3674180867644625,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin2:2",
+     "type": "trough",
+     "bin": 2,
+     "ra": 63.30972,
+     "dec": -43.60575,
+     "kappa": -0.00662328134464934,
+     "kappa_over_reference_rms": -2.3361174761151635,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin2:3",
+     "type": "trough",
+     "bin": 2,
+     "ra": 68.20312,
+     "dec": -40.52197,
+     "kappa": -0.006495504078253436,
+     "kappa_over_reference_rms": -2.291048772319447,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin2:4",
+     "type": "trough",
+     "bin": 2,
+     "ra": 355.38724,
+     "dec": -49.02035,
+     "kappa": -0.00630214540440653,
+     "kappa_over_reference_rms": -2.222848653129716,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin2:5",
+     "type": "trough",
+     "bin": 2,
+     "ra": 70.22461,
+     "dec": -29.14222,
+     "kappa": -0.006274499968855693,
+     "kappa_over_reference_rms": -2.2130977484399583,
+     "site_peak": null
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin2",
+     "label": "image:bin2"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Bin 3: peaks 0-3 correspond to the same locations as bin 2 (edge-adjacent, southern, RA ~50 deg clump, northern strip). Peak 4 is at the western edge and peak 5 is in the northern strip. Repeated sky positions across layers likely reflect overlapping projected structure and are not independent confirmation.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin3:0",
+     "type": "peak",
+     "bin": 3,
+     "ra": 1.31836,
+     "dec": -34.77202,
+     "kappa": 0.02357282854381921,
+     "kappa_over_reference_rms": 7.277011414502191,
+     "site_peak": {
+      "index": 150,
+      "sep_deg": 0.0722
+     }
+    },
+    {
+     "id": "peak:bin3:1",
+     "type": "peak",
+     "bin": 3,
+     "ra": 55.58824,
+     "dec": -53.66841,
+     "kappa": 0.019549091673840953,
+     "kappa_over_reference_rms": 6.03487031644281,
+     "site_peak": {
+      "index": 153,
+      "sep_deg": 0.0975
+     }
+    },
+    {
+     "id": "peak:bin3:2",
+     "type": "peak",
+     "bin": 3,
+     "ra": 50.48554,
+     "dec": -44.59799,
+     "kappa": 0.016755614356169884,
+     "kappa_over_reference_rms": 5.172514477852733,
+     "site_peak": {
+      "index": 158,
+      "sep_deg": 0.0662
+     }
+    },
+    {
+     "id": "peak:bin3:3",
+     "type": "peak",
+     "bin": 3,
+     "ra": 8.87695,
+     "dec": -2.23869,
+     "kappa": 0.016581166995234202,
+     "kappa_over_reference_rms": 5.118661991105164,
+     "site_peak": {
+      "index": 157,
+      "sep_deg": 0.0878
+     }
+    },
+    {
+     "id": "peak:bin3:4",
+     "type": "peak",
+     "bin": 3,
+     "ra": 94.07368,
+     "dec": -45.48795,
+     "kappa": 0.015391696054073825,
+     "kappa_over_reference_rms": 4.751468313012923,
+     "site_peak": null
+    },
+    {
+     "id": "peak:bin3:5",
+     "type": "peak",
+     "bin": 3,
+     "ra": 5.36133,
+     "dec": -0.89528,
+     "kappa": 0.01530914859531302,
+     "kappa_over_reference_rms": 4.725985634999808,
+     "site_peak": {
+      "index": 160,
+      "sep_deg": 0.0879
+     }
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin3",
+     "label": "image:bin3"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Bin 3: the deepest troughs are the near-adjacent pair at RA ~63-64 deg, Dec ~-43.6 (troughs 0 and 1), with trough 2 in the north-central region, trough 3 nearby, trough 4 at RA ~70 deg, Dec ~-29, and trough 5 in the southeast. Their values are low-amplitude and not confirmed voids.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "trough:bin3:0",
+     "type": "trough",
+     "bin": 3,
+     "ra": 64.03846,
+     "dec": -43.60575,
+     "kappa": -0.008346671437814493,
+     "kappa_over_reference_rms": -2.5766455312381757,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin3:1",
+     "type": "trough",
+     "bin": 3,
+     "ra": 63.30972,
+     "dec": -43.60575,
+     "kappa": -0.008138095205993545,
+     "kappa_over_reference_rms": -2.512257347319837,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin3:2",
+     "type": "trough",
+     "bin": 3,
+     "ra": 41.74805,
+     "dec": -11.87219,
+     "kappa": -0.007957351535779566,
+     "kappa_over_reference_rms": -2.456461168732223,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin3:3",
+     "type": "trough",
+     "bin": 3,
+     "ra": 68.20312,
+     "dec": -40.52197,
+     "kappa": -0.007825773842290343,
+     "kappa_over_reference_rms": -2.4158426924371494,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin3:4",
+     "type": "trough",
+     "bin": 3,
+     "ra": 70.22461,
+     "dec": -29.14222,
+     "kappa": -0.007614754666944569,
+     "kappa_over_reference_rms": -2.3507003636404353,
+     "site_peak": null
+    },
+    {
+     "id": "trough:bin3:5",
+     "type": "trough",
+     "bin": 3,
+     "ra": 355.38724,
+     "dec": -49.02035,
+     "kappa": -0.0075943372529574055,
+     "kappa_over_reference_rms": -2.3443974393068956,
+     "site_peak": null
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin3",
+     "label": "image:bin3"
+    }
+   ]
   },
   {
    "kind": "visual_hypothesis",
-   "text": "Visually, red positive convergence appears to run as a connected band from peak:bin0:0 through peak:bin0:2 toward peak:bin0:1 and peak:bin0:5. This could be a bridge-like morphology, but it is only a visual impression and not a confirmed filament. It may be affected by smoothing and projection.",
+   "text": "A visually clumpy red region in the southern-western portion (RA ~50-90 deg, Dec ~-42 to -48) contains several adjacent positive patches that could look like a chain or bridge-like elongation, as might connect the RA ~50 deg peak cluster with western patches. This is only a visual impression in the images, not a measured filament.",
    "requires_followup": true,
    "targets": [
     {
      "id": "peak:bin0:0",
      "type": "peak",
      "bin": 0,
-     "ra": 57.65625,
-     "dec": -41.81031,
-     "kappa": 0.042385404285155075,
-     "kappa_over_reference_rms": 5.546395954692685
+     "ra": 49.45361,
+     "dec": -44.49893,
+     "kappa": 0.008891633163407792,
+     "kappa_over_reference_rms": 8.532718381012133,
+     "site_peak": {
+      "index": 0,
+      "sep_deg": 0.0993
+     }
     },
     {
-     "id": "peak:bin0:2",
+     "id": "peak:bin0:4",
      "type": "peak",
      "bin": 0,
-     "ra": 66.09375,
-     "dec": -35.68533,
-     "kappa": 0.02142650267779564,
-     "kappa_over_reference_rms": 2.803792243570974
-    },
-    {
-     "id": "peak:bin0:1",
-     "type": "peak",
-     "bin": 0,
-     "ra": 71.71875,
-     "dec": -24.62432,
-     "kappa": 0.021729742263814453,
-     "kappa_over_reference_rms": 2.8434730450535373
-    },
-    {
-     "id": "peak:bin0:5",
-     "type": "peak",
-     "bin": 0,
-     "ra": 64.6875,
-     "dec": -25.94448,
-     "kappa": 0.017888153011709526,
-     "kappa_over_reference_rms": 2.340777000346276
+     "ra": 50.48554,
+     "dec": -44.59799,
+     "kappa": 0.0067746044154028216,
+     "kappa_over_reference_rms": 6.501144453111814,
+     "site_peak": {
+      "index": 7,
+      "sep_deg": 0.0662
+     }
     }
    ],
    "refs": [
     {
      "id": "image:bin0",
      "label": "image:bin0"
+    },
+    {
+     "id": "image:bin1",
+     "label": "image:bin1"
+    },
+    {
+     "id": "image:bin2",
+     "label": "image:bin2"
+    },
+    {
+     "id": "image:bin3",
+     "label": "image:bin3"
     }
    ]
   },
   {
-   "kind": "quality_concern",
-   "text": "The map is clumpy, with small-scale red and blue patches that follow the pixel and footprint geometry. The peak counts in the summary are not calibrated against the reference, so visual clumpiness should not be over-interpreted.",
+   "kind": "visual_hypothesis",
+   "text": "The northern strip appears to have patchy positive structure near the peaks around RA ~5-9 deg, Dec ~-1 to -2, with small neighbouring peaks that may form a loose clump. Possible connectivity is ambiguous given mask edges and is not a confirmed bridge.",
    "requires_followup": true,
-   "targets": [],
+   "targets": [
+    {
+     "id": "peak:bin0:2",
+     "type": "peak",
+     "bin": 0,
+     "ra": 5.44922,
+     "dec": -0.82067,
+     "kappa": 0.00842080674324366,
+     "kappa_over_reference_rms": 8.080897081620952,
+     "site_peak": {
+      "index": 2,
+      "sep_deg": 0.0746
+     }
+    },
+    {
+     "id": "peak:bin0:5",
+     "type": "peak",
+     "bin": 0,
+     "ra": 8.87695,
+     "dec": -2.23869,
+     "kappa": 0.005903698052715954,
+     "kappa_over_reference_rms": 5.665392618497149,
+     "site_peak": {
+      "index": 9,
+      "sep_deg": 0.0878
+     }
+    },
+    {
+     "id": "peak:bin2:3",
+     "type": "peak",
+     "bin": 2,
+     "ra": 8.87695,
+     "dec": -2.23869,
+     "kappa": 0.015471346644013185,
+     "kappa_over_reference_rms": 5.456945189760532,
+     "site_peak": {
+      "index": 107,
+      "sep_deg": 0.0878
+     }
+    },
+    {
+     "id": "peak:bin2:4",
+     "type": "peak",
+     "bin": 2,
+     "ra": 5.36133,
+     "dec": -0.89528,
+     "kappa": 0.015106431390545055,
+     "kappa_over_reference_rms": 5.328234833583895,
+     "site_peak": {
+      "index": 108,
+      "sep_deg": 0.0879
+     }
+    }
+   ],
    "refs": [
     {
      "id": "image:bin0",
      "label": "image:bin0"
     },
     {
+     "id": "image:bin1",
+     "label": "image:bin1"
+    }
+   ]
+  },
+  {
+   "kind": "quality_concern",
+   "text": "Several extrema are close to mask boundaries or holes (for example the peak near the edge of the observed region, the western-edge peak in bins 2 and 3, and the fine speckled gray edges). Edge and masking effects may contribute to or distort these features.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin0:3",
+     "type": "peak",
+     "bin": 0,
+     "ra": 1.40625,
+     "dec": -34.68125,
+     "kappa": 0.008118409391635203,
+     "kappa_over_reference_rms": 7.79070613547873,
+     "site_peak": {
+      "index": 3,
+      "sep_deg": 0.0908
+     }
+    },
+    {
+     "id": "peak:bin2:5",
+     "type": "peak",
+     "bin": 2,
+     "ra": 94.07368,
+     "dec": -45.48795,
+     "kappa": 0.0143686446767794,
+     "kappa_over_reference_rms": 5.068007863599311,
+     "site_peak": null
+    },
+    {
+     "id": "peak:bin3:4",
+     "type": "peak",
+     "bin": 3,
+     "ra": 94.07368,
+     "dec": -45.48795,
+     "kappa": 0.015391696054073825,
+     "kappa_over_reference_rms": 4.751468313012923,
+     "site_peak": null
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin2",
+     "label": "image:bin2"
+    },
+    {
+     "id": "image:bin3",
+     "label": "image:bin3"
+    }
+   ]
+  },
+  {
+   "kind": "quality_concern",
+   "text": "Peak-count summaries show many low-SNR-bin peaks and few high-SNR-bin peaks, and the reference RMS is data-derived rather than noise-only, so peak and trough amplitudes should not be interpreted as detection significance.",
+   "requires_followup": true,
+   "targets": [],
+   "refs": [
+    {
+     "id": "summary:0",
+     "label": "bin0_peaks_15.0arcmin_snr[-1,0)"
+    },
+    {
      "id": "summary:1",
-     "label": "bin0_peaks_240.0arcmin_snr[0,1)"
+     "label": "bin0_peaks_15.0arcmin_snr[0,1)"
     },
     {
      "id": "summary:2",
-     "label": "bin0_peaks_240.0arcmin_snr[1,2)"
+     "label": "bin0_peaks_15.0arcmin_snr[1,2)"
     },
     {
      "id": "summary:3",
-     "label": "bin0_peaks_240.0arcmin_snr[2,3)"
+     "label": "bin0_peaks_15.0arcmin_snr[2,3)"
+    },
+    {
+     "id": "summary:4",
+     "label": "bin0_peaks_15.0arcmin_snr[3,4)"
     },
     {
      "id": "summary:5",
-     "label": "bin0_peaks_240.0arcmin_snr[4,1e+09)"
+     "label": "bin0_peaks_15.0arcmin_snr[4,1e+09)"
+    },
+    {
+     "id": "image:bin0",
+     "label": "image:bin0"
     }
    ]
   }
  ],
  "model_limitations": [
-  "Source is a TOY held-out map with TOY lognormal reference simulations; it is not physics or DES, and the color scale is a fixed fiducial one that is uncalibrated.",
-  "Projected convergence; layers are not independent 3D slices.",
-  "Extrema are not confirmed clusters or voids; apparent bridges are not confirmed filaments.",
-  "Reference RMS is not noise-only uncertainty; no detection significance, mass, redshift or cosmological parameter can be inferred.",
-  "Gray masked regions are unobserved, and the irregular footprint edges and pixelization may affect the visual morphology.",
-  "No calibrated posterior is supplied."
+  "Maps are resampled from website display grids (float16, plate carree, already smoothed 10 arcmin), not the original HEALPix release.",
+  "A posterior-mean map is smoother and lower in amplitude than any single realization; small or faint features are suppressed.",
+  "Redshift layers are projected convergence, overlapping and not independent 3D slices.",
+  "Reference RMS is derived from the analysed map itself (data-derived display scale, not a simulation, not valid for SBI); it is not noise-only sigma or detection significance.",
+  "Extrema are not confirmed clusters or voids and apparent bridges are not confirmed filaments.",
+  "Many extrema sit near mask edges, holes and ragged boundaries, which may affect apparent morphology.",
+  "No cosmological posterior, calibration or coverage validation is available, so no cosmological parameters, masses, redshifts or significance can be inferred.",
+  "Peak and trough rankings differ between layers, and nearby labels overlap in the images, so identification of individual extrema across layers needs follow-up."
  ]
 }

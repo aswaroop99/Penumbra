@@ -40,7 +40,7 @@ const TAB_KEY = 'cw-tab';
  */
 export class CosmicApp {
   private readonly renderer: THREE.WebGLRenderer;
-  private readonly params: Params = { s8: 0.8, om: 0.315 };
+  private readonly params: Params = { s8: 0.76, om: 0.3 }; // S8 from our DES Y3 shear fit; Omega_m = DES Y3 published
   private readonly views: Record<Tab, View>;
   private readonly built = new Set<Tab>();
   private active: View | null = null;
