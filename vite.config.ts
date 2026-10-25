@@ -88,8 +88,14 @@ export default defineConfig({
   server: { port: 5173 },
   build: {
     rollupOptions: {
-      // Two pages: the cosmic-web app (index.html) and the sky-layer viewer (layers.html).
-      input: { main: resolve(ROOT, 'index.html'), layers: resolve(ROOT, 'layers.html'), guide: resolve(ROOT, 'guide.html') },
+      // Pages: the cosmic-web app (index.html), the sky-layer viewer (layers.html), the tour
+      // (guide.html) and the DES filament map (web.html).
+      input: {
+        main: resolve(ROOT, 'index.html'),
+        layers: resolve(ROOT, 'layers.html'),
+        guide: resolve(ROOT, 'guide.html'),
+        web: resolve(ROOT, 'web.html'),
+      },
     },
   },
   test: {

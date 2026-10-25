@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Penumbra — DES cosmic web</title>
+  </head>
+  <body>
+    <canvas id="stage" aria-label="Filament map of the DES Y3 survey area"></canvas>
+    <div id="loading" class="fullscreen-msg">Loading the map…</div>
+
+    <header>
+      <div class="brand">Penumbra <span>· DES cosmic web</span></div>
+      <nav>
+        <a href="./">Cosmic web sim</a>
+        <a href="layers.html">Layer viewer</a>
+        <a href="guide.html">Tour</a>
+      </nav>
+    </header>
+
+    <aside id="panel" hidden>
+      <div class="row head">
+        <h1>Filaments in real lensing data</h1>
+        <button id="collapse" class="link" aria-expanded="true" aria-controls="panelBody">Hide</button>
+      </div>
+      <div id="panelBody">
+        <p class="lede">
+          Each glowing line runs along a ridge of the DES Y3 mass map, where mass piles up between emptier regions.
+          The map is measured from how DES galaxy shapes are distorted by gravitational lensing.
+        </p>
+
+        <h2>Show</h2>
+        <div class="seg" role="radiogroup" aria-label="Image">
+          <button role="radio" data-mode="web" aria-checked="true">Filaments</button>
+          <button role="radio" data-mode="kappa" aria-checked="false">Mass map</button>
+          <button role="radio" data-mode="compare" aria-checked="false">Compare</button>
+        </div>
+        <div class="row"><label><input id="showPeaks" type="checkbox" checked /> Mass peaks</label></div>
+        <div class="row"><label><input id="showGrid" type="checkbox" /> RA / Dec grid</label></div>
+        <div class="row"><span>Glow</span><input id="glow" type="range" min="0.6" max="2" step="0.05" value="1" /></div>
+
+        <h2>How sure are we?</h2>
+        <p class="small" id="stats"></p>
+        <div class="legend"><span>faint: little mass, or few samples agree</span><span>bright</span></div>
+
+        <h2>Strongest peaks</h2>
+        <ol id="peaks"></ol>
+
+        <details>
+          <summary>How this was made</summary>
+          <ol class="small method">
+            <li>Start from the 100 KaRMMa posterior samples of the DES Y3 mass map and stack its four tomographic bins.</li>
+            <li>Smooth to <span id="mFwhm"></span>′ and flood the map downhill from every low point, merging shallow dips.</li>
+            <li>Where two of these low regions meet is a ridge of mass, which is a filament in projection.</li>
+            <li>Repeat on all 100 samples. A line is bright only when there is mass along it <em>and</em> most samples draw it too.</li>
+          </ol>
+        </details>
+        <p class="note" id="caption"></p>
+        <button id="reset" class="wide">Reset view</button>
+      </div>
+    </aside>
+
+    <div id="readout" aria-live="polite">Hover over the map</div>
+    <div id="divider" hidden><span></span></div>
+
+    <script type="module" src="/src/web/main.ts"></script>
+  </body>
+</html>
