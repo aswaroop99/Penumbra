@@ -54,3 +54,8 @@ myenv/
 .env.*
 !.env.example
 des_map/reader_runs/
+
+# Inference scratch space (toy sims, summaries, trained flows); published results go to data/
+inference/work/
+*.pkl
+sbi-logs/

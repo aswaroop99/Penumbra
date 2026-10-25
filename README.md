@@ -20,6 +20,7 @@ The viewer puts three datasets on one shared sky:
 | `data/` | Exported viewer data: the real DES Y3 layers (PNGs, float16 grids, `manifest.json`), the COSMOS 3D grids in `data/cosmos/`, and the optional `reader.json` / `inference.json`. See `data/README_for_frontend.md` |
 | `prep/` | Data prep: `export_des.py` (alternative DES layer export), `cosmos_3d.py` (COSMOS 3D rebuild), `deproject_des.py` / `des_volume.py` (DES depth-inversion experiments) |
 | `des_map/` | DES science pipeline and the vision-language map reader (`run-reader`, `run-vlm-demo`). See `des_map/MAP_READER.md` |
+| `inference/` | Offline SBI pipeline (Ωm, S8 from a map). Run once per dataset; the stored result is reused. See `inference/README.md` |
 | `environment.yml`, `penumbra-osx-arm64.lock`, `requirements.txt` | Python environments; see [Python environments](#python-environments) |
 | `get_dark_matter_data.sh` | Downloads the raw survey data into `dark_universe_data/` |
 | `dark_universe_data/` | Raw data (~2.4 GB). **Git-ignored**, so each teammate fetches it with the script |
@@ -66,6 +67,20 @@ npm run dev             # terminal 2: http://localhost:5173
 - Open two tabs on the same `?room=` to try multiplayer: one tab clicks **Share my view**, the other **Follow presenter**.
 - The two pages use different shared-view encodings, so they never share a room: the cosmic web joins `penumbra-demo`, the layer viewer `penumbra-demo-layers`.
 - The standalone pages in `viewer/` still work with `python3 -m http.server 8000` from the repo root (open `/viewer/`).
+
+### Cosmology result (Ωm, S8)
+
+The cosmic web page shows a "Cosmology from this map" card when `data/manifest.json` points at a matching
+`data/inference.json`: S8, Ωm and σ8 with 68% intervals, a bar comparison with DES Y3 and Planck, and the held-out
+trust check. The numbers are computed offline once and stored as JSON; inference never runs in the browser and
+nothing is stored in SpacetimeDB. If the file is absent or does not match the map, the card is hidden.
+
+```bash
+cd inference && python run_inference.py ...   # first run trains; later runs load data/inference.json
+```
+
+**The shipped result is from the toy universe**, not real data: the card says "Toy data" and the Planck offset it
+would imply is not a scientific result. Details and the real-data cutover: `inference/README.md`.
 
 ### How the cosmic web page uses the backend
 

@@ -33,6 +33,8 @@ export interface Manifest {
   layers: LayerInfo[];
   peaks: Peak[];
   note?: string;
+  /** Optional file name of the stored inference result (see `src/lib/inference.ts`). */
+  inference?: string;
 }
 
 export class ManifestError extends Error {
@@ -127,6 +129,12 @@ export function parseManifest(input: unknown): Manifest {
     peaks.push({ ra: p.ra, dec: p.dec, kappa: p.kappa, snr: p.snr, bin });
   }
 
+  // Optional extra: an unusable pointer is dropped rather than breaking the whole viewer.
+  const inference =
+    isStr(input.inference) && !/[\\/]/.test(input.inference) && !input.inference.includes('..')
+      ? input.inference
+      : undefined;
+
   return {
     source: isStr(input.source) ? input.source : 'unknown',
     smoothing_arcmin: isNum(input.smoothing_arcmin) ? input.smoothing_arcmin : 0,
@@ -136,6 +144,7 @@ export function parseManifest(input: unknown): Manifest {
     layers,
     peaks,
     note: isStr(input.note) ? input.note : undefined,
+    inference,
   };
 }
 

@@ -18,6 +18,29 @@ Build to the manifest, not to the pixels.
 - `peaks[]`: `{ra, dec, kappa, snr, bin}`, plus optional `post_snr` — the clusters. `snr` = κ / layer sigma (peak height); `post_snr` (only written by `prep/export_des.py`) = κ / posterior std across the samples. Treat `post_snr` as optional. Label/flag these in the UI; they're the "fly to a landmark" targets and the hooks for the citizen-annotation layer.
 - `coord`: `C` = equatorial (celestial). `smoothing_arcmin`: display smoothing applied.
 
+## inference.json (optional): the stored cosmology result
+
+Produced offline by `inference/run_inference.py` (see `inference/README.md`) and loaded once per map. The
+manifest points at it with `"inference": "inference.json"`; the pointer is not part of the manifest version,
+so existing rooms stay valid. The viewer fetches it from `data/inference.json` (the dev/preview server only
+serves `/manifest.json` and `/data/*`). If it is missing, malformed or computed from a different map, the viewer
+simply hides the "Cosmology from this map" card. Parser: `src/lib/inference.ts`.
+
+| Field | Meaning |
+|---|---|
+| `version` | schema version, currently `1` |
+| `method`, `data` | e.g. `"sbi-NPE x1"` |
+| `map` | `{source, n_layers}` of the map it was computed from; must equal the manifest's `source` and layer count |
+| `synthetic` | `true` for toy observations: not a scientific result |
+| `S8`, `Omega_m`, `sigma8` | `{median, lo68, hi68, lo95, hi95}`. `sigma8` is derived per sample from S8 = σ8·√(Ωm/0.3) |
+| `training` | `n_train`, `n_heldout`, `n_features`, `n_samples` |
+| `trust` | held-out coverage: `n_heldout`, `coverage_68_S8`, `binomial_1sigma_at_68`, `out_of_distribution`, ... (or `null`) |
+| `comparison` | `planck`, `des_y3` references, `tension_vs_planck_sigma`, optional `mcmc` cross-check |
+| `statement`, `caveats` | generated honest wording; the viewer shows `statement` only for non-synthetic maps |
+| `truth` | known answer, toy observations only |
+| `samples` | up to a few thousand `[Omega_m, S8]` posterior draws |
+| `fingerprint` | cache key (sha256 of observed map + config + training summaries); ignored by the viewer |
+
 ## Fly-through notes (honest)
 - The 4 layers are **mass projected toward progressively more distant galaxies**, not slices of 3D space — they overlap heavily. Label the depth axis "looking deeper / toward more distant sources," NOT "slices through space." Stacking them with parallax still gives a great pseudo-3D fly-through; just don't claim it's a literal 3D volume.
 - Masked (transparent/NaN) regions are outside the survey footprint — render them as empty space, not zero-density.

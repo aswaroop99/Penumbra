@@ -89,6 +89,33 @@ body[data-active='sim'] [data-mode~='sim'],
 body[data-active='box'] [data-mode~='box'],
 body[data-active='slices'] [data-mode~='slices'] { display: block; }
 
+/* ---- cosmology result card ---- */
+.infer { margin-top: 14px; padding-top: 4px; border-top: 1px solid var(--line); user-select: text; }
+.infer h2 { margin-top: 10px; justify-content: space-between; }
+.infer-badge { font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 6px; border-radius: 4px; color: #061036; }
+.infer-badge.toy { background: #ffc46b; }
+.infer-badge.real { background: #7ee0a3; }
+.infer-stat { display: flex; align-items: baseline; justify-content: space-between; margin: 4px 0; }
+.infer-stat .sym { color: var(--muted); font-size: 14px; }
+.infer-stat .num { font-size: 17px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.infer-chart { margin: 8px 0 6px; }
+.chart-row { display: grid; grid-template-columns: 92px 1fr 40px; align-items: center; gap: 6px; margin: 4px 0; font-size: 11.5px; }
+.chart-label { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chart-val { text-align: right; font-variant-numeric: tabular-nums; }
+.track { position: relative; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.07); }
+.track .band { position: absolute; top: 0; bottom: 0; min-width: 4px; border-radius: 4px; opacity: 0.5; }
+.track .mid { position: absolute; top: -2px; bottom: -2px; width: 2px; margin-left: -1px; border-radius: 1px; }
+.band.ours, .mid.ours { background: var(--accent); }
+.band.des, .mid.des { background: #7ee0a3; }
+.band.planck, .mid.planck { background: #ff9f6b; }
+.chart-axis { display: flex; justify-content: space-between; color: var(--muted); font-size: 10.5px; margin-top: 2px; padding-left: 98px; padding-right: 46px; }
+.infer-note.toy { color: #ffc46b; }
+.infer-trust.ok { color: #7ee0a3; }
+.infer-trust.warn { color: #ffc46b; }
+.infer-caveats { margin: 6px 0; color: var(--muted); font-size: 11.5px; }
+.infer-caveats summary { cursor: pointer; }
+.infer-caveats ul { margin: 4px 0 0; padding-left: 16px; }
+
 /* ---- collaboration drawer ---- */
 #collab {
   position: absolute; top: 60px; right: 16px; width: 280px; max-height: calc(100% - 140px); overflow: auto;

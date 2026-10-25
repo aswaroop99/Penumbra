@@ -1465,5 +1465,6 @@
    "bin": 3
   }
  ],
- "note": "Real DES Y3 data. Each layer is mass projected toward more distant source galaxies (overlapping), not a slice of space. Bright = more projected mass; smoothed 10\u2032 for display."
+ "note": "Real DES Y3 data. Each layer is mass projected toward more distant source galaxies (overlapping), not a slice of space. Bright = more projected mass; smoothed 10\u2032 for display.",
+ "inference": "inference.json"
 }
