@@ -169,6 +169,23 @@ multiple rotations from one simulation. Report held-out coverage, fiducial bias,
 and comparison to the MCMC baseline before interpreting DES cosmology. The
 reader itself does not establish these validations.
 
+## Analyse the DES map the website shows
+
+```bash
+./run-vlm-des            # from the repo root; uses VLM_PROVIDER / VLM_MODEL / API key from .env
+```
+
+This resamples the site's own DES Y3 layers (`data/manifest.json` + float16 grids) to a
+HEALPix nside-512 map with the identical footprint, extracts peaks/troughs at 15′ and
+20′ smoothing on the eroded interior, asks Claude for a cited description of all four
+layers, and rewrites `data/reader.json` (even if the model call fails). Because the
+reader analyses the same map as the viewer, pins are linked to site peaks.
+
+No survey-matched simulations exist yet, so the image colour scale and the evidence's
+reference RMS come from the analysed map itself. That config is marked `display_only`,
+labelled as data-derived in the evidence and images, and `batch` refuses it, so it can
+never feed SBI. Omit the model (`./run-reader site-des`) for measurements only.
+
 ## Publish to the viewer
 
 `./run-vlm-demo` now also writes `data/reader.json`, the one file the website reads

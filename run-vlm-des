@@ -1,0 +1,16 @@
+#!/bin/sh
+# Analyse the real DES Y3 layers shown on the website with Claude and refresh data/reader.json.
+set -eu
+READER_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ -f "$READER_ROOT/.env" ]; then
+  set -a
+  . "$READER_ROOT/.env"
+  set +a
+fi
+READER_PROVIDER="${VLM_PROVIDER:-anthropic}"
+case "$READER_PROVIDER" in
+  anthropic) READER_MODEL="${VLM_MODEL:-claude-sonnet-5-5}" ;;
+  openai) READER_MODEL="${VLM_MODEL:-${OPENAI_VISION_MODEL:-gpt-4.1-mini}}" ;;
+  *) echo 'VLM_PROVIDER must be anthropic or openai' >&2; exit 2 ;;
+esac
+exec "$READER_ROOT/run-reader" site-des --provider "$READER_PROVIDER" --model "$READER_MODEL" "$@"

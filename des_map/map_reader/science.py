@@ -30,8 +30,16 @@ def file_digest(path):
     return h.hexdigest()
 
 
-def freeze_config(paths, smoothing, n_ell=8, width=1200, ra=(-65, 105), dec=(-68, 8)):
-    """Use fiducial simulations only, never fit scaling on an observed map."""
+DISPLAY_ONLY_SOURCE = ("DATA-DERIVED display scale from the analysed map itself; "
+                       "not a simulation, not valid for SBI")
+
+
+def freeze_config(paths, smoothing, n_ell=8, width=1200, ra=(-65, 105), dec=(-68, 8), display_only=False):
+    """Use fiducial simulations only, never fit scaling on an observed map.
+
+    ``display_only=True`` is the single exception: it scales images/evidence from the
+    observed map itself when no survey-matched simulations exist. Such configs are
+    marked and rejected by ``batch`` so they can never feed SBI."""
     if not paths:
         raise ValueError("At least one fiducial simulation is required")
     _, mask, meta = load_map(paths[0])
@@ -44,11 +52,11 @@ def freeze_config(paths, smoothing, n_ell=8, width=1200, ra=(-65, 105), dec=(-68
     sources = []
     for path in paths:
         _, other, info = load_map(path)
-        if not isinstance(info.get("theta"), dict):
+        if not display_only and not isinstance(info.get("theta"), dict):
             raise ValueError(f"{path}: fiducial maps need known meta.theta")
         if info.get("coord") != "C" or not np.array_equal(other, mask):
             raise ValueError(f"{path}: fiducials must share coordinates and survey mask")
-        sources.append(str(info.get("source", "unspecified")))
+        sources.append(DISPLAY_ONLY_SOURCE if display_only else str(info.get("source", "unspecified")))
     interiors = [{"smoothing_arcmin": float(s), "pixels": int(erode_mask(mask, s).sum())} for s in smoothing]
     if any(x["pixels"] == 0 for x in interiors):
         raise ValueError("No usable eroded interior at a requested smoothing scale; use a better-resolved mask or smaller resolved smoothing scale")
@@ -62,6 +70,7 @@ def freeze_config(paths, smoothing, n_ell=8, width=1200, ra=(-65, 105), dec=(-68
         "render": {"ra": list(ra), "dec": list(dec), "width": width,
                    "scale_index": 0, "sigma_limits": [-4, 4]},
         "warning": "Reference RMS is not a noise-only sigma; kappa/RMS is not detection significance.",
+        "display_only": bool(display_only),
     }
     return cfg
 
@@ -152,11 +161,15 @@ def render(path, cfg, evidence, out):
             label = obj["id"].replace(f":bin{b}:", ":")
             ax.plot(lon, obj["dec_deg"], "o", ms=5, mfc="none", mec="black")
             ax.annotate(label, (lon, obj["dec_deg"]), fontsize=7, xytext=(3, 3), textcoords="offset points")
-        reference_note = " | TOY reference scale; uncalibrated" if any(
-            "toy" in s.lower() for s in cfg["map_reader"]["reference_sources"]) else ""
+        if cfg["map_reader"].get("display_only"):
+            reference_note = " | scale from this map's own RMS; uncalibrated"
+        elif any("toy" in s.lower() for s in cfg["map_reader"]["reference_sources"]):
+            reference_note = " | TOY reference scale; uncalibrated"
+        else:
+            reference_note = ""
         ax.set(title=f"Projected convergence | bin {b} | {scale:g} arcmin | gray = unobserved{reference_note}",
                xlabel="RA [deg], east left (negative RA wraps +360)", ylabel="Dec [deg]")
-        fig.colorbar(im, ax=ax, label="Convergence kappa (fixed fiducial scale)", shrink=.8)
+        fig.colorbar(im, ax=ax, label="Convergence kappa (fixed reference scale)", shrink=.8)
         target = out / f"map_bin{b}.png"
         fig.savefig(target, dpi=110)
         plt.close(fig)
