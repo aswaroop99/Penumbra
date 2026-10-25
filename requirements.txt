@@ -1,8 +1,10 @@
-# Python dependencies for Penumbra (data prep + inference lanes).
-# Tested with Python 3.11. Install with:
-#   python3 -m venv venv && source venv/bin/activate
-#   pip install -r requirements.txt
-# The 3D viewer's JS deps live in package.json (npm install).
+# Pip fallback for Penumbra's Python (prep + inference + map reader), Python 3.11.
+# Prefer the conda env (environment.yml); use this only if you don't have conda:
+#   python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+# Don't install this into a conda env: a pip torch on top of conda packages brings a
+# second OpenMP runtime and aborts training on macOS.
+# Narrower, pinned sets: inference/requirements.txt (SBI lane), des_map/requirements-reader.txt (reader only).
+# The viewer's JS deps live in package.json (npm install).
 
 # --- Core numerics / sky maps ---
 numpy>=2.0
@@ -18,6 +20,11 @@ torch>=2.2           # CPU build is enough
 sbi>=0.23            # neural posterior estimation (normalizing flow)
 emcee>=3.1           # classic MCMC baseline
 scikit-learn>=1.4
+
+# --- Vision map reader (des_map/map_reader) ---
+anthropic>=1,<2       # reader is tested against the 1.x SDK
+openai>=2,<4
+jsonschema>=4.20,<5
 
 # --- Testing ---
 pytest>=8.0

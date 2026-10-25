@@ -20,18 +20,20 @@ DES FITS / forward-modeled simulations
 
 ## Run now
 
-Create a Python 3.11+ environment at the repository root, install dependencies,
-then enter `des_map`:
+Use the repo's Python environment (the conda env `penumbra` from `environment.yml`,
+which already has the reader SDKs; see the root README "Python environments"), then
+run the launcher from the repo root:
 
 ```bash
 cd /path/to/Penumbra
-python3 -m venv .venv-map-reader
-.venv-map-reader/bin/python -m pip install -r des_map/requirements-reader.txt
-cd des_map
-export OMP_NUM_THREADS=2
-export MPLCONFIGDIR=/tmp/dm-reader-mpl
-../.venv-map-reader/bin/python -m map_reader demo --out reader_runs/toy
+conda env create -f environment.yml     # once
+./run-reader demo --out reader_runs/toy
 ```
+
+`run-reader` sets `OMP_NUM_THREADS` and `MPLCONFIGDIR`, loads `.env`, and runs
+`python -m map_reader` inside `des_map/` with the interpreter chosen by
+`bin/penumbra-python`. In the commands below, `../bin/penumbra-python` (from
+`des_map/`) is the same interpreter.
 
 Open `reader_runs/toy/analysis/report.md`. This makes four low-resolution
 fiducial **toy lognormal** maps, one independent toy observation, freezes a
@@ -39,11 +41,11 @@ fiducial **toy lognormal** maps, one independent toy observation, freezes a
 demonstrations, not physical simulations or DES constraints. The demo does not
 train SBI or establish parameter recovery.
 
-For a fresh installation, use Python 3.11+ and install:
+Without conda, a reader-only venv still works (the launcher finds it):
 
 ```bash
-python3 -m venv ../.venv-map-reader
-../.venv-map-reader/bin/python -m pip install -r requirements-reader.txt
+python3.11 -m venv .venv-map-reader
+.venv-map-reader/bin/python -m pip install -r des_map/requirements-reader.txt pytest
 ```
 
 ## Claude with hackathon API credits
@@ -70,7 +72,7 @@ files. Choose an available model that supports vision and structured outputs;
 `--model` is explicit so account access and cost are under your control.
 
 ```bash
-../.venv-map-reader/bin/python -m map_reader analyze \
+../bin/penumbra-python -m map_reader analyze \
   --map reader_runs/toy/obs.npz --config reader_runs/toy/config.json \
   --out reader_runs/toy/vlm --model YOUR_VISION_MODEL_ID \
   --question "Describe the extrema and possible bridge-like structures. What is uncertain?"
@@ -93,7 +95,7 @@ Use the full map already present; a partially downloaded tomographic file must
 finish downloading before it is ingested.
 
 ```bash
-../.venv-map-reader/bin/python -m map_reader ingest \
+../bin/penumbra-python -m map_reader ingest \
   des_data/des_y3/KS_full.fits --coord C --nside 128 \
   --mask release/DES_Y3_KS_mask.fits \
   --out reader_runs/des/data.npz
@@ -118,11 +120,11 @@ low-resolution demonstration to an unmatched high-resolution SBI training set.
 Once **survey-matched fiducial simulations** are available:
 
 ```bash
-../.venv-map-reader/bin/python -m map_reader freeze \
+../bin/penumbra-python -m map_reader freeze \
   --fiducials 'matched/fid_*.npz' --smoothing 60 90 \
   --out reader_runs/des/config.json
 
-../.venv-map-reader/bin/python -m map_reader analyze \
+../bin/penumbra-python -m map_reader analyze \
   --map reader_runs/des/data.npz --config reader_runs/des/config.json \
   --out reader_runs/des/analysis
 ```
@@ -149,12 +151,12 @@ automatically. Keep simulation identities so all rotations/noise versions of
 one realization stay in the same train/validation/test partition.
 
 ```bash
-../.venv-map-reader/bin/python -m map_reader batch \
+../bin/penumbra-python -m map_reader batch \
   --maps 'matched/sim_*.npz' --config reader_runs/des/config.json \
   --out reader_runs/des/train.npz
 
 # Install torch and sbi separately when the physical training set is available.
-../.venv-map-reader/bin/python pipeline/train_sbi.py \
+../bin/penumbra-python pipeline/train_sbi.py \
   --train reader_runs/des/train.npz \
   --observed reader_runs/des/analysis/summary.json \
   --config reader_runs/des/config.json --out reader_runs/des/posterior.json
@@ -229,9 +231,8 @@ layers look toward progressively more distant sources and overlap in depth.
 
 ```bash
 cd /path/to/Penumbra
-.venv-map-reader/bin/python -m pip install pytest
 OMP_NUM_THREADS=2 MPLCONFIGDIR=/tmp/dm-reader-mpl \
-  .venv-map-reader/bin/python -m pytest des_map/tests -q
+  bin/penumbra-python -m pytest des_map/tests -q
 ```
 
 Tests check numerical parity, mass-sheet invariance, masking, coordinate

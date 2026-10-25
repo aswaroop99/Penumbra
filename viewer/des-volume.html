@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penumbra DES Volume</title>
+<style>
+  :root { --bg:#04030b; --panel:rgba(16,12,28,.86); --text:#e9e4f5; --muted:#9a90b5; --accent:#ffb347; --line:rgba(255,255,255,.12); }
+  * { box-sizing:border-box; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--text); font:13px/1.4 system-ui, sans-serif; overflow:hidden; }
+  canvas { display:block; }
+  #panel { position:absolute; top:12px; left:12px; width:290px; max-height:calc(100% - 24px); overflow:auto; z-index:2;
+           background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; backdrop-filter:blur(6px); user-select:none; }
+  h1 { font-size:15px; margin:0 0 2px; }
+  .sub { color:var(--muted); font-size:11px; margin-bottom:8px; }
+  .sub a { color:var(--accent); }
+  h2 { font-size:12px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin:14px 0 4px; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:6px 0; }
+  .row > span:first-child { min-width:72px; }
+  .row input[type=range] { flex:1; min-width:0; accent-color:var(--accent); }
+  .val { min-width:44px; text-align:right; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .hint { color:var(--muted); font-size:11px; margin:2px 0 6px; }
+  label { cursor:pointer; }
+  .btns { display:flex; flex-wrap:wrap; gap:6px; margin:6px 0; }
+  button { background:rgba(255,255,255,.08); color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px 10px; cursor:pointer; font:inherit; }
+  button:hover { background:rgba(255,255,255,.16); }
+  button.primary { background:var(--accent); color:#1a0f00; border-color:transparent; font-weight:600; }
+  #peaks { list-style:none; margin:0; padding:0; }
+  #peaks li { display:flex; justify-content:space-between; padding:3px 6px; border-radius:6px; cursor:pointer; font-variant-numeric:tabular-nums; }
+  #peaks li:hover { background:rgba(255,255,255,.08); }
+  #peaks li span:last-child { color:var(--muted); }
+  .legend { height:8px; border-radius:4px; margin:4px 0 2px; background:linear-gradient(90deg,#5a1a7a,#d8457a,#ff9a3c,#fff1b8); }
+  .legend.neg { background:linear-gradient(90deg,#0c2a5a,#2f7fd0,#9fe0ff); }
+  .legend-lbl { display:flex; justify-content:space-between; color:var(--muted); font-size:10.5px; }
+  #readout { position:absolute; bottom:12px; left:12px; z-index:2; background:var(--panel); border:1px solid var(--line); border-radius:8px;
+             padding:6px 10px; font-variant-numeric:tabular-nums; pointer-events:none; max-width:calc(100% - 24px); }
+  #note { position:absolute; bottom:12px; right:12px; z-index:2; max-width:360px; color:var(--muted); font-size:11px; text-align:right; }
+  #keys { position:absolute; top:12px; right:12px; z-index:2; color:var(--muted); font-size:11px; text-align:right; line-height:1.6; }
+  kbd { background:rgba(255,255,255,.1); border-radius:3px; padding:0 4px; font:inherit; color:var(--text); }
+  #loading { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; color:var(--muted); z-index:3; }
+  .lbl { color:var(--muted); font-size:11px; white-space:nowrap; pointer-events:none; text-shadow:0 0 4px #000; }
+  .lbl.earth { color:#9fd0ff; }
+  @media (max-width:700px) { #panel { width:calc(100% - 32px); left:16px; max-height:48%; } #note, #keys { display:none; } }
+</style>
+</head>
+<body>
+<script>
+  if (location.protocol === 'file:') {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.innerHTML = '<div style="padding:40px;font:15px system-ui;color:#e9e4f5;background:#04030b;height:100%">' +
+        'Run <code>python3 serve.py</code> in the repo folder, then open ' +
+        '<a style="color:#ffb347" href="http://localhost:8000/viewer/des-volume.html">http://localhost:8000/viewer/des-volume.html</a></div>';
+    });
+  }
+</script>
+<div id="loading">Loading DES volume…</div>
+<div id="panel">
+  <div class="row" style="margin:0"><h1>DES Y3 in depth</h1><button id="collapse" aria-expanded="true">Hide</button></div>
+  <div class="sub"><a href="index.html">← Flat layers</a> · <a href="cosmic-web.html">Cosmic web →</a></div>
+  <div id="panelBody">
+    <div class="sub" id="source"></div>
+
+    <h2>Camera</h2>
+    <div class="btns">
+      <button id="overview">Overview</button>
+      <button id="fromEarth">View from Earth</button>
+      <button id="flyOut" class="primary">▶ Fly outward</button>
+    </div>
+
+    <h2>What to show</h2>
+    <div class="row"><span>Show above</span><input id="thresh" type="range" min="1" max="4" step="0.1" value="1.8"><span class="val" id="threshVal"></span></div>
+    <div class="legend"></div>
+    <div class="legend-lbl"><span>overdense, faint</span><span>confident</span></div>
+    <div class="row"><label><input id="neg" type="checkbox"> Show underdense regions (voids)</label></div>
+    <div class="legend neg" id="negLegend" style="display:none"></div>
+    <div class="row"><span>Glow</span><input id="glow" type="range" min="0.2" max="4" step="0.05" value="1.4"><span class="val" id="glowVal"></span></div>
+    <div class="row"><span>Footprint haze</span><input id="haze" type="range" min="0" max="1" step="0.02" value="0.25"><span class="val" id="hazeVal"></span></div>
+
+    <h2>Depth window</h2>
+    <div class="row"><span>Nearest z</span><input id="zNear" type="range" min="0" max="1.3" step="0.01" value="0"><span class="val" id="zNearVal"></span></div>
+    <div class="row"><span>Farthest z</span><input id="zFar" type="range" min="0.05" max="1.3" step="0.01" value="1.0"><span class="val" id="zFarVal"></span></div>
+    <div class="hint">Narrow the window and drag it to slice through the volume.</div>
+
+    <h2>Guides</h2>
+    <div class="row"><label><input id="rings" type="checkbox" checked> Distance outlines</label><label><input id="showPeaks" type="checkbox" checked> Peaks</label></div>
+
+    <h2>Strongest clumps (fly to)</h2>
+    <ul id="peaks"></ul>
+  </div>
+</div>
+<div id="keys">Drag to orbit · right-drag to pan · scroll to zoom<br><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> fly · <kbd>Q</kbd><kbd>E</kbd> down/up · <kbd>Shift</kbd> faster</div>
+<div id="readout">Hover over the volume to read the brightest point along that line of sight</div>
+<div id="note"></div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+const BASE = '../data/des_volume/';
+const $ = id => document.getElementById(id);
+
+// ---------- data ----------
+const meta = await (await fetch(BASE + 'volume.json', { cache: 'no-cache' })).json();
+const [volBuf, maskBuf] = await Promise.all(['volume.u8.bin', 'mask.u8.bin'].map(async f =>
+  (await fetch(BASE + f, { cache: 'no-cache' })).arrayBuffer()));
+const vol = new Uint8Array(volBuf), maskArr = new Uint8Array(maskBuf);
+const { nx, ny, nchi } = meta.shape;
+const { ra_min, ra_max, dec_min, dec_max } = meta.bounds;
+const GPC = 1000;                                   // world units are Gpc
+const rMin = meta.chi_min_mpc / GPC, rMax = meta.chi_max_mpc / GPC;
+$('loading').remove();
+
+$('source').innerHTML = `${meta.source}. ${meta.smoothing_arcmin}′ smoothing, ${nchi} depth shells. ` +
+  `<a href="${meta.source_url}" target="_blank" rel="noopener">KaRMMa maps</a>`;
+$('note').textContent = meta.note + ' Distances are true comoving distances, not compressed.';
+
+// redshift <-> distance from the table in volume.json
+const ZT = meta.z_table.z, CT = meta.z_table.chi_mpc.map(c => c / GPC);
+const interp = (x, xs, ys) => {
+  if (x <= xs[0]) return ys[0];
+  for (let i = 1; i < xs.length; i++) if (x <= xs[i]) {
+    const t = (x - xs[i - 1]) / (xs[i] - xs[i - 1]); return ys[i - 1] + t * (ys[i] - ys[i - 1]);
+  }
+  return ys[ys.length - 1];
+};
+const zToR = z => interp(z, ZT, CT), rToZ = r => interp(r, CT, ZT);
+
+// shared sky frame: x = r cosδ cosα, y = r cosδ sinα, z = r sinδ (z is up)
+const D2R = Math.PI / 180;
+const sky = (ra, dec, r) => new THREE.Vector3(r * Math.cos(dec * D2R) * Math.cos(ra * D2R),
+                                              r * Math.cos(dec * D2R) * Math.sin(ra * D2R), r * Math.sin(dec * D2R));
+const raC = (ra_min + ra_max) / 2, decC = (dec_min + dec_max) / 2;
+const dirC = sky(raC, decC, 1);
+
+// ---------- renderer / scene ----------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const labels = new CSS2DRenderer();
+labels.setSize(innerWidth, innerHeight);
+labels.domElement.style.cssText = 'position:absolute;top:0;left:0;pointer-events:none';
+document.body.appendChild(labels.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x04030b);
+const camera = new THREE.PerspectiveCamera(55, innerWidth / innerHeight, 0.005, 200);
+camera.up.set(0, 0, 1);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.zoomSpeed = 0.8;
+
+// Faint background stars.
+{
+  const n = 2500, pos = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    const v = new THREE.Vector3().randomDirection().multiplyScalar(60 + Math.random() * 40);
+    pos.set([v.x, v.y, v.z], i * 3);
+  }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0x6f6890, size: 0.12 })));
+}
+
+function label(html, cls = 'lbl') {
+  const d = document.createElement('div'); d.className = cls; d.innerHTML = html;
+  return new CSS2DObject(d);
+}
+
+// Earth at the origin.
+const earth = new THREE.Mesh(new THREE.SphereGeometry(0.03, 24, 24), new THREE.MeshBasicMaterial({ color: 0x6fb4ff }));
+scene.add(earth);
+const earthLbl = label('Earth (you)', 'lbl earth'); earthLbl.position.set(0, 0, 0.08); scene.add(earthLbl);
+
+// ---------- footprint outlines at a few distances ----------
+const guides = new THREE.Group(); scene.add(guides);
+const raOf = x => ra_max - (x + 0.5) * meta.res_deg, decOf = y => dec_min + (y + 0.5) * meta.res_deg;
+const inside = (x, y) => x >= 0 && y >= 0 && x < nx && y < ny && maskArr[y * nx + x] > 127;
+const edge = [];
+for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++)
+  if (inside(x, y) && (!inside(x + 1, y) || !inside(x - 1, y) || !inside(x, y + 1) || !inside(x, y - 1)) && (x + y) % 3 === 0)
+    edge.push([raOf(x), decOf(y)]);
+for (const zr of [0.1, 0.25, 0.5, 0.75, 1.0, 1.3]) {
+  const r = zToR(zr), pos = new Float32Array(edge.length * 3);
+  edge.forEach(([ra, dec], i) => { const v = sky(ra, dec, r); pos.set([v.x, v.y, v.z], i * 3); });
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  guides.add(new THREE.Points(g, new THREE.PointsMaterial({ color: zr <= 0.55 ? 0x8d7fc4 : 0x4f4870, size: 1.2, sizeAttenuation: false, transparent: true, opacity: 0.45 })));
+  const l = label(`z = ${zr} · ${(r * 3.26).toFixed(1)} billion ly`);
+  l.position.copy(sky(ra_min + 2, dec_max - 2, r)); guides.add(l);
+}
+// Lines of sight from Earth to the footprint corners.
+{
+  const pts = [];
+  for (const [ra, dec] of [[ra_min + 2, dec_max - 2], [ra_max - 2, dec_max - 2], [ra_min + 2, dec_min + 3], [ra_max - 2, dec_min + 3]])
+    pts.push(new THREE.Vector3(), sky(ra, dec, zToR(1.3)));
+  guides.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts),
+    new THREE.LineBasicMaterial({ color: 0x3a3458, transparent: true, opacity: 0.6 })));
+}
+
+// ---------- volume (ray-marched in spherical coordinates) ----------
+const tex3 = new THREE.Data3DTexture(vol, nx, ny, nchi);
+tex3.format = THREE.RGFormat; tex3.type = THREE.UnsignedByteType;
+tex3.minFilter = tex3.magFilter = THREE.LinearFilter;
+tex3.unpackAlignment = 1; tex3.needsUpdate = true;
+const maskTex = new THREE.DataTexture(maskArr, nx, ny, THREE.RedFormat, THREE.UnsignedByteType);
+maskTex.minFilter = maskTex.magFilter = THREE.LinearFilter;
+maskTex.unpackAlignment = 1; maskTex.needsUpdate = true;
+
+// Bounding box of the spherical wedge.
+const box = new THREE.Box3();
+for (let i = 0; i <= 24; i++) for (let j = 0; j <= 12; j++) for (const r of [rMin, rMax]) {
+  box.expandByPoint(sky(ra_min + (ra_max - ra_min) * i / 24, dec_min + (dec_max - dec_min) * j / 12, r));
+}
+box.expandByPoint(new THREE.Vector3());
+const boxSize = box.getSize(new THREE.Vector3()), boxCenter = box.getCenter(new THREE.Vector3());
+
+const volMat = new THREE.ShaderMaterial({
+  glslVersion: THREE.GLSL3,
+  transparent: true, depthWrite: false, depthTest: false, side: THREE.BackSide,
+  blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneMinusSrcAlphaFactor,
+  uniforms: {
+    uVol: { value: tex3 }, uMask: { value: maskTex },
+    uBoxMin: { value: box.min }, uBoxMax: { value: box.max },
+    uRa: { value: new THREE.Vector2(ra_min, ra_max) }, uDec: { value: new THREE.Vector2(dec_min, dec_max) },
+    uR: { value: new THREE.Vector2(rMin, rMax) }, uClip: { value: new THREE.Vector2(0, zToR(1.0)) },
+    uThresh: { value: 1.8 }, uGlow: { value: 1.4 }, uHaze: { value: 0.25 }, uNeg: { value: 0 },
+    uStep: { value: rMax / 420 }, uSnrScale: { value: meta.snr_scale },
+  },
+  vertexShader: `
+    varying vec3 vWorld;
+    void main() { vec4 w = modelMatrix * vec4(position, 1.0); vWorld = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`,
+  fragmentShader: `
+    precision highp float; precision highp sampler3D;
+    uniform sampler3D uVol; uniform sampler2D uMask;
+    uniform vec3 uBoxMin, uBoxMax; uniform vec2 uRa, uDec, uR, uClip;
+    uniform float uThresh, uGlow, uHaze, uNeg, uStep, uSnrScale;
+    varying vec3 vWorld;
+    out highp vec4 fragOut;
+    const float R2D = 57.29577951;
+    vec3 ramp(float t) {                       // purple -> pink -> orange -> pale yellow
+      vec3 a = vec3(0.35, 0.10, 0.48), b = vec3(0.85, 0.27, 0.48), c = vec3(1.0, 0.60, 0.24), d = vec3(1.0, 0.95, 0.72);
+      return t < 0.33 ? mix(a, b, t / 0.33) : t < 0.66 ? mix(b, c, (t - 0.33) / 0.33) : mix(c, d, (t - 0.66) / 0.34);
+    }
+    void main() {
+      vec3 ro = cameraPosition, rd = normalize(vWorld - cameraPosition);
+      vec3 inv = 1.0 / rd, t0 = (uBoxMin - ro) * inv, t1 = (uBoxMax - ro) * inv;
+      vec3 tn = min(t0, t1), tf = max(t0, t1);
+      float ta = max(max(max(tn.x, tn.y), tn.z), 0.0), tb = min(min(tf.x, tf.y), tf.z);
+      if (ta >= tb) discard;
+      float jitter = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+      vec4 acc = vec4(0.0);
+      float t = ta + jitter * uStep;
+      for (int i = 0; i < 900; i++) {
+        if (t > tb || acc.a > 0.97) break;
+        vec3 p = ro + rd * t; t += uStep;
+        float r = length(p);
+        if (r < uClip.x || r > uClip.y) continue;
+        float ra = atan(p.y, p.x) * R2D, dec = asin(clamp(p.z / r, -1.0, 1.0)) * R2D;
+        vec3 uvw = vec3((uRa.y - ra) / (uRa.y - uRa.x), (dec - uDec.x) / (uDec.y - uDec.x), (r - uR.x) / (uR.y - uR.x));
+        if (any(lessThan(uvw, vec3(0.0))) || any(greaterThan(uvw, vec3(1.0)))) continue;
+        float m = texture(uMask, uvw.xy).r;
+        if (m < 0.5) continue;
+        vec2 s = texture(uVol, uvw).rg;
+        float snr = (s.g * 255.0 - 128.0) / 127.5 * uSnrScale;
+        vec3 col = vec3(0.0); float dens = 0.0;
+        float pos = smoothstep(uThresh, uThresh + 1.2, snr);
+        if (pos > 0.0) { col = ramp(clamp((snr - uThresh) / 2.5, 0.0, 1.0)); dens = pos * (1.0 + 2.0 * max(snr - uThresh, 0.0)); }
+        float neg = uNeg * smoothstep(uThresh, uThresh + 1.2, -snr);
+        if (neg > 0.0) { col = mix(vec3(0.05, 0.2, 0.45), vec3(0.6, 0.88, 1.0), clamp((-snr - uThresh) / 2.5, 0.0, 1.0)); dens = neg * (1.0 + 2.0 * max(-snr - uThresh, 0.0)); }
+        // dim haze so the shape of the surveyed volume stays visible
+        float hz = uHaze * 0.6 * smoothstep(0.5, 1.0, m);
+        vec3 hcol = vec3(0.22, 0.18, 0.40);
+        float a = 1.0 - exp(-(dens * uGlow * 40.0 + hz) * uStep);
+        vec3 c = (dens > 0.0 ? col * (dens * uGlow * 40.0) + hcol * hz : hcol * hz) / max(dens * uGlow * 40.0 + hz, 1e-5);
+        acc.rgb += (1.0 - acc.a) * c * a;
+        acc.a += (1.0 - acc.a) * a;
+      }
+      fragOut = acc;
+    }`,
+});
+const volMesh = new THREE.Mesh(new THREE.BoxGeometry(boxSize.x, boxSize.y, boxSize.z), volMat);
+volMesh.position.copy(boxCenter);
+volMesh.renderOrder = 10;
+volMesh.frustumCulled = false;
+scene.add(volMesh);
+
+// ---------- peaks ----------
+const peakGroup = new THREE.Group(); scene.add(peakGroup);
+const peakGeo = new THREE.SphereGeometry(0.012, 12, 12);
+const peakMeshes = meta.peaks.map(p => {
+  const s = new THREE.Mesh(peakGeo, new THREE.MeshBasicMaterial({ color: 0xfff1b8 }));
+  s.position.copy(sky(p.ra, p.dec, p.chi_mpc / GPC)); s.userData.peak = p;
+  peakGroup.add(s); return s;
+});
+const peaksUl = $('peaks');
+meta.peaks.slice(0, 12).forEach(p => {
+  const li = document.createElement('li');
+  li.innerHTML = `<span>z ≈ ${p.z.toFixed(2)} · RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}°</span><span>${p.snr.toFixed(1)}σ</span>`;
+  li.onclick = () => flyToPeak(p);
+  peaksUl.appendChild(li);
+});
+
+// ---------- camera moves ----------
+const side = new THREE.Vector3().crossVectors(dirC, new THREE.Vector3(0, 0, 1)).normalize();
+const lift = new THREE.Vector3().crossVectors(side, dirC).normalize();
+const views = {
+  overview: () => [dirC.clone().multiplyScalar(1.6).addScaledVector(side, -3.2).addScaledVector(lift, 1.6).addScaledVector(dirC, -1.2),
+                   dirC.clone().multiplyScalar(1.3)],
+  earth: () => [dirC.clone().multiplyScalar(-0.15).addScaledVector(lift, 0.05), dirC.clone().multiplyScalar(1.0)],
+};
+let flight = null;
+function flyTo(pos, target, ms = 1600) {
+  flight = { t0: performance.now(), ms, p0: camera.position.clone(), p1: pos, q0: controls.target.clone(), q1: target };
+}
+function flyToPeak(p) {
+  const c = sky(p.ra, p.dec, p.chi_mpc / GPC), d = c.clone().normalize();
+  const sd = new THREE.Vector3().crossVectors(d, new THREE.Vector3(0, 0, 1)).normalize();
+  flyTo(c.clone().addScaledVector(d, -0.35).addScaledVector(sd, -0.45).add(new THREE.Vector3(0, 0, 0.2)), c);
+  if (+$('zFar').value < p.z + 0.05) { $('zFar').value = Math.min(1.3, p.z + 0.3); $('zFar').oninput(); }
+}
+const ease = t => t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+let tour = null;
+function flyOutward() {
+  tour = { t0: performance.now(), ms: 16000 };
+  flight = null;
+}
+const [p0, q0] = views.overview(); camera.position.copy(p0); controls.target.copy(q0);
+$('overview').onclick = () => { tour = null; flyTo(...views.overview()); };
+$('fromEarth').onclick = () => { tour = null; flyTo(...views.earth()); };
+$('flyOut').onclick = () => (tour ? (tour = null) : flyOutward());
+controls.addEventListener('start', () => { flight = null; tour = null; });
+
+// WASD fly: moves camera and orbit target together.
+const keys = new Set();
+addEventListener('keydown', e => { if (!(e.target instanceof HTMLInputElement)) keys.add(e.key.toLowerCase()); if (e.key === 'Shift') keys.add('shift'); });
+addEventListener('keyup', e => { keys.delete(e.key.toLowerCase()); if (e.key === 'Shift') keys.delete('shift'); });
+addEventListener('blur', () => keys.clear());
+
+// ---------- UI ----------
+const uni = volMat.uniforms;
+const bind = (id, fmt, fn) => { const el = $(id), out = $(id + 'Val'); el.oninput = () => { fn(+el.value); if (out) out.textContent = fmt(+el.value); }; el.oninput(); };
+bind('thresh', v => v.toFixed(1) + 'σ', v => { uni.uThresh.value = v; });
+bind('glow', v => v.toFixed(2), v => { uni.uGlow.value = v; });
+bind('haze', v => v.toFixed(2), v => { uni.uHaze.value = v; });
+bind('zNear', v => v.toFixed(2), v => {
+  if (v > +$('zFar').value - 0.05) { $('zFar').value = v + 0.05; $('zFarVal').textContent = (v + 0.05).toFixed(2); uni.uClip.value.y = zToR(v + 0.05); }
+  uni.uClip.value.x = zToR(v);
+});
+bind('zFar', v => v.toFixed(2), v => {
+  if (v < +$('zNear').value + 0.05) { $('zNear').value = v - 0.05; $('zNearVal').textContent = (v - 0.05).toFixed(2); uni.uClip.value.x = zToR(v - 0.05); }
+  uni.uClip.value.y = zToR(v);
+});
+$('neg').onchange = e => { uni.uNeg.value = e.target.checked ? 1 : 0; $('negLegend').style.display = e.target.checked ? '' : 'none'; };
+$('rings').onchange = e => { guides.visible = e.target.checked; };
+$('showPeaks').onchange = e => { peakGroup.visible = e.target.checked; };
+$('collapse').onclick = e => {
+  const body = $('panelBody'), hide = body.style.display !== 'none';
+  body.style.display = hide ? 'none' : ''; e.target.textContent = hide ? 'Show' : 'Hide';
+  e.target.setAttribute('aria-expanded', String(!hide));
+};
+
+// ---------- hover readout: CPU march along the ray, report the strongest visible point ----------
+const B2V = (b, sc) => (b - 128) / 127.5 * sc;
+function sampleAt(p) {
+  const r = p.length(); if (r < rMin || r > rMax) return null;
+  const ra = Math.atan2(p.y, p.x) / D2R, dec = Math.asin(p.z / r) / D2R;
+  const x = Math.floor((ra_max - ra) / meta.res_deg), y = Math.floor((dec - dec_min) / meta.res_deg);
+  if (!inside(x, y)) return null;
+  const l = Math.min(nchi - 1, Math.max(0, Math.round((r - rMin) / (rMax - rMin) * nchi - 0.5)));
+  const k = ((l * ny + y) * nx + x) * 2;
+  return { ra: (ra + 360) % 360, dec, r, z: rToZ(r), delta: B2V(vol[k], meta.delta_scale), snr: B2V(vol[k + 1], meta.snr_scale) };
+}
+const raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2(), readout = $('readout');
+let hoverPending = false, lastEvent = null;
+renderer.domElement.addEventListener('pointermove', e => {
+  lastEvent = e;
+  if (hoverPending) return;
+  hoverPending = true;
+  requestAnimationFrame(() => { hoverPending = false; hover(lastEvent); });
+});
+function hover(e) {
+  mouse.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
+  raycaster.setFromCamera(mouse, camera);
+  if (peakGroup.visible) {
+    const ph = raycaster.intersectObjects(peakMeshes)[0];
+    if (ph) {
+      const p = ph.object.userData.peak;
+      readout.textContent = `Clump · z ≈ ${p.z.toFixed(2)} · RA ${p.ra.toFixed(2)}°, Dec ${p.dec.toFixed(2)}° · ${p.snr.toFixed(1)}σ · δ ${p.delta.toFixed(3)} (depth uncertain by a few tenths in z)`;
+      return;
+    }
+  }
+  const o = raycaster.ray.origin, d = raycaster.ray.direction, step = rMax / 500;
+  let best = null, entered = false;
+  const p = new THREE.Vector3();
+  for (let t = 0; t < 12; t += step) {
+    p.copy(o).addScaledVector(d, t);
+    const r = p.length();
+    if (r < uni.uClip.value.x || r > uni.uClip.value.y) continue;
+    const s = sampleAt(p); if (!s) continue;
+    entered = true;
+    const score = uni.uNeg.value ? Math.abs(s.snr) : s.snr;
+    if (!best || score > best.score) { best = s; best.score = score; }
+  }
+  if (!entered) { readout.textContent = 'Outside the DES footprint (or outside the depth window)'; return; }
+  const kind = best.snr >= uni.uThresh.value ? 'overdense' : best.snr <= -uni.uThresh.value ? 'underdense' : 'below threshold';
+  readout.textContent = `Strongest along this ray: z ≈ ${best.z.toFixed(2)} (${(best.r * 3.26).toFixed(1)} billion ly) · RA ${best.ra.toFixed(1)}°, Dec ${best.dec.toFixed(1)}° · ${best.snr.toFixed(1)}σ ${kind}`;
+}
+
+// ---------- loop ----------
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight); labels.setSize(innerWidth, innerHeight);
+});
+const fwd = new THREE.Vector3(), rgt = new THREE.Vector3(), mv = new THREE.Vector3(), tmp = new THREE.Vector3();
+let last = performance.now();
+renderer.setAnimationLoop(now => {
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (tour) {
+    const t = Math.min(1, (now - tour.t0) / tour.ms), k = ease(t);
+    const r = 0.02 + k * zToR(1.0);
+    const along = dirC.clone().multiplyScalar(r);
+    camera.position.copy(along).addScaledVector(side, -0.25).addScaledVector(lift, 0.12);
+    controls.target.copy(along).addScaledVector(dirC, 0.6);
+    if (t === 1) tour = null;
+  } else if (flight) {
+    const t = Math.min(1, (now - flight.t0) / flight.ms), k = ease(t);
+    camera.position.lerpVectors(flight.p0, flight.p1, k);
+    controls.target.lerpVectors(flight.q0, flight.q1, k);
+    if (t === 1) flight = null;
+  }
+  if (keys.size) {
+    camera.getWorldDirection(fwd); rgt.crossVectors(fwd, camera.up).normalize();
+    mv.set(0, 0, 0);
+    if (keys.has('w')) mv.add(fwd); if (keys.has('s')) mv.sub(fwd);
+    if (keys.has('d')) mv.add(rgt); if (keys.has('a')) mv.sub(rgt);
+    if (keys.has('e')) mv.z += 1; if (keys.has('q')) mv.z -= 1;
+    if (mv.lengthSq() > 0) {
+      mv.normalize().multiplyScalar(dt * 0.6 * (keys.has('shift') ? 3 : 1));
+      camera.position.add(mv); controls.target.add(mv); flight = null; tour = null;
+    }
+  }
+  controls.update();
+  for (const s of peakMeshes) s.scale.setScalar(Math.max(0.15, camera.position.distanceTo(s.position) * 0.22));
+  renderer.render(scene, camera);
+  labels.render(scene, camera);
+});
+
+window.__vol = { meta, camera, controls, volMat, flyToPeak };   // for debugging
+</script>
+</body>
+</html>

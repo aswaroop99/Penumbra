@@ -13,7 +13,9 @@
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--text);
                font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
   canvas { display: block; }
-  .labels { position: absolute; inset: 0; pointer-events: none; }
+  /* 3D labels sit below the panel and never take clicks (CSS2DObject turns pointer events back on per label). */
+  .labels { position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .labels * { pointer-events: none !important; }
 
   header { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px;
            padding: 10px 16px; background: linear-gradient(rgba(4,3,11,.85), rgba(4,3,11,0)); z-index: 5; }
@@ -35,16 +37,28 @@
   .row input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
   .val { min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
   .hint { color: var(--muted); font-size: 11px; margin: 2px 0 6px; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .swatch.faint { background: rgba(196, 170, 255, .45); border: 1px dashed rgba(220, 205, 255, .8); }
   button.btn { background: rgba(106,168,255,.14); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
                padding: 6px 12px; cursor: pointer; font: inherit; }
   button.btn:hover { background: rgba(106,168,255,.26); }
   button.primary { background: var(--accent); color: #061036; font-weight: 600; border-color: transparent; }
   select { flex: 1; min-width: 0; background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px; font: inherit; }
   label { cursor: pointer; }
+  .seg { gap: 4px; } .seg .btn { flex: 1; }
+  .pick { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
+  .pick button { text-align: left; background: none; border: 1px solid transparent; color: var(--text); border-radius: 6px;
+                 padding: 5px 8px; cursor: pointer; font: inherit; font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; gap: 8px; }
+  .pick button:hover { background: rgba(255,255,255,.07); }
+  .pick button[aria-selected="true"] { background: rgba(106,168,255,.2); border-color: rgba(106,168,255,.5); }
+  .pick button span:last-child { color: var(--muted); }
+  button.btn[aria-pressed="true"], button.btn[aria-pressed="true"]:hover { background: var(--accent); color: #061036; font-weight: 600; border-color: transparent; }
   [data-mode] { display: none; }
   body[data-active="sim"] [data-mode~="sim"],
   body[data-active="box"] [data-mode~="box"],
   body[data-active="slices"] [data-mode~="slices"] { display: block; }
+  body[data-active="box"][data-boxsrc="cosmos"] .cosmo,
+  body[data-boxsrc="cosmos"] .sim-only, body:not([data-boxsrc="cosmos"]) .cosmos-only { display: none; }
 
   #hud { position: absolute; top: 64px; right: 18px; max-width: min(380px, calc(100% - 330px)); text-align: right; pointer-events: none; z-index: 3; }
   #hud .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
@@ -74,6 +88,23 @@
 </style>
 </head>
 <body data-active="sim">
+<script>
+  // Opened straight from disk (file://)? Browsers block loading ../data from there, so nothing would work.
+  if (location.protocol === 'file:') {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const url = 'http://localhost:8000/viewer/' + page;
+    document.addEventListener('DOMContentLoaded', () => {
+      const d = document.createElement('div');
+      d.setAttribute('role', 'alert');
+      d.style.cssText = 'position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,3,11,.94);color:#e8ecff;font:15px/1.5 system-ui,sans-serif;text-align:center';
+      d.innerHTML = '<div style="max-width:460px"><div style="font-size:20px;font-weight:650;margin-bottom:8px">Open this page through the local server</div>' +
+        'This file was opened straight from disk, and browsers won\'t let it load the map data from there.<br><br>' +
+        'In the repo folder, run <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px">python3 serve.py</code>, then open<br>' +
+        '<a style="color:#6aa8ff" href="' + url + '">' + url + '</a></div>';
+      document.body.appendChild(d);
+    });
+  }
+</script>
 <header>
   <div class="brand">Penumbra <span>· Cosmic Web</span></div>
   <nav role="tablist">
@@ -95,7 +126,13 @@
     <div class="row"><button class="btn" id="reseed">New random universe</button></div>
   </div>
 
-  <div data-mode="sim box">
+  <div data-mode="box">
+    <h2>Data</h2>
+    <div class="row seg"><button class="btn" data-src="cosmos" aria-pressed="true">COSMOS (real)</button><button class="btn" data-src="sim" aria-pressed="false">Simulation</button></div>
+    <div class="hint cosmos-only">Click COSMOS again to fly to the strongest structure.</div>
+  </div>
+
+  <div data-mode="sim box" class="cosmo">
     <h2>Cosmology</h2>
     <div class="row"><span>S8</span><input id="s8" type="range" min="0.6" max="1.0" step="0.01" value="0.80"><span class="val" id="s8val"></span></div>
     <div class="hint">How clumpy matter is today. DES lensing ≈ 0.78, Planck CMB ≈ 0.83.</div>
@@ -105,8 +142,15 @@
 
   <div data-mode="box">
     <h2>Clumps</h2>
-    <div class="row"><span>Volume</span><input id="frac" type="range" min="0.02" max="0.2" step="0.005" value="0.07"><span class="val" id="fracval"></span></div>
-    <div class="hint">Share of the box drawn as dark-matter clumps (the densest regions).</div>
+    <div class="row sim-only"><span>Volume</span><input id="frac" type="range" min="0.02" max="0.2" step="0.005" value="0.07"><span class="val" id="fracval"></span></div>
+    <div class="row cosmos-only"><span>Threshold</span><input id="sig" type="range" min="1.5" max="4.5" step="0.1" value="2.0"><span class="val" id="sigval"></span></div>
+    <div class="hint" id="fracnote"></div>
+    <div class="cosmos-only">
+      <h2>Low-confidence structure</h2>
+      <div class="row"><label><input id="faintOn" type="checkbox" checked> <span class="swatch faint"></span>Show faint haze</label></div>
+      <div class="row"><span>Above</span><input id="faintSig" type="range" min="0.5" max="2.0" step="0.1" value="1.0"><span class="val" id="faintval"></span></div>
+      <div class="hint" id="faintnote"></div>
+    </div>
   </div>
 
   <div data-mode="sim box">
@@ -116,7 +160,7 @@
 
   <div data-mode="slices">
     <h2>Sky region</h2>
-    <div class="row"><select id="region"></select></div>
+    <div id="region" class="pick" role="listbox" aria-label="Sky region"></div>
     <div class="hint">The same patch of sky in every slice, centred on one of the strongest mass peaks inside the survey.</div>
     <h2>Slices</h2>
     <div class="row"><span>Spacing</span><input id="gap" type="range" min="1.5" max="5" step="0.1" value="3"></div>
@@ -143,6 +187,7 @@ import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
 
 const $ = id => document.getElementById(id);
 const DATA = '../data/';
+const getData = (path) => fetch(DATA + path, { cache: 'no-cache' });
 
 // =====================================================================
 // Cosmology helpers (flat ΛCDM, h = 0.674)
@@ -461,15 +506,15 @@ const sim = makeView(0x04030b, 55, 0.5, 4000);
 }
 
 // =====================================================================
-// View 2: 3D map — Massey et al. (2007)-style clumps in a box
+// View 2: 3D map — real COSMOS rebuild (default) or the simulation,
+// drawn as Massey et al. (2007)-style clumps in a box
 // =====================================================================
 const box = makeView(0x0a0f33, 40, 0.1, 200);
 {
-  const dims = [128, 32, 32], L = [512, 128, 128], [nx, ny, nz] = dims, N = nx * ny * nz;
-  const cell = L[0] / nx;          // 4 Mpc/h
-  const Z_NEAR = 0.25, Z_FAR = 0.95, RES = 128, OFF = (RES - ny) / 2;
-  const WORLD = 10;                // world length of the long axis
-  let noise = null, delta = null;
+  const RES = 128, WORLD = 10, hw = WORLD / 2;   // marching-cubes grid; world length of the long axis
+  let src = 'cosmos';                            // 'cosmos' | 'sim'
+  const grids = {};                              // per source: { NX, NY, NZ, get(X, Y, Z), data }
+  let cosmosMeta = null, cosmosFailed = false;
 
   box.scene.add(new THREE.AmbientLight(0x6a7bd0, 0.9));
   const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3, 6, 5); box.scene.add(key);
@@ -481,21 +526,37 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   mc.scale.setScalar(WORLD / 2);
   box.scene.add(mc);
 
-  const hw = WORLD / 2, hh = WORLD * ny / RES / 2;
-  box.scene.add(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(WORLD, 2 * hh, 2 * hh)),
-    new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.55 })));
+  // Low-confidence haze (COSMOS only): weaker structure below the clump threshold, much of it noise.
+  // Drawn after the clumps, without depth writes, so the solid clumps show through it.
+  const faintMaterial = new THREE.MeshBasicMaterial({ color: 0xc4aaff, transparent: true, opacity: 0.13,
+    side: THREE.DoubleSide, depthWrite: false });
+  const mcFaint = new MarchingCubes(RES, faintMaterial, false, false, 600000);
+  mcFaint.scale.setScalar(WORLD / 2);
+  mcFaint.renderOrder = 1;
+  box.scene.add(mcFaint);
 
-  // Distance axis along the bottom-front edge
-  for (const t of [0, 1 / 3, 2 / 3, 1]) {
-    const z = Z_NEAR + (Z_FAR - Z_NEAR) * t;
-    const l = label(`${lookbackGyr(z, 0.315).toFixed(1)} billion years ago<small>z = ${z.toFixed(2)}</small>`);
-    l.position.set(-hw + WORLD * t, -hh - 0.45, hh);
-    box.scene.add(l);
+  // Frame (wireframe box + axis labels) for one source. Labels are toggled one by one,
+  // because CSS2DRenderer ignores a parent's visibility.
+  const frames = {};
+  function makeFrame(name, NY, NZ, zNear, zFar, ticks) {
+    const hy = WORLD * NY / RES / 2, hz = WORLD * NZ / RES / 2, items = [];
+    items.push(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(WORLD, 2 * hy, 2 * hz)),
+      new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.55 })));
+    for (const z of ticks) {
+      const l = label(`${lookbackGyr(z, 0.315).toFixed(1)} billion years ago<small>z = ${z.toFixed(2)}</small>`);
+      l.position.set(-hw + WORLD * (z - zNear) / (zFar - zNear), -hy - 0.45, hz);
+      items.push(l);
+    }
+    const ax = label('<span class="axis">nearer · more recent  ←  distance from Earth  →  farther · earlier</span>');
+    ax.position.set(0, -hy - 1.6, hz); items.push(ax);
+    const ra = label('<span class="axis">right ascension</span>'); ra.position.set(-hw - 0.2, -hy, 0); items.push(ra);
+    const dec = label('<span class="axis">declination</span>'); dec.position.set(-hw - 0.2, 0, hz + 0.2); items.push(dec);
+    items.forEach(o => box.scene.add(o));
+    frames[name] = { items, hy, hz, zNear, zFar };
   }
-  const ax = label('<span class="axis">nearer · more recent  ←  distance from Earth  →  farther · earlier</span>');
-  ax.position.set(0, -hh - 1.15, hh); box.scene.add(ax);
-  const ra = label('<span class="axis">right ascension</span>'); ra.position.set(-hw - 0.2, -hh, 0); box.scene.add(ra);
-  const dec = label('<span class="axis">declination</span>'); dec.position.set(-hw - 0.2, 0, hh + 0.2); box.scene.add(dec);
+  function showFrame(name) {
+    for (const [n, f] of Object.entries(frames)) f.items.forEach(o => { o.visible = n === name; });
+  }
 
   box.camera.position.set(-4.2, 5, 12.5);
   if (innerWidth < innerHeight) box.camera.position.multiplyScalar(1.8);   // fit the long box on portrait screens
@@ -503,31 +564,68 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   box.controls.autoRotateSpeed = 0.25;
   box.controls.minDistance = 3; box.controls.maxDistance = 30;
 
+  let threshold = 0;
   function drawClumps() {
+    const g = grids[src];
+    if (!g) return;
     const frac = +$('frac').value;
-    const sorted = Float32Array.from(delta).sort();
-    const thr = Math.max(0.05, sorted[Math.floor((1 - frac) * (N - 1))]);
-    mc.reset();
-    const f = mc.field;
-    for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 2; x < nx - 2; x++) {
-      f[x + RES * (y + OFF) + RES * RES * (z + OFF)] = delta[x + nx * (y + ny * z)];
+    if (src === 'cosmos') {
+      threshold = +$('sig').value;
+    } else {
+      const sorted = Float32Array.from(g.data).sort();
+      threshold = Math.max(0.05, sorted[Math.floor((1 - frac) * (sorted.length - 1))]);
     }
-    mc.isolation = thr;
+    mc.reset();
+    const f = mc.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
+    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
+      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
+    }
+    mc.isolation = threshold;
     mc.update();
+    $('fracval').textContent = `${Math.round(frac * 100)}%`;
+    $('sigval').textContent = `${threshold.toFixed(1)}σ`;
+    $('fracnote').textContent = src === 'cosmos'
+      ? `Solid: lens detections above ${threshold.toFixed(1)}σ.`
+      : 'Share of the box drawn as dark-matter clumps (the densest regions).';
+    drawFaint();
   }
-  async function rebuild() {
+
+  function drawFaint() {
+    const g = grids.cosmosFaint;
+    mcFaint.visible = src === 'cosmos' && !!g && $('faintOn').checked;
+    if (!mcFaint.visible) return;
+    // Keep the haze strictly below the clump threshold so the two layers never claim the same level.
+    const t = Math.min(+$('faintSig').value, threshold - 0.1);
+    mcFaint.reset();
+    const f = mcFaint.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
+    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
+      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
+    }
+    mcFaint.isolation = t;
+    mcFaint.update();
+    $('faintval').textContent = `${t.toFixed(1)}σ`;
+    $('faintnote').textContent = `Haze: signal from ${t.toFixed(1)}σ to ${threshold.toFixed(1)}σ. Not detections. ` +
+      'At this level much of it is random galaxy-shape noise, and it smears along the distance axis. ' +
+      'It may trace real filaments, but this data cannot tell them apart from noise.';
+  }
+
+  // ---------- simulation source ----------
+  const SIM = { dims: [128, 32, 32], L: [512, 128, 128], zNear: 0.25, zFar: 0.95 };
+  makeFrame('sim', 32, 32, SIM.zNear, SIM.zFar, [0.25, 0.25 + 0.7 / 3, 0.25 + 1.4 / 3, 0.95]);
+  let noise = null;
+  async function buildSim() {
+    const { dims, L } = SIM, [nx, ny, nz] = dims, N = nx * ny * nz, cell = L[0] / nx;
     busy(true); await nextFrame();
     if (!noise) noise = whiteNoiseK(dims, 2007);
     const psi = displacementField(noise, dims, L, { om: params.om, sigma8: sigma8(), Rs: 4.0 });
     // Light-cone: nearer slabs (small x) are seen later in cosmic time, so they've grown more.
     const Dx = new Float64Array(nx);
-    for (let x = 0; x < nx; x++) Dx[x] = growth(Z_NEAR + (Z_FAR - Z_NEAR) * (x + 0.5) / nx, params.om);
+    for (let x = 0; x < nx; x++) Dx[x] = growth(SIM.zNear + (SIM.zFar - SIM.zNear) * (x + 0.5) / nx, params.om);
     // Move one particle per cell, deposit with cloud-in-cell.
     const rho = new Float64Array(N), im = new Float64Array(N);
     for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
       const i = x + nx * (y + ny * z), D = Dx[x];
-      const px = (x + 0.5) + D * psi[0][i] / cell, py = (y + 0.5) + D * psi[1][i] / cell, pz = (z + 0.5) + D * psi[2][i] / cell;
-      const gx = px - 0.5, gy = py - 0.5, gz = pz - 0.5;
+      const gx = x + D * psi[0][i] / cell, gy = y + D * psi[1][i] / cell, gz = z + D * psi[2][i] / cell;
       const x0 = Math.floor(gx), y0 = Math.floor(gy), z0 = Math.floor(gz);
       const fx = gx - x0, fy = gy - y0, fz = gz - z0;
       for (let c = 0; c < 8; c++) {
@@ -542,17 +640,92 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
     fft3(rho, im, dims, false);
     forEachMode(dims, L, (i, kx, ky, kz, k2) => { const g = Math.exp(-0.5 * k2 * 64); rho[i] *= g; im[i] *= g; });
     fft3(rho, im, dims, true);
-    delta = Float32Array.from(rho);
-    drawClumps();
+    const data = Float32Array.from(rho);
+    grids.sim = { NX: nx, NY: ny, NZ: nz, data, get: (X, Y, Z) => data[X + nx * (Y + ny * Z)] };
     busy(false);
   }
-  box.rebuild = rebuild;
-  $('frac').oninput = e => { $('fracval').textContent = `${Math.round(e.target.value * 100)}%`; if (delta) drawClumps(); };
-  $('fracval').textContent = `${Math.round($('frac').value * 100)}%`;
 
-  box.hud = () => ['Dark matter in 3D', `Clumpier toward the near side: structure has had longer to grow · S8 = ${params.s8.toFixed(2)}`];
-  box.source = () => '<b class="sim">Simulated</b>Built from the in-browser simulation, not observations. Style after Massey et al. 2007 (<a href="https://science.nasa.gov/mission/hubble/science/science-highlights/mapping-the-cosmic-web/" target="_blank" rel="noopener">NASA</a>).';
-  box.caption = 'Styled after the Hubble COSMOS 3D dark-matter map (Massey et al. 2007), but built from the simulation above, not from telescope data. The box runs from about 3 to 8 billion years ago. Distances are not to scale: the real survey volume is a long, narrow cone.';
+  // ---------- COSMOS source (data/cosmos, made by prep/cosmos_3d.py) ----------
+  const peakMarker = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.025, 8, 48),
+    new THREE.MeshBasicMaterial({ color: 0xffd34d }));
+  const peakLabel = label('');
+  box.scene.add(peakMarker, peakLabel);
+  async function loadCosmos() {
+    try {
+      cosmosMeta = await (await getData('cosmos/cosmos_3d.json')).json();
+      const data = new Float32Array(await (await getData('cosmos/cosmos_3d.f32.bin')).arrayBuffer());
+      const [ny, nx, nd] = cosmosMeta.shape;          // stored [y, x, depth], depth fastest
+      // Box axes: X = redshift (long), Y = declination (up), Z = right ascension.
+      grids.cosmos = { NX: nd, NY: ny, NZ: nx, data, get: (X, Y, Z) => data[X + nd * (Z + nx * Y)] };
+      try {   // optional low-confidence layer (older prep runs don't write it)
+        const fd = new Float32Array(await (await getData('cosmos/' + (cosmosMeta.faint_file || 'cosmos_3d_faint.f32.bin'))).arrayBuffer());
+        if (fd.length === data.length) grids.cosmosFaint = { ...grids.cosmos, data: fd, get: (X, Y, Z) => fd[X + nd * (Z + nx * Y)] };
+      } catch (e) { console.warn('COSMOS faint layer not found; rerun prep/cosmos_3d.py', e); }
+      const { z_near, z_far } = cosmosMeta, step = z_far - z_near;
+      makeFrame('cosmos', ny, nx, z_near, z_far, [0.1, 0.4, 0.7, 1.0, 1.3].filter(z => z > z_near && z < z_far + 1e-6));
+      // Mark the strongest structure.
+      const p = cosmosMeta.peaks[0], b = cosmosMeta.bounds, f = frames.cosmos;
+      peakMarker.position.set(-hw + WORLD * (p.z - z_near) / step,
+        -f.hy + 2 * f.hy * (p.dec - b.dec_min) / (b.dec_max - b.dec_min),
+        -f.hz + 2 * f.hz * (b.ra_max - p.ra) / (b.ra_max - b.ra_min));
+      peakMarker.rotation.y = Math.PI / 2;
+      peakLabel.position.copy(peakMarker.position).add(new THREE.Vector3(0, f.hy + 0.6 - peakMarker.position.y, 0));
+      peakLabel.element.innerHTML = `Strongest structure<small>z ≈ ${p.z.toFixed(1)} · ${p.value.toFixed(1)}σ · RA ${p.ra.toFixed(2)}°, Dec ${p.dec.toFixed(2)}°</small>`;
+    } catch (e) {
+      cosmosFailed = true;
+      console.warn('COSMOS 3D grid not found; run prep/cosmos_3d.py', e);
+    }
+  }
+
+  async function setSource(name) {
+    if (name === 'cosmos' && !grids.cosmos && !cosmosFailed) { busy(true); await loadCosmos(); busy(false); }
+    if (name === 'cosmos' && cosmosFailed) name = 'sim';
+    src = name;
+    document.querySelectorAll('[data-src]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.src === src)));
+    if (src === 'sim' && !grids.sim) await buildSim();
+    showFrame(src);
+    peakMarker.visible = peakLabel.visible = src === 'cosmos';
+    document.body.dataset.boxsrc = src;
+    if (document.body.dataset.active === 'box') $('caption').textContent = box.caption;
+    drawClumps();
+  }
+  box.rebuild = () => setSource(src);   // first show
+  box.onCosmo = async () => { grids.sim = null; if (src === 'sim') { await buildSim(); drawClumps(); } };
+  let flight = null;
+  function flyToPeak() {
+    const t = peakMarker.position.clone();
+    flight = { t0: performance.now(), p0: box.camera.position.clone(), p1: t.clone().add(new THREE.Vector3(-1.2, 1.4, 3.6)),
+               q0: box.controls.target.clone(), q1: t };
+  }
+  box.tick = now => {
+    if (!flight) return;
+    const k = Math.min(1, (now - flight.t0) / 1200), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+    box.camera.position.lerpVectors(flight.p0, flight.p1, e);
+    box.controls.target.lerpVectors(flight.q0, flight.q1, e);
+    if (k === 1) flight = null;
+  };
+  document.querySelectorAll('[data-src]').forEach(b => {
+    b.onclick = async () => {
+      const again = b.dataset.src === src;
+      await setSource(b.dataset.src);
+      if (again && src === 'cosmos') flyToPeak();
+    };
+  });
+  $('frac').oninput = () => drawClumps();
+  $('sig').oninput = () => drawClumps();
+  $('faintSig').oninput = () => drawFaint();
+  $('faintOn').onchange = () => drawFaint();
+
+  box.hud = () => src === 'cosmos'
+    ? ['Dark matter in 3D: COSMOS', `A ${cosmosMeta ? (cosmosMeta.width_arcmin / 60).toFixed(1) : '1.4'}° patch of sky seen by Hubble, out to z ≈ ${cosmosMeta ? cosmosMeta.z_far.toFixed(1) : '1.3'}`]
+    : ['Dark matter in 3D: simulated', `Clumpier toward the near side: structure has had longer to grow · S8 = ${params.s8.toFixed(2)}`];
+  box.source = () => src === 'cosmos' && cosmosMeta
+    ? `<b class="real">Survey data</b>Hubble COSMOS galaxy shapes (Leauthaud et al. 2007, <a href="${cosmosMeta.source_url}" target="_blank" rel="noopener">IRSA</a>), ${cosmosMeta.n_galaxies.toLocaleString()} galaxies. Our 3D rebuild, not the published map.`
+    : '<b class="sim">Simulated</b>Built from the in-browser simulation, not observations. Style after Massey et al. 2007 (<a href="https://science.nasa.gov/mission/hubble/science/science-highlights/mapping-the-cosmic-web/" target="_blank" rel="noopener">NASA</a>).';
+  box.captionFor = () => src === 'cosmos'
+    ? 'Our rebuild of the Hubble COSMOS 3D dark-matter map (Massey et al. 2007) from the public galaxy-shape catalog. Galaxies are split by distance, each group gives a lensing mass map, and the change from group to group places the mass in depth. Solid clumps show where a lens is detected with high significance. The faint purple haze is low-confidence structure below that threshold: much of it is noise, so read it as "possibly something here", not as mapped filaments. Depth resolution is poor, so clumps stretch along the distance axis. The strongest structure sits at z ≈ 0.7, where the known COSMOS cluster at z ≈ 0.73 is. Not to scale: the real volume is a long, narrow cone.'
+    : 'Styled after the Hubble COSMOS 3D dark-matter map (Massey et al. 2007), but built from the in-browser simulation, not telescope data. The box runs from about 3 to 8 billion years ago. Distances are not to scale: the real survey volume is a long, narrow cone.';
+  Object.defineProperty(box, 'caption', { get: box.captionFor });
 }
 
 // =====================================================================
@@ -633,9 +806,9 @@ const slices = makeView(0x0a0f33, 42, 0.1, 200);
   async function load() {
     if (loaded) return; loaded = true;
     busy(true);
-    manifest = await (await fetch(DATA + 'manifest.json')).json();
+    manifest = await (await getData('manifest.json')).json();
     grids = await Promise.all(manifest.layers.map(async Lr => {
-      const u16 = new Uint16Array(await (await fetch(DATA + Lr.raw)).arrayBuffer());
+      const u16 = new Uint16Array(await (await getData(Lr.raw)).arrayBuffer());
       const out = new Float32Array(u16.length);
       for (let i = 0; i < u16.length; i++) out[i] = halfToFloat(u16[i]);
       return out;
@@ -655,15 +828,35 @@ const slices = makeView(0x0a0f33, 42, 0.1, 200);
       for (let r = 0; r < S0; r += 8) for (let c = 0; c < S0; c += 8, n++) if (Number.isNaN(grids[0][(r0 + r) * w + c0 + c])) nan++;
       return nan / n;
     };
-    const top = [...manifest.peaks].filter(p => maskedShare(p) < 0.02).sort((a, b) => b.snr - a.snr).slice(0, 10);
-    if (!top.length) top.push(...[...manifest.peaks].sort((a, b) => b.snr - a.snr).slice(0, 10));
-    top.forEach((p, i) => sel.add(new Option(`Peak ${i + 1}: RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}° (S/N ${p.snr.toFixed(1)})`, i)));
-    sel.add(new Option('Middle of the survey', 'mid'));
-    sel.onchange = () => {
-      center = sel.value === 'mid' ? [w / 2, h * 0.62] : toPix(top[+sel.value].ra, top[+sel.value].dec);
+    // Strongest peaks inside the survey, one per location (the same cluster shows up in several bins).
+    // Prefer patches that are mostly inside the survey (the real mask has small holes everywhere).
+    const sameSpot = (q, p) => Math.abs(q.dec - p.dec) < 1.5 && Math.abs(((q.ra - p.ra + 540) % 360) - 180) < 1.5;
+    const byHeight = [...manifest.peaks].sort((a, b) => b.snr - a.snr);
+    const top = [];
+    for (const maxMasked of [0.1, 0.3, 1.01]) {
+      for (const p of byHeight) {
+        if (top.length >= 8) break;
+        if (maskedShare(p) < maxMasked && !top.some(q => sameSpot(q, p))) top.push(p);
+      }
+    }
+    // A list of buttons rather than a <select>: native dropdowns don't open in some embedded browsers.
+    const choices = top.map((p, i) => ({ text: `Peak ${i + 1} · RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}°`, tag: `${p.snr.toFixed(1)}σ`,
+                                         at: () => toPix(p.ra, p.dec) }));
+    choices.push({ text: 'Middle of the survey', tag: '', at: () => [w / 2, h * 0.62] });
+    const pick = i => {
+      center = choices[i].at();
+      [...sel.children].forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
       paint();
     };
-    center = toPix(top[0].ra, top[0].dec);
+    choices.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'option');
+      b.innerHTML = `<span>${c.text}</span><span>${c.tag}</span>`;
+      b.onclick = () => pick(i);
+      sel.appendChild(b);
+    });
+    sel.children[0].setAttribute('aria-selected', 'true');
+    center = choices[0].at();
 
     manifest.layers.forEach((Lr, b) => {
       const plane = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE),
@@ -692,7 +885,7 @@ const slices = makeView(0x0a0f33, 42, 0.1, 200);
       ? `<b class="toy">Toy data</b>Stand-in maps from the team pipeline (<code>${manifest.source}</code>), shaped like DES Y3. Not real observations.`
       : `<b class="real">Survey data</b>${manifest.source}`;
   };
-  slices.caption = 'The same patch of sky in four DES-style lensing layers. Each layer is the mass projected toward more distant galaxies, so the layers overlap; they are not separate slices of space. Times are approximate. The current files are toy data until the real DES export lands.';
+  slices.caption = 'The same patch of sky in the four DES lensing layers. Each layer is the mass projected toward more distant galaxies, so the layers overlap; they are not separate slices of space. Times are approximate.';
 }
 
 // =====================================================================
@@ -716,7 +909,7 @@ async function show(name) {
 document.querySelectorAll('nav button').forEach(b => { b.onclick = () => show(b.dataset.tab); });
 
 const onCosmo = debounce(() => {
-  for (const name of built) views[name].rebuild?.();
+  for (const name of built) (views[name].onCosmo ?? views[name].rebuild)?.();
 }, 180);
 for (const [id, key] of [['s8', 's8'], ['om', 'om']]) {
   const out = $(id + 'val');

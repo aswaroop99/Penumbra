@@ -1,9 +1,11 @@
-# Sample viewer data — build the fly-through against this
+# Viewer data
 
-This is **toy (fake-but-realistic) data** with a known answer, so the explorer can be built
-before the real DES maps arrive. The file shapes and `manifest.json` schema are the **real
-contract** — when real data lands, these same files get regenerated with identical structure,
-and your frontend keeps working unchanged. Build to the manifest, not to the pixels.
+Everything here except this file, `inference.json` and `reader.json` is **generated, not committed**:
+run `bash build_data.sh` from the repo root. The layers are the **real DES Y3 mass maps**: the mean of
+the 100 KaRMMa posterior samples (zenodo.org/records/10668943), written by `prep/export_des.py`
+(20′ display smoothing). (An earlier version of this folder
+held toy data with the same file shapes; the schema didn't change, so the viewers kept working.)
+Build to the manifest, not to the pixels.
 
 ## Files (per depth layer, 4 layers = bin0..bin3)
 - `layer_bin{b}.png`  — RGBA image, colour = smoothed dark-matter density (κ). **Masked sky is transparent.** Drop straight onto a plane/quad.
@@ -14,17 +16,42 @@ and your frontend keeps working unchanged. Build to the manifest, not to the pix
 - `bounds`: `{ra_min, ra_max, dec_min, dec_max}` in degrees — the geographic extent of every layer.
 - `convention`: plate carrée; **column 0 = ra_max (east-left, astronomical), row 0 = dec_max**. RA may be negative (= RA+360). Read this before mapping pixels↔sky.
 - `layers[]`: each has `name`, `png`, `raw`, `shape:[h,w]`, `vmin`, `vmax`, `sigma`. Use vmin/vmax for colour scaling if you render from the raw grid.
-- `peaks[]`: `{ra, dec, kappa, snr, bin}` — the clusters. Label/flag these in the UI; they're the "fly to a landmark" targets and the hooks for the citizen-annotation layer.
+- `peaks[]`: `{ra, dec, kappa, snr, bin}`, plus optional `post_snr` — the clusters. `snr` = κ / layer sigma (peak height); `post_snr` = κ / posterior std across the samples (how certain the peak is, typically 2–4 for the top peaks). Treat `post_snr` as optional: the `des_map/` pipeline's exporter doesn't write it.
+- `inference` (optional): file name of the stored SBI result. `export_des.py` adds it when `data/inference.json` exists; the viewer shows it only if the result was computed from this map. Label/flag these in the UI; they're the "fly to a landmark" targets and the hooks for the citizen-annotation layer.
 - `coord`: `C` = equatorial (celestial). `smoothing_arcmin`: display smoothing applied.
+
+## inference.json (optional): the stored cosmology result
+
+Produced offline by `inference/run_inference.py` (see `inference/README.md`) and loaded once per map. The
+manifest points at it with `"inference": "inference.json"`; the pointer is not part of the manifest version,
+so existing rooms stay valid. The viewer fetches it from `data/inference.json` (the dev/preview server only
+serves `/manifest.json` and `/data/*`). If it is missing, malformed or computed from a different map, the viewer
+simply hides the "Cosmology from this map" card. Parser: `src/lib/inference.ts`.
+
+| Field | Meaning |
+|---|---|
+| `version` | schema version, currently `1` |
+| `method`, `data` | e.g. `"sbi-NPE x1"` |
+| `map` | `{source, n_layers}` of the map it was computed from; must equal the manifest's `source` and layer count |
+| `synthetic` | `true` for toy observations: not a scientific result |
+| `S8`, `Omega_m`, `sigma8` | `{median, lo68, hi68, lo95, hi95}`. `sigma8` is derived per sample from S8 = σ8·√(Ωm/0.3) |
+| `training` | `n_train`, `n_heldout`, `n_features`, `n_samples` |
+| `trust` | held-out coverage: `n_heldout`, `coverage_68_S8`, `binomial_1sigma_at_68`, `out_of_distribution`, ... (or `null`) |
+| `comparison` | `planck`, `des_y3` references, `tension_vs_planck_sigma`, optional `mcmc` cross-check |
+| `statement`, `caveats` | generated honest wording; the viewer shows `statement` only for non-synthetic maps |
+| `truth` | known answer, toy observations only |
+| `samples` | up to a few thousand `[Omega_m, S8]` posterior draws |
+| `fingerprint` | cache key (sha256 of observed map + config + training summaries); ignored by the viewer |
 
 ## Fly-through notes (honest)
 - The 4 layers are **mass projected toward progressively more distant galaxies**, not slices of 3D space — they overlap heavily. Label the depth axis "looking deeper / toward more distant sources," NOT "slices through space." Stacking them with parallax still gives a great pseudo-3D fly-through; just don't claim it's a literal 3D volume.
 - Masked (transparent/NaN) regions are outside the survey footprint — render them as empty space, not zero-density.
 
-## When real data arrives
-Nothing changes on your side. The pipeline reruns `export_view.py` on the real map and overwrites
-these files with the same names/schema. Your viewer should read `manifest.json` at load time and
-never hard-code bounds, shapes, or layer counts.
+## Regenerating
+`bash build_data.sh` overwrites these files with the same names and schema. The `des_map/` pipeline
+(`des_map/pipeline/export_view.py`) writes the same schema too. Viewers read `manifest.json` at load
+time and never hard-code bounds, shapes, or layer counts. **After the layers change, re-run the map
+reader** (see `des_map/MAP_READER.md`) so `reader.json` matches the new map.
 
 ## Optional: `reader.json` (AI map-reader layer)
 
@@ -48,3 +75,13 @@ ever reaches the browser.
 Rules: render every string with `textContent` (never `innerHTML`). `kappa_over_reference_rms` is **not** a
 detection significance. Call Claude's text "AI description of the map's shape", never a measurement, and
 never show it next to S8/Ωm as if it fed the inference.
+
+## COSMOS 3D grid (`cosmos/`)
+Written by `prep/cosmos_3d.py` from the COSMOS HST shear catalog (Leauthaud et al. 2007).
+- `cosmos_3d.f32.bin` — float32 grid, shape and index layout in the JSON (`index = depth + nd*(x + nx*y)`).
+  Values are lens-detection significance (σ); each detected lens is drawn at its most likely redshift.
+- `cosmos_3d.json` — bounds, redshift range (`z_near`..`z_far`), method, galaxy counts, and the
+  strongest 3D peaks `{ra, dec, z, value}`.
+- `cosmos_3d_faint.f32.bin` — same layout; the lenses drawn wider in redshift, for the low-confidence
+  "haze" isosurface (~1σ up to the clump threshold). Largely noise; label it that way.
+Depth resolution is poor; treat redshifts as approximate.

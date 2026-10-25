@@ -3,10 +3,12 @@ import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type Sh
 import { initialProfile, saveProfile } from '../collab/profile';
 import type { Annotation } from '../generated/types';
 import { el } from '../lib/dom';
+import { loadInference } from '../lib/inference';
 import { loadManifest, manifestVersion, type Manifest } from '../lib/manifest';
 import { cleanRoomName } from '../lib/room';
 import { throttle } from '../lib/throttle';
 import { CosmicApp, type SkyPlace } from './CosmicApp';
+import { renderInferenceCard, setCosmologySliders } from './inferenceCard';
 import { sameView, tabLabel } from './viewCodec';
 
 const $ = <T extends HTMLElement>(id: string): T => {
@@ -76,6 +78,11 @@ async function start() {
   }
   $('loading').remove();
   if (import.meta.env.DEV) (window as unknown as { __cosmic?: CosmicApp }).__cosmic = app; // debugging only
+
+  // Stored cosmology result for this map (optional; the card stays hidden if absent/invalid/mismatched).
+  void loadInference(manifest).then((inf) => {
+    if (inf) renderInferenceCard($('inference'), inf, setCosmologySliders);
+  });
 
   // -------------------------------------------------------------- backend
   const collab = new Collab(profile, version);

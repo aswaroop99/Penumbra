@@ -9,4 +9,5 @@ fi
 export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}"
 export MPLCONFIGDIR="${MPLCONFIGDIR:-/tmp/dm-reader-mpl}"
 cd "$READER_ROOT/des_map"
-exec "$READER_ROOT/.venv-map-reader/bin/python" -m map_reader "$@"
+# bin/penumbra-python picks the conda env "penumbra" or a repo venv (.venv-map-reader, .venv, venv).
+exec "$READER_ROOT/bin/penumbra-python" -m map_reader "$@"

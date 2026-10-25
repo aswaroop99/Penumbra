@@ -16,7 +16,8 @@ describe('viewCodec', () => {
   it('round-trips every tab', () => {
     const views: CosmicView[] = [
       { tab: 'sim', cam, s8: 0.82, om: 0.3, time: 0.4, universe: 3 },
-      { tab: 'box', cam, s8: 0.7, om: 0.25, volume: 0.1 },
+      { tab: 'box', cam, s8: 0.7, om: 0.25, source: 'sim', level: 0.1 },
+      { tab: 'box', cam, s8: 0.8, om: 0.3, source: 'cosmos', level: 2.5 },
       { tab: 'slices', cam, ra: 150.5, dec: -20.25, gap: 3.2 },
     ];
     for (const v of views) expect(decodeView(encodeView(v))).toEqual(v);
@@ -25,6 +26,8 @@ describe('viewCodec', () => {
   it('keeps every encoded value inside what the backend accepts', () => {
     const v = encodeView({ tab: 'sim', cam, s8: 1, om: 0.45, time: 1, universe: UNIVERSE_SEEDS.length - 1 });
     expect(v.activeLayer).toBeLessThan(16); // MAX_LAYERS in the SpacetimeDB module
+    const box = encodeView({ tab: 'box', cam, s8: 1, om: 0.45, source: 'sim', level: 0.2 });
+    expect(box.activeLayer).toBeLessThan(16);
     expect(v.dec).toBeGreaterThanOrEqual(-90);
     expect(v.dec).toBeLessThanOrEqual(90);
     expect(v.ra).toBeGreaterThanOrEqual(-360);
@@ -39,6 +42,11 @@ describe('viewCodec', () => {
     if (v.tab === 'slices') expect(v.gap).toBe(5);
     const sim = decodeView({ ra: 5, dec: 3, zoom: 1, yaw: 0, pitch: 0, activeLayer: 15, spread: -2 });
     expect(sim).toMatchObject({ tab: 'sim', s8: 1, om: 0.45, time: 0, universe: UNIVERSE_SEEDS.length - 1 });
+    // 3D map: the threshold range depends on the source.
+    const cosmos = decodeView({ ra: 0.8, dec: 0.3, zoom: 1, yaw: 0, pitch: 0, activeLayer: 1, spread: 0.07 });
+    expect(cosmos).toMatchObject({ tab: 'box', source: 'cosmos', level: 1.5 });
+    const simBox = decodeView({ ra: 0.8, dec: 0.3, zoom: 1, yaw: 0, pitch: 0, activeLayer: 13, spread: 3 });
+    expect(simBox).toMatchObject({ tab: 'box', source: 'sim', level: 0.2 });
   });
 
   it('names a participant\u2019s tab', () => {
@@ -48,10 +56,11 @@ describe('viewCodec', () => {
   });
 
   it('detects meaningful change only', () => {
-    const a = encodeView({ tab: 'box', cam, s8: 0.8, om: 0.3, volume: 0.07 });
+    const a = encodeView({ tab: 'box', cam, s8: 0.8, om: 0.3, source: 'sim', level: 0.07 });
     expect(sameView(a, { ...a, yaw: a.yaw + 0.0001 })).toBe(true);
     expect(sameView(a, { ...a, yaw: a.yaw + 0.05 })).toBe(false);
     expect(sameView(a, { ...a, activeLayer: 0 })).toBe(false);
+    expect(sameView(a, { ...a, activeLayer: 1 })).toBe(false); // switching source is a change
   });
 
   it('converts camera offsets both ways', () => {

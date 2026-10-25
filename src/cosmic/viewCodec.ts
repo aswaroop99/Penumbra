@@ -4,22 +4,28 @@ import type { SharedView } from '../collab/client';
  * The SpacetimeDB module is unchanged, so a cosmic-web view is carried in the
  * existing `update_view` / `room_state` fields:
  *
- *   field        sim                 box                 slices
- *   ----------   -----------------   -----------------   ---------------------
- *   activeLayer  tab 0 + 3·universe  tab 1               tab 2
- *   ra           S8                  S8                  patch centre RA  (deg)
- *   dec          Ωm                  Ωm                  patch centre Dec (deg)
- *   spread       time (0..1)         clump volume        slice spacing
+ *   field        sim                 box                       slices
+ *   ----------   -----------------   -----------------------   ---------------------
+ *   activeLayer  tab 0 + 3·universe  tab 1 + 3·source          tab 2
+ *   ra           S8                  S8                        patch centre RA  (deg)
+ *   dec          Ωm                  Ωm                        patch centre Dec (deg)
+ *   spread       time (0..1)         σ threshold (COSMOS) or   slice spacing
+ *                                    clump volume (sim)
  *   yaw          camera azimuth      camera azimuth      camera azimuth     (rad)
  *   pitch        camera elevation    camera elevation    camera elevation   (rad)
  *   zoom         camera distance     camera distance     camera distance
  *
  * Camera angles/distance are relative to each view's orbit target, so panning
- * (which moves the target) is deliberately not shared.
+ * (which moves the target) is deliberately not shared. On the 3D map, source 0 is
+ * the COSMOS rebuild and 1 the simulation; the haze settings are not shared.
  */
 
 export type Tab = 'sim' | 'box' | 'slices';
 export const TABS: readonly Tab[] = ['sim', 'box', 'slices'];
+/** What the 3D map tab draws: our COSMOS rebuild (real data) or the simulated box. */
+export type BoxSource = 'cosmos' | 'sim';
+export const BOX_SOURCES: readonly BoxSource[] = ['cosmos', 'sim'];
+
 export const TAB_LABEL: Record<Tab, string> = {
   sim: 'Simulate',
   box: '3D map',
@@ -34,6 +40,7 @@ export const LIMITS = {
   om: [0.2, 0.45],
   time: [0, 1],
   volume: [0.02, 0.2],
+  sigma: [1.5, 4.5],
   gap: [1.5, 5],
 } as const;
 
@@ -48,7 +55,8 @@ export interface Cam {
 
 export type CosmicView =
   | { tab: 'sim'; cam: Cam; s8: number; om: number; time: number; universe: number }
-  | { tab: 'box'; cam: Cam; s8: number; om: number; volume: number }
+  /** `level` is the σ threshold for COSMOS and the clump volume fraction for the simulation. */
+  | { tab: 'box'; cam: Cam; s8: number; om: number; source: BoxSource; level: number }
   | { tab: 'slices'; cam: Cam; ra: number; dec: number; gap: number };
 
 const clamp = (v: number, [lo, hi]: readonly [number, number]) => Math.min(hi, Math.max(lo, v));
@@ -70,7 +78,13 @@ export function encodeView(v: CosmicView): SharedView {
         activeLayer: TABS.indexOf('sim') + 3 * v.universe,
       };
     case 'box':
-      return { ...base, ra: v.s8, dec: v.om, spread: v.volume, activeLayer: TABS.indexOf('box') };
+      return {
+        ...base,
+        ra: v.s8,
+        dec: v.om,
+        spread: v.level,
+        activeLayer: TABS.indexOf('box') + 3 * BOX_SOURCES.indexOf(v.source),
+      };
     case 'slices':
       return { ...base, ra: v.ra, dec: v.dec, spread: v.gap, activeLayer: TABS.indexOf('slices') };
   }
@@ -94,14 +108,17 @@ export function decodeView(s: SharedView): CosmicView {
         time: clamp(s.spread, LIMITS.time),
         universe: Math.min(UNIVERSE_SEEDS.length - 1, Math.floor(s.activeLayer / 3)),
       };
-    case 'box':
+    case 'box': {
+      const source = BOX_SOURCES[Math.min(BOX_SOURCES.length - 1, Math.floor(s.activeLayer / 3))];
       return {
         tab,
         cam,
         s8: clamp(s.ra, LIMITS.s8),
         om: clamp(s.dec, LIMITS.om),
-        volume: clamp(s.spread, LIMITS.volume),
+        source,
+        level: clamp(s.spread, source === 'cosmos' ? LIMITS.sigma : LIMITS.volume),
       };
+    }
     case 'slices':
       return { tab, cam, ra: s.ra, dec: s.dec, gap: clamp(s.spread, LIMITS.gap) };
   }
