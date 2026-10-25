@@ -12,7 +12,16 @@ import { parseManifest } from './manifest';
 
 const readJson = (rel: string) => JSON.parse(readFileSync(new URL(rel, import.meta.url), 'utf8'));
 const realInference = readJson('../../data/inference.json');
-const realManifest = parseManifest(readJson('../../data/manifest.json'));
+// A small manifest bound to the stored result (same source and layer count), so these tests
+// don't need the generated data/ files.
+const layer = (b: number) => ({ name: `bin ${b}`, png: `l${b}.png`, raw: `l${b}.bin`, shape: [10, 20], vmin: -1, vmax: 1, sigma: 0.1 });
+const realManifest = parseManifest({
+  source: realInference.map.source,
+  bounds: { ra_min: -65, ra_max: 105, dec_min: -70, dec_max: 10 },
+  layers: Array.from({ length: realInference.map.n_layers }, (_, b) => layer(b)),
+  peaks: [{ ra: 1, dec: -2, kappa: 0.1, snr: 5, bin: 0 }],
+  inference: 'inference.json',
+});
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v));
 
@@ -39,7 +48,7 @@ function minimal() {
 }
 
 describe('parseInference', () => {
-  it('accepts the shipped inference.json and binds it to the shipped manifest', () => {
+  it('accepts the stored inference.json and binds it to a manifest of the same map', () => {
     const inf = parseInference(realInference);
     expect(inf.S8.median).toBeGreaterThan(0.6);
     expect(inf.Omega_m.median).toBeGreaterThan(0.1);

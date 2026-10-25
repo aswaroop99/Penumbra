@@ -39,7 +39,15 @@
         <div class="row"><button class="btn" id="reseed">Next universe</button></div>
       </div>
 
-      <div data-mode="sim box">
+      <div data-mode="box">
+        <h2>Data</h2>
+        <div class="row seg">
+          <button class="btn" data-src="cosmos" aria-pressed="true">COSMOS (real)</button><button class="btn" data-src="sim" aria-pressed="false">Simulation</button>
+        </div>
+        <div class="hint cosmos-only">Click COSMOS again to fly to the strongest structure.</div>
+      </div>
+
+      <div data-mode="sim box" class="cosmo">
         <h2>Cosmology</h2>
         <div class="row">
           <span>S8</span><input id="s8" type="range" min="0.6" max="1.0" step="0.01" value="0.80" /><span class="val" id="s8val"></span>
@@ -53,10 +61,21 @@
 
       <div data-mode="box">
         <h2>Clumps</h2>
-        <div class="row">
+        <div class="row sim-only">
           <span>Volume</span><input id="frac" type="range" min="0.02" max="0.2" step="0.005" value="0.07" /><span class="val" id="fracval"></span>
         </div>
-        <div class="hint">Share of the box drawn as dark-matter clumps (the densest regions).</div>
+        <div class="row cosmos-only">
+          <span>Threshold</span><input id="sig" type="range" min="1.5" max="4.5" step="0.1" value="2.0" /><span class="val" id="sigval"></span>
+        </div>
+        <div class="hint" id="fracnote"></div>
+        <div class="cosmos-only">
+          <h2>Low-confidence structure</h2>
+          <div class="row"><label><input id="faintOn" type="checkbox" checked /> <span class="swatch faint"></span>Show faint haze</label></div>
+          <div class="row">
+            <span>Above</span><input id="faintSig" type="range" min="0.5" max="2.0" step="0.1" value="1.0" /><span class="val" id="faintval"></span>
+          </div>
+          <div class="hint" id="faintnote"></div>
+        </div>
       </div>
 
       <div data-mode="sim box">

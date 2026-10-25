@@ -9,6 +9,8 @@ const DATA_DIR = resolve(ROOT, 'data');
 // manifest.json lives next to the layer files it describes (moved there on the viewer branch).
 // It is still served/emitted at `/manifest.json` as well, so the app's fetch URL is unchanged.
 const MANIFEST = resolve(DATA_DIR, 'manifest.json');
+/** data/ subfolders the built site needs (COSMOS 3D grids for the 3D map tab). */
+const DATA_SUBDIRS = ['cosmos'];
 
 const MIME: Record<string, string> = {
   '.png': 'image/png',
@@ -69,13 +71,16 @@ function penumbraData(): Plugin {
           source: readFileSync(MANIFEST),
         });
       }
-      if (existsSync(DATA_DIR)) {
-        for (const name of readdirSync(DATA_DIR)) {
-          if (!MIME[extname(name)]) continue;
+      // Top-level layer files plus the subfolders the pages load (prototype outputs stay out).
+      for (const sub of ['', ...DATA_SUBDIRS]) {
+        const dir = join(DATA_DIR, sub);
+        if (!existsSync(dir)) continue;
+        for (const name of readdirSync(dir)) {
+          if (!MIME[extname(name)] || !statSync(join(dir, name)).isFile()) continue;
           this.emitFile({
             type: 'asset',
-            fileName: `data/${name}`,
-            source: readFileSync(join(DATA_DIR, name)),
+            fileName: sub ? `data/${sub}/${name}` : `data/${name}`,
+            source: readFileSync(join(dir, name)),
           });
         }
       }
