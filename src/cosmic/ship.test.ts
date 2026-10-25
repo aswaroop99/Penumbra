@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { forwardOf, orientation, stepFlight, type FlightInput, type FlightState } from './ship';
+import { forwardOf, headingDeg, orientation, stepFlight, type FlightInput, type FlightState } from './ship';
 
 const state = (): FlightState => ({
   pos: new THREE.Vector3(),
@@ -80,6 +80,12 @@ describe('ship flight model', () => {
     run(s, { ...idle, roll: 1 }, 0.6);
     expect(axis(s, 0, 1, 0).z).toBeGreaterThan(0.3);
     expect(axis(s, 1, 0, 0).x).toBeCloseTo(1);
+  });
+
+  it('reports heading in degrees, increasing with left turns', () => {
+    expect(headingDeg(new THREE.Vector3(1, 0, 0))).toBe(0);
+    expect(headingDeg(new THREE.Vector3(0, 0, -1))).toBeCloseTo(90);
+    expect(headingDeg(new THREE.Vector3(0, 0, 1))).toBeCloseTo(270);
   });
 
   it('stays inside the bounds and loses speed against a wall', () => {

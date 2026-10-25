@@ -27,9 +27,19 @@ export interface ShipWorld {
   dust?: boolean;
   /** HTML for the flight readout at a world position, e.g. the redshift there. */
   describe?(pos: THREE.Vector3): string;
+  /** Named directions drawn on the orientation globe, e.g. toward Earth. */
+  compass?: CompassMark[];
 }
 
 export type ShipCamera = 'chase' | 'cockpit';
+
+export interface CompassMark {
+  /** World direction (need not be normalised). */
+  dir: [number, number, number];
+  label: string;
+  /** Highlight colour, e.g. for Earth. */
+  color?: string;
+}
 
 export interface ShipRig {
   readonly active: boolean;
@@ -301,6 +311,135 @@ function buildHud() {
   };
 }
 
+// ------------------------------------------------------- orientation globe
+
+/** Heading of a world direction, degrees 0..360 (0 = +X, 90 = −Z, matching a left turn). */
+export function headingDeg(d: THREE.Vector3): number {
+  return (THREE.MathUtils.radToDeg(Math.atan2(-d.z, d.x)) + 360) % 360;
+}
+
+/**
+ * A small attitude ball: the world's directions painted on a sphere, seen from the ship.
+ * The centre is where the nose points; the top half is world +Y ("up"), the bottom half −Y,
+ * with a grid every 30° and labelled directions. Drawn per pixel on a 2D canvas.
+ */
+function buildNavball() {
+  const wrap = document.createElement('div');
+  wrap.className = 'ship-nav';
+  wrap.hidden = true;
+  wrap.setAttribute('aria-hidden', 'true');
+  const canvas = document.createElement('canvas');
+  const caption = document.createElement('div');
+  caption.className = 'ship-nav-read';
+  wrap.append(canvas, caption);
+  document.body.append(wrap);
+  const g = canvas.getContext('2d')!;
+  let img: ImageData | null = null;
+  let lastCaption = '';
+  const F = new THREE.Vector3();
+  const U = new THREE.Vector3();
+  const Rt = new THREE.Vector3();
+  const d = new THREE.Vector3();
+  const STEP = Math.PI / 6;
+  const SKY = [58, 95, 176];
+  const GROUND = [52, 40, 82];
+  const LINE = 0.028;
+
+  function size() {
+    const css = canvas.clientWidth || 92;
+    const px = Math.round(css * Math.min(devicePixelRatio, 2));
+    if (canvas.width !== px) {
+      canvas.width = canvas.height = px;
+      img = g.createImageData(px, px);
+    }
+    return px;
+  }
+
+  function draw(q: THREE.Quaternion, marks: CompassMark[] = []) {
+    const N = size();
+    const data = img!.data;
+    const c = N / 2;
+    const R = c - 1;
+    F.set(1, 0, 0).applyQuaternion(q);
+    U.set(0, 1, 0).applyQuaternion(q);
+    Rt.set(0, 0, 1).applyQuaternion(q);
+    for (let py = 0; py < N; py++) {
+      for (let px = 0; px < N; px++) {
+        const i = 4 * (px + N * py);
+        const sx = (px + 0.5 - c) / R;
+        const sy = (py + 0.5 - c) / R;
+        const rr = sx * sx + sy * sy;
+        if (rr >= 1) {
+          data[i + 3] = 0;
+          continue;
+        }
+        const f = Math.sqrt(1 - rr);
+        // Screen right = ship right (+Z), screen up = ship up (+Y), centre = nose (+X).
+        const dx = F.x * f + U.x * -sy + Rt.x * sx;
+        const dy = F.y * f + U.y * -sy + Rt.y * sx;
+        const dz = F.z * f + U.z * -sy + Rt.z * sx;
+        const lat = Math.asin(Math.max(-1, Math.min(1, dy)));
+        const lon = Math.atan2(-dz, dx);
+        const latOff = Math.abs(lat - Math.round(lat / STEP) * STEP);
+        const lonOff = Math.abs(lon - Math.round(lon / STEP) * STEP) * Math.cos(lat);
+        const base = dy >= 0 ? SKY : GROUND;
+        let line = 0;
+        if (Math.abs(lat) < LINE * 1.6) line = 1;
+        else if (latOff < LINE || lonOff < LINE) line = 0.35;
+        const shade = 0.5 + 0.5 * f;
+        for (let k = 0; k < 3; k++) data[i + k] = (base[k] + (230 - base[k]) * line) * shade;
+        data[i + 3] = 255 * Math.min(1, (1 - Math.sqrt(rr)) * R * 1.5) * 0.92;
+      }
+    }
+    g.putImageData(img!, 0, 0);
+
+    const s = N / 92;
+    g.font = `600 ${9.5 * s}px system-ui, sans-serif`;
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    for (const m of marks) {
+      d.set(...m.dir).normalize();
+      const f = d.dot(F);
+      if (f < 0.12) continue;
+      const x = c + d.dot(Rt) * R;
+      const y = c - d.dot(U) * R;
+      g.globalAlpha = Math.min(1, (f - 0.12) * 4);
+      g.fillStyle = 'rgba(4, 3, 11, 0.55)';
+      const w = g.measureText(m.label).width + 6 * s;
+      g.fillRect(x - w / 2, y - 6.5 * s, w, 13 * s);
+      g.fillStyle = m.color ?? '#e8ecff';
+      g.fillText(m.label, x, y + 0.5 * s);
+    }
+    g.globalAlpha = 1;
+    // Fixed ship symbol at the centre: where the nose points.
+    g.strokeStyle = '#ffb36b';
+    g.lineWidth = 2 * s;
+    g.lineCap = 'round';
+    g.beginPath();
+    g.moveTo(c - 14 * s, c);
+    g.lineTo(c - 6 * s, c);
+    g.lineTo(c - 3 * s, c + 4 * s);
+    g.lineTo(c, c);
+    g.lineTo(c + 3 * s, c + 4 * s);
+    g.lineTo(c + 6 * s, c);
+    g.lineTo(c + 14 * s, c);
+    g.stroke();
+    g.strokeStyle = 'rgba(160, 190, 255, 0.35)';
+    g.lineWidth = 1 * s;
+    g.beginPath();
+    g.arc(c, c, R - 0.5 * s, 0, Math.PI * 2);
+    g.stroke();
+
+    const text = `HDG ${Math.round(headingDeg(F)).toString().padStart(3, '0')}° · ${lat0(F)}`;
+    if (text !== lastCaption) caption.textContent = lastCaption = text;
+  }
+  const lat0 = (f: THREE.Vector3) => {
+    const p = Math.round(THREE.MathUtils.radToDeg(Math.asin(THREE.MathUtils.clamp(f.y, -1, 1))));
+    return `${p >= 0 ? '▲' : '▼'} ${Math.abs(p)}°`;
+  };
+  return { wrap, draw };
+}
+
 const KEYMAP: Record<string, keyof typeof NO_KEYS> = {
   ArrowUp: 'fwd',
   KeyW: 'fwd',
@@ -337,6 +476,14 @@ export function createShipRig(opts: ShipOptions): ShipRig {
   dust.visible = false;
   scene.add(dust);
   const ui = buildHud();
+  const nav = buildNavball();
+  // On narrower screens the flight panel sits in the bottom-right corner, so stack the globe above it.
+  const narrow = matchMedia('(max-width: 1100px)');
+  const placeNav = () => {
+    nav.wrap.style.bottom = narrow.matches && !ui.hud.hidden ? `${ui.hud.offsetHeight + 24}px` : '';
+  };
+  new ResizeObserver(placeNav).observe(ui.hud);
+  narrow.addEventListener('change', placeNav);
 
   let world: ShipWorld | null = null;
   let view: ShipCamera = 'chase';
@@ -529,7 +676,8 @@ export function createShipRig(opts: ShipOptions): ShipRig {
       listen(true);
       syncCamButton();
       snapCamera();
-      ui.hud.hidden = false;
+      ui.hud.hidden = nav.wrap.hidden = false;
+      placeNav();
       document.body.dataset.ship = 'on';
       last = performance.now();
       opts.onEnter?.();
@@ -546,7 +694,7 @@ export function createShipRig(opts: ShipOptions): ShipRig {
       Object.assign(keys, NO_KEYS);
       steer = null;
       ship.visible = dust.visible = false;
-      ui.hud.hidden = ui.reticle.hidden = true;
+      ui.hud.hidden = ui.reticle.hidden = nav.wrap.hidden = true;
       delete document.body.dataset.ship;
       if (saved) {
         camera.position.copy(saved.pos);
@@ -581,6 +729,7 @@ export function createShipRig(opts: ShipOptions): ShipRig {
       updateCamera(dt);
       (dust.material as THREE.ShaderMaterial).uniforms.uCenter.value.copy(camera.position);
       updateHud();
+      nav.draw(st.quat, world.compass);
     },
   };
   return rig;

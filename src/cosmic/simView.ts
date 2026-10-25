@@ -256,6 +256,14 @@ export function createSimView(ctx: Ctx): View {
       size: 2.4,
       speed: 22,
       dust: false,
+      compass: [
+        { dir: [1, 0, 0], label: '+x' },
+        { dir: [-1, 0, 0], label: '−x' },
+        { dir: [0, 1, 0], label: '+y' },
+        { dir: [0, -1, 0], label: '−y' },
+        { dir: [0, 0, 1], label: '+z' },
+        { dir: [0, 0, -1], label: '−z' },
+      ],
       describe: () =>
         `<b>Simulated universe</b>A periodic box ${(L / H) | 0} million parsecs wide: fly out one side and you come back in the other. ` +
         'Every point in the box is shown at the same cosmic time (use the redshift slider).',

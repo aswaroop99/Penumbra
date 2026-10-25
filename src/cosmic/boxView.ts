@@ -412,6 +412,15 @@ export function createBoxView(ctx: Ctx): View {
       bounds: new THREE.Box3(new THREE.Vector3(-HW - 1.6, -f.hy - m, -f.hz - m), new THREE.Vector3(HW + 1, f.hy + m, f.hz + m)),
       fog: new THREE.FogExp2(0x0a0f33, 0.13),
       describe: describeAt,
+      // Box axes: +X away from Earth, +Y north (declination), −Z east (right ascension increases).
+      compass: [
+        { dir: [-1, 0, 0], label: 'Earth', color: '#7ee0a3' },
+        { dir: [1, 0, 0], label: 'Deeper', color: '#ffc46b' },
+        { dir: [0, 1, 0], label: 'N' },
+        { dir: [0, -1, 0], label: 'S' },
+        { dir: [0, 0, -1], label: 'E' },
+        { dir: [0, 0, 1], label: 'W' },
+      ],
     };
   }
 
