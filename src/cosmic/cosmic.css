@@ -238,3 +238,163 @@ body[data-ship='on'] #caption { display: none; }
   .ship-keys { display: none; }
   .ship-nav canvas { width: 72px; height: 72px; }
 }
+
+/* =====================================================================
+   Bridge console theme (Figma "D / Landing (Bridge console)", node 41:755)
+   UI panels only: header / mode tabs, #panel, #collab, buttons, sliders,
+   badges and caption panels. The three.js canvas and labels are untouched.
+   Tokens live in src/styles/bridge-tokens.css (linked from index.html).
+   ===================================================================== */
+:root {
+  --panel: var(--br-panel-glass);
+  --line: rgba(192, 57, 43, 0.45);
+  --text: var(--br-ice);
+  --muted: var(--br-muted);
+  --accent: var(--br-ice-2);
+  --danger: #FF8A7A;
+  /* corner cuts: top-right + bottom-left */
+  --br-clip: polygon(0 0, calc(100% - var(--br-chamfer)) 0, 100% var(--br-chamfer), 100% 100%, var(--br-chamfer) 100%, 0 calc(100% - var(--br-chamfer)));
+  --br-clip-btn: polygon(0 0, 100% 0, 100% calc(100% - var(--br-chamfer-btn)), calc(100% - var(--br-chamfer-btn)) 100%, 0 100%);
+  /* diagonal edge line drawn along a cut corner (isoline of a square "to top right" gradient) */
+  --br-cut-line: linear-gradient(to top right, transparent calc(50% - 0.7px), var(--br-red-dim) calc(50% - 0.7px), var(--br-red-dim) calc(50% + 0.7px), transparent calc(50% + 0.7px));
+  --br-ice-h: linear-gradient(var(--br-ice), var(--br-ice));
+}
+html, body { background: var(--br-bg); font-family: var(--br-font-body); font-size: 14px; }
+
+/* ---- panel shell: chamfer, double outline, ice L-brackets ---- */
+#panel, #collab, .ship-hud, #source, #busy {
+  border: var(--br-stroke) solid var(--br-red-dim);
+  border-radius: 0;
+  clip-path: var(--br-clip);
+  outline: var(--br-stroke) solid rgba(192, 57, 43, 0.55);
+  outline-offset: calc(-1 * (var(--br-inset) + var(--br-stroke)));
+  /* backgrounds use attachment "scroll", so brackets stay on the box while the content scrolls */
+  background:
+    var(--br-ice-h) left top / var(--br-bracket) var(--br-bracket-w) no-repeat,
+    var(--br-ice-h) left top / var(--br-bracket-w) var(--br-bracket) no-repeat,
+    var(--br-ice-h) right bottom / var(--br-bracket) var(--br-bracket-w) no-repeat,
+    var(--br-ice-h) right bottom / var(--br-bracket-w) var(--br-bracket) no-repeat,
+    var(--br-cut-line) right top / var(--br-chamfer) var(--br-chamfer) no-repeat,
+    var(--br-cut-line) left bottom / var(--br-chamfer) var(--br-chamfer) no-repeat,
+    var(--br-panel-glass);
+}
+#panel, #collab { padding: 16px 18px; }
+#source, #busy { --br-chamfer: 10px; --br-bracket: 12px; outline: none; }
+#source { font-family: var(--br-font-body); font-size: 13px; }
+
+#panel h2, #collab h2 {
+  font-family: var(--br-font-label); font-weight: 500; font-size: 11px; letter-spacing: 0.12em;
+  color: var(--br-ice-2); margin: 16px 0 8px; padding-bottom: 5px;
+  border-bottom: var(--br-stroke) solid var(--br-red-dim);
+}
+#panel h2::before, #collab h2::before {
+  content: ''; width: 6px; height: 6px; background: var(--br-red); flex: none;
+}
+#collab .status { font-family: var(--br-font-mono); letter-spacing: 0.04em; color: var(--br-muted); }
+#collab section + section { border-top: 0; margin-top: 14px; }
+.hint { color: var(--br-muted); font-size: 12.5px; line-height: 1.4; }
+.small { font-size: 13px; }
+.row > span:first-child { font-family: var(--br-font-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--br-ice-2); }
+.val { font-family: var(--br-font-mono); color: var(--br-ice); }
+code { font-family: var(--br-font-mono); background: var(--br-hatch-off); border-radius: 0; }
+
+/* ---- header + mode tabs ---- */
+header {
+  background: linear-gradient(rgba(11, 12, 14, 0.94), rgba(11, 12, 14, 0.72));
+  border-bottom: var(--br-stroke) solid var(--br-red-dim);
+  box-shadow: inset 0 -4px 0 -3px rgba(192, 57, 43, 0.35);
+}
+.brand { font-family: var(--br-font-head); font-weight: 700; font-size: 18px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--br-ice); }
+.brand span { font-family: var(--br-font-label); font-size: 11px; letter-spacing: 0.1em; color: var(--br-muted); font-weight: 400; }
+nav {
+  gap: 2px; padding: 3px; border-radius: 0; background-color: var(--br-panel);
+  border: var(--br-stroke) solid var(--br-red-dim); clip-path: var(--br-clip-btn);
+}
+nav button {
+  border-radius: 0; font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--br-muted); padding: 6px 14px; border: var(--br-stroke) solid transparent;
+}
+nav button:hover { color: var(--br-ice); }
+nav button[aria-selected='true'] {
+  background: var(--br-hatch-off); color: var(--br-ice); font-weight: 500;
+  border-color: var(--br-red); box-shadow: inset 0 -2px 0 var(--br-red);
+}
+header a { font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.06em; color: var(--br-muted); }
+header a:hover { color: var(--br-ice); }
+.room-toggle {
+  border-radius: 0; background-color: var(--br-panel); border: var(--br-stroke) solid var(--br-red-dim);
+  clip-path: var(--br-clip-btn); font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.room-toggle:hover, .room-toggle[aria-expanded='true'] { background-color: var(--br-hatch-off); border-color: var(--br-red); }
+.room-toggle .count { font-family: var(--br-font-mono); color: var(--br-ice-2); }
+
+/* ---- buttons: 10px chamfer bottom-right ---- */
+button.btn, #collab button, .room-toggle, nav {
+  background-image: linear-gradient(to top right, transparent calc(50% - 0.7px), var(--br-red-dim) calc(50% - 0.7px), var(--br-red-dim) calc(50% + 0.7px), transparent calc(50% + 0.7px));
+  background-size: var(--br-chamfer-btn) var(--br-chamfer-btn);
+  background-position: right bottom;
+  background-repeat: no-repeat;
+}
+button.btn, #collab button {
+  font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--br-ice); background-color: transparent; border: var(--br-stroke) solid var(--br-red-dim);
+  border-radius: 0; padding: 7px 14px; clip-path: var(--br-clip-btn);
+}
+button.btn:hover:not(:disabled), #collab button:hover:not(:disabled) { background-color: var(--br-hatch-off); border-color: var(--br-red); }
+button.primary, #collab button.primary { background-color: var(--br-hatch-off); color: var(--br-ice); border-color: var(--br-red); font-weight: 500; }
+button.primary:hover:not(:disabled), #collab button.primary:hover:not(:disabled) { background-color: var(--br-crimson); color: var(--br-ice); }
+button.btn.active, button.btn[aria-pressed='true'], button.btn[aria-pressed='true']:hover {
+  background-color: var(--br-crimson); color: var(--br-ice); border-color: var(--br-red); font-weight: 500;
+}
+#collab button.link { clip-path: none; background-image: none; text-transform: none; letter-spacing: 0; }
+#collab input, #collab textarea, select {
+  font-family: var(--br-font-mono); background: var(--br-panel-raised); color: var(--br-ice);
+  border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0;
+}
+#collab input[type='color'] { background: var(--br-panel-raised); }
+input[type='checkbox'] { accent-color: var(--br-red); }
+:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 1px; }
+
+/* ---- sliders: hatch gauge with ice end cap ---- */
+.row input[type='range'] {
+  -webkit-appearance: none; appearance: none; height: 12px; margin: 0; padding: 0;
+  background: transparent; border: var(--br-stroke) solid var(--br-crimson); border-radius: 0;
+  overflow: hidden; cursor: pointer; accent-color: var(--br-red);
+}
+.row input[type='range']::-webkit-slider-runnable-track { height: 100%; background: var(--br-hatch), var(--br-hatch-off); border: 0; }
+.row input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 3px; height: 10px; background: var(--br-ice); border: 0;
+  /* covers the unfilled part of the hatch, so the hatch reads as the filled value */
+  box-shadow: 1003px 0 0 1000px var(--br-hatch-off);
+}
+.row input[type='range']::-moz-range-track { height: 10px; background: var(--br-hatch-off); border: 0; }
+.row input[type='range']::-moz-range-progress { height: 10px; background: var(--br-hatch); }
+.row input[type='range']::-moz-range-thumb { width: 3px; height: 10px; background: var(--br-ice); border: 0; border-radius: 0; }
+.row input[type='range']:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 2px; }
+
+/* ---- badges / chips ---- */
+.badge, .infer-badge, #source b {
+  border-radius: 0; font-family: var(--br-font-label); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.badge { background: var(--br-hatch-off); color: var(--br-ice); border: var(--br-stroke) solid var(--br-red); }
+.infer { border-top: var(--br-stroke) solid var(--br-red-dim); }
+.infer-stat .num { font-family: var(--br-font-mono); font-weight: 400; }
+.track { border-radius: 0; background: var(--br-hatch-off); outline: var(--br-stroke) solid var(--br-red-dim); }
+.track .band, .track .mid { border-radius: 0; }
+.band.ours, .mid.ours { background: var(--br-ice-2); }
+.flags li { border-radius: 0; }
+.flags li.focus { border-color: var(--br-red); }
+#source a { color: var(--br-ice-2); }
+
+/* ---- caption / HUD text panels (text only; positions unchanged) ---- */
+#caption { font-family: var(--br-font-mono); font-size: 11.5px; letter-spacing: 0.03em; color: var(--br-muted); }
+.toast { border-radius: 0; border: var(--br-stroke) solid var(--br-red-dim); clip-path: var(--br-clip-btn); font-family: var(--br-font-label); font-size: 12px; background: var(--br-panel-glass); }
+.toast.error { color: var(--danger); border-color: var(--br-red); }
+.fullscreen-msg { background: var(--br-bg); font-family: var(--br-font-label); letter-spacing: 0.06em; }
+
+/* ---- spaceship HUD bars (panel shell set above) ---- */
+.ship-lbl { font-family: var(--br-font-label); color: var(--br-ice-2); }
+.ship-read b { font-family: var(--br-font-head); letter-spacing: 0.06em; }
+.ship-bar { border-radius: 0; background: var(--br-hatch-off); outline: var(--br-stroke) solid var(--br-crimson); }
+.ship-bar i { border-radius: 0; }
+.ship-cruise { background: var(--br-hatch); }
