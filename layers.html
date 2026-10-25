@@ -13,9 +13,13 @@
   <body>
     <div id="app">
       <header class="pb-bar overlay">
-        <a class="pb-back" href="./" title="Back to the front page">← Front page</a>
-        <div class="pb-brand">Penumbra <span>· Layer viewer</span></div>
-        <nav class="pb-tabs" aria-label="Pages">
+        <a class="pb-brand" href="./" title="Penumbra front page">Penumbra <span>· Cosmic Web</span></a>
+        <nav class="pb-tabs" aria-label="Views">
+          <a class="pb-tab" href="./?tab=sim">Simulate</a>
+          <a class="pb-tab" href="./?tab=box">3D map</a>
+          <a class="pb-tab" href="./?tab=slices">Survey slices</a>
+        </nav>
+        <nav class="pb-tabs pb-pages" aria-label="Pages">
           <a class="pb-tab" href="guide.html">Tour</a>
           <a class="pb-tab" href="web.html">DES filaments</a>
           <a class="pb-tab" href="layers.html" aria-current="page">Layer viewer</a>
@@ -54,6 +58,11 @@
 
       <!-- Collaboration (backed by SpacetimeDB) -->
       <aside id="collab" aria-label="Collaboration" hidden>
+        <div class="row head">
+          <span>Multiplayer</span>
+          <button id="collabCollapse" aria-expanded="true" aria-controls="collabBody">Hide</button>
+        </div>
+        <div id="collabBody">
         <section>
           <h2>Room <span id="dot" class="dot connecting"></span><span id="status" class="status">Connecting…</span></h2>
           <p id="offline" class="small error-text" hidden></p>
@@ -100,6 +109,7 @@
           </form>
           <ul id="flags" class="flags"></ul>
         </section>
+        </div>
       </aside>
 
       <div id="readout">Hover over a layer to read κ</div>

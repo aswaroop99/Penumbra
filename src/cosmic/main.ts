@@ -1,3 +1,4 @@
+import '../styles/topbar.css';
 import './cosmic.css';
 import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from '../collab/client';
 import { initialProfile, saveProfile } from '../collab/profile';
@@ -175,6 +176,19 @@ async function start() {
   toggle.onclick = () => setDrawer(drawer.hasAttribute('hidden'));
   setDrawer(innerWidth >= 1100);
 
+  // Fold the controls panel (sliders etc.) and the multiplayer drawer down to their title bars.
+  const foldable = (btnId: string, bodyId: string) => {
+    const btn = $(btnId);
+    const body = $(bodyId);
+    btn.onclick = () => {
+      body.hidden = !body.hidden;
+      btn.textContent = body.hidden ? 'Show' : 'Hide';
+      btn.setAttribute('aria-expanded', String(!body.hidden));
+    };
+  };
+  foldable('collapse', 'panelBody');
+  foldable('collabCollapse', 'collabBody');
+
   const roomValid = () => cleanRoomName(roomInput.value) !== null;
   roomInput.oninput = () => renderRoomForm();
   $('roomForm').onsubmit = (e) => {
@@ -324,7 +338,6 @@ async function start() {
   function renderCollab() {
     const s = state;
     if (!s) return;
-    $('dot').className = `dot ${s.status}`;
     $('status').textContent = STATUS_LABEL[s.status];
     $('roomLabel').textContent = roomId;
     $('roomCount').textContent = String(s.participants.length);

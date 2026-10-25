@@ -293,6 +293,15 @@ async function start() {
   nameInput.value = profile.name;
   colorInput.value = profile.color;
 
+  // Fold the multiplayer panel down to its title bar.
+  const collabBtn = $('collabCollapse');
+  const collabBody = $('collabBody');
+  collabBtn.onclick = () => {
+    collabBody.hidden = !collabBody.hidden;
+    collabBtn.textContent = collabBody.hidden ? 'Show' : 'Hide';
+    collabBtn.setAttribute('aria-expanded', String(!collabBody.hidden));
+  };
+
   const roomValid = () => cleanRoomName(roomInput.value) !== null;
   roomInput.oninput = () => renderRoomForm();
   $('roomForm').onsubmit = (e) => {
