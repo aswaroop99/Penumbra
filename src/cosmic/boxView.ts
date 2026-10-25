@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
 import type { CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { createShipRig, type ShipWorld } from './ship';
 import { cosmosIndex, loadCosmos3d, type CosmosMeta } from '../lib/cosmos3d';
 import {
   displacementField,
@@ -29,6 +30,8 @@ interface Frame {
   items: THREE.Object3D[];
   hy: number;
   hz: number;
+  zNear: number;
+  zFar: number;
 }
 
 const RES = 128; // marching-cubes grid
@@ -121,7 +124,7 @@ export function createBoxView(ctx: Ctx): View {
     dec.position.set(-HW - 0.2, 0, hz + 0.2);
     items.push(ax, ra, dec);
     items.forEach((o) => base.scene.add(o));
-    frames[name] = { items, hy, hz };
+    frames[name] = { items, hy, hz, zNear, zFar };
   }
   function showFrame(name: BoxSource) {
     for (const [n, f] of Object.entries(frames)) f.items.forEach((o) => (o.visible = n === name));
@@ -310,11 +313,12 @@ export function createBoxView(ctx: Ctx): View {
     document.body.dataset.boxsrc = src;
     if (document.body.dataset.active === 'box') $('caption').textContent = CAPTION[src];
     drawClumps();
+    if (ship.active) ship.setWorld(shipWorld());
   });
 
   let flight: { t0: number; p0: THREE.Vector3; p1: THREE.Vector3; q0: THREE.Vector3; q1: THREE.Vector3 } | null = null;
   function flyToPeak() {
-    if (!peakMarker.visible) return;
+    if (!peakMarker.visible || ship.active) return;
     const t = peakMarker.position.clone();
     flight = {
       t0: performance.now(),
@@ -325,6 +329,99 @@ export function createBoxView(ctx: Ctx): View {
     };
   }
   base.controls.addEventListener('start', () => (flight = null));
+
+  // ---------- spaceship ----------
+  // Works for any source drawn in this box: it only needs the source's frame (size and
+  // redshift range) and grid. Earth sits just in front of the near face, not to scale.
+  const earth = new THREE.Group();
+  earth.add(
+    new THREE.Mesh(new THREE.SphereGeometry(0.2, 32, 20), new THREE.MeshPhongMaterial({ color: 0x2f7dff, emissive: 0x0a2a66, shininess: 30 })),
+    new THREE.Mesh(
+      new THREE.SphereGeometry(0.205, 16, 10, 0, Math.PI * 2, Math.PI * 0.25, Math.PI * 0.35),
+      new THREE.MeshPhongMaterial({ color: 0x46c46a, emissive: 0x0d3318 })
+    )
+  );
+  earth.position.set(-HW - 1.25, -0.4, 0);
+  const earthLabel = label('Earth<small>not to scale</small>');
+  earthLabel.position.set(-HW - 1.25, -0.72, 0);
+  earth.visible = earthLabel.visible = false;
+  base.scene.add(earth, earthLabel);
+  let orbitCam = getCam(base);
+
+  const ship = createShipRig({
+    scene: base.scene,
+    camera: base.camera,
+    controls: base.controls,
+    dom: ctx.renderer.domElement,
+    onInput: () => ctx.interacted(),
+    onEnter: () => {
+      flight = null;
+      earth.visible = earthLabel.visible = true;
+      syncShipButton();
+    },
+    onExit: () => {
+      earth.visible = earthLabel.visible = false;
+      syncShipButton();
+    },
+  });
+  const shipButton = () => $<HTMLButtonElement>('shipBox');
+  const syncShipButton = () => (shipButton().textContent = ship.active ? 'Leave the spaceship' : '🚀 Fly a spaceship from Earth');
+
+  /** Grid value at a world position, or null outside the grid. */
+  function sample(g: BoxGrid | undefined, p: THREE.Vector3): number | null {
+    if (!g) return null;
+    const cell = (v: number, n: number) => Math.floor(((v + HW) * RES) / WORLD - (RES - n) / 2);
+    const X = Math.floor(((p.x + HW) * RES) / WORLD);
+    const Y = cell(p.y, g.NY);
+    const Z = cell(p.z, g.NZ);
+    if (X < 0 || Y < 0 || Z < 0 || X >= g.NX || Y >= g.NY || Z >= g.NZ) return null;
+    return g.get(X, Y, Z);
+  }
+
+  function describeAt(p: THREE.Vector3): string {
+    const f = frames[src]!;
+    const u = (p.x + HW) / WORLD;
+    const z = f.zNear + u * (f.zFar - f.zNear);
+    if (u < 0) return '<b>Leaving Earth</b>The map starts ahead. Distances are squeezed: not to scale.';
+    if (u > 1) return `<b>Past the far edge</b>The map ends at z ≈ ${f.zFar.toFixed(2)}. Turn around to fly back.`;
+    const when = `<b>${lookbackGyr(z, 0.315).toFixed(1)} billion years ago</b>Redshift z ≈ ${z.toFixed(2)}: you're seeing this region as it was when its light left.`;
+    const v = sample(grids[src], p);
+    let here: string;
+    if (v === null) here = 'Outside the mapped patch of sky.';
+    else if (src === 'cosmos') {
+      const haze = sample(grids.cosmosFaint, p);
+      const faintT = Math.min(+$<HTMLInputElement>('faintSig').value, threshold - 0.1);
+      if (v >= threshold) here = `Inside a clump: lens detected at ${v.toFixed(1)}σ.`;
+      else if (mcFaint.visible && haze !== null && haze >= faintT)
+        here = `In the faint haze (${haze.toFixed(1)}σ): low confidence, may be noise.`;
+      else here = 'Nothing detected here.';
+    } else {
+      here = v >= threshold ? 'Inside a simulated dark-matter clump.' : 'Between simulated clumps.';
+    }
+    return `${when}<br>${here}`;
+  }
+
+  function shipWorld(): ShipWorld {
+    const f = frames[src]!;
+    const m = 0.5;
+    return {
+      start: new THREE.Vector3(-HW - 0.85, 0, 0),
+      yaw: 0,
+      size: 0.12,
+      speed: 0.7,
+      bounds: new THREE.Box3(new THREE.Vector3(-HW - 1.6, -f.hy - m, -f.hz - m), new THREE.Vector3(HW + 1, f.hy + m, f.hz + m)),
+      fog: new THREE.FogExp2(0x0a0f33, 0.13),
+      describe: describeAt,
+    };
+  }
+
+  shipButton().onclick = () => {
+    if (ship.active) return ship.exit();
+    if (!frames[src] || !grids[src]) return;
+    orbitCam = getCam(base);
+    ship.enter(shipWorld());
+  };
+  syncShipButton();
 
   document.querySelectorAll<HTMLElement>('[data-src]').forEach((b) => {
     b.onclick = async () => {
@@ -351,6 +448,7 @@ export function createBoxView(ctx: Ctx): View {
       await setSource(src);
     },
     tick(now) {
+      ship.tick(now);
       if (!flight) return;
       const k = Math.min(1, (now - flight.t0) / 1200);
       const e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
@@ -359,6 +457,8 @@ export function createBoxView(ctx: Ctx): View {
       if (k === 1) flight = null;
     },
     onShow: () => {},
+    onHide: () => ship.exit(),
+    orbitEnabled: () => !ship.active,
     hud: () =>
       src === 'cosmos'
         ? [
@@ -373,11 +473,11 @@ export function createBoxView(ctx: Ctx): View {
       src === 'cosmos' && cosmosMeta
         ? `<b class="real">Survey data</b>Hubble COSMOS galaxy shapes (Leauthaud et al. 2007${cosmosMeta.sourceUrl ? `, <a href="${cosmosMeta.sourceUrl}" target="_blank" rel="noopener">IRSA</a>` : ''}), ${cosmosMeta.nGalaxies.toLocaleString()} galaxies. Our 3D rebuild, not the published map.`
         : '<b class="sim">Simulated</b>Built from the in-browser simulation, not observations. Style after Massey et al. 2007 (<a href="https://science.nasa.gov/mission/hubble/science/science-highlights/mapping-the-cosmic-web/" target="_blank" rel="noopener">NASA</a>).',
-    // While flying to the peak the orbit target moves, so don't publish mid-flight.
-    cameraShared: () => !flight,
+    // While flying to the peak or piloting the ship, the camera isn't an orbit view.
+    cameraShared: () => !flight && !ship.active,
     getView: (): CosmicView => ({
       tab: 'box',
-      cam: getCam(base),
+      cam: ship.active ? orbitCam : getCam(base),
       s8: ctx.params.s8,
       om: ctx.params.om,
       source: src,

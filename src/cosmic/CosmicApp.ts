@@ -106,6 +106,7 @@ export class CosmicApp {
     const token = ++this.showToken;
     const next = this.views[tab];
     if (this.active) {
+      if (this.active !== next) this.active.onHide?.();
       this.active.controls.enabled = false;
       this.active.labels.domElement.style.display = 'none';
     }
@@ -116,7 +117,7 @@ export class CosmicApp {
     document
       .querySelectorAll<HTMLElement>('nav button')
       .forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === tab)));
-    next.controls.enabled = !(tab === 'sim' && $<HTMLInputElement>('fly').checked);
+    next.controls.enabled = next.orbitEnabled?.() ?? true;
     next.labels.domElement.style.display = '';
     $('caption').textContent = next.caption;
     $('cursorHint').hidden = !(this.annotateMode && tab === 'slices');

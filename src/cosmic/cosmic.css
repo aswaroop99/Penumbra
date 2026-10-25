@@ -188,6 +188,34 @@ body.collab-open #hud { right: 312px; max-width: min(380px, calc(100% - 640px));
 .lbl small { display: block; color: var(--muted); font-size: 10.5px; }
 .axis { color: var(--muted); font-size: 11px; letter-spacing: 0.04em; white-space: nowrap; }
 
+/* ---- spaceship (src/cosmic/ship.ts) ---- */
+body[data-ship='on'] #caption { display: none; }
+.ship-hud {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); width: min(560px, calc(100% - 632px));
+  min-width: 340px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 9px 12px;
+  backdrop-filter: blur(8px); z-index: 4; user-select: none;
+}
+.ship-read { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
+.ship-read b { display: block; color: var(--text); font-size: 15px; font-weight: 650; }
+.ship-row { display: flex; align-items: center; gap: 6px; }
+.ship-row .btn { padding: 4px 10px; white-space: nowrap; }
+.ship-lbl { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.ship-bar { position: relative; flex: 1; min-width: 50px; height: 10px; border-radius: 5px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.ship-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 5px; }
+.ship-cruise { background: rgba(106, 168, 255, 0.35); }
+.ship-speed { background: linear-gradient(90deg, #6aa8ff, #ffb36b); height: 4px; top: 3px !important; bottom: auto !important; }
+.ship-speed.reverse { background: var(--danger); }
+.ship-keys { margin-top: 7px; color: var(--muted); font-size: 10.5px; line-height: 1.6; }
+.ship-keys b { color: var(--text); font-weight: 600; }
+.ship-reticle {
+  position: absolute; left: 50%; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; z-index: 2; pointer-events: none;
+  border: 1.5px solid rgba(160, 200, 255, 0.55); border-radius: 50%;
+}
+.ship-reticle::after { content: ''; position: absolute; left: 50%; top: 50%; width: 4px; height: 4px; margin: -2px; border-radius: 50%; background: rgba(200, 225, 255, 0.85); }
+
+@media (max-width: 1100px) {
+  .ship-hud { left: auto; right: 16px; transform: none; width: min(460px, calc(100% - 330px)); min-width: 0; }
+}
 @media (max-width: 1100px) {
   body.collab-open #hud { right: 18px; top: 330px; }
 }
@@ -201,4 +229,7 @@ body.collab-open #hud { right: 312px; max-width: min(380px, calc(100% - 640px));
   #hud .big { font-size: 20px; }
   body.collab-open #hud { display: none; }
   #caption, #busy { display: none !important; }
+  body[data-ship='on'] #panel { display: none; }
+  .ship-hud { left: 16px; right: 16px; width: auto; }
+  .ship-keys { display: none; }
 }

@@ -15,7 +15,7 @@ A browser app that shows dark matter from public weak-lensing data, plus the sci
 ## Repo layout
 | Path | What it is |
 |---|---|
-| `index.html`, `src/cosmic/` | Main app: tabs **Simulate** (`simView.ts`), **3D map** (`boxView.ts`: COSMOS by default, simulation as a toggle), **Survey slices** (`sliceView.ts`). SpacetimeDB rooms |
+| `index.html`, `src/cosmic/` | Main app: tabs **Simulate** (`simView.ts`), **3D map** (`boxView.ts`: COSMOS by default, simulation as a toggle), **Survey slices** (`sliceView.ts`). SpacetimeDB rooms. Drivable spaceship camera (`ship.ts`) on Simulate and 3D map |
 | `layers.html`, `src/layers/`, `src/viewer/` | Sky-sphere layer viewer with the AI map-reading panel (`readerPanel.ts`). Own SpacetimeDB room |
 | `guide.html`, `src/tour/` | Static tour. Team progress lives in `src/tour/team_status.json` |
 | `src/lib/` | Validated loaders with tests: `manifest.ts`, `cosmos3d.ts`, `reader.ts`, `inference.ts`, `sky.ts` |
