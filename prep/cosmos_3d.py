@@ -93,21 +93,32 @@ def kaiser_squires(g1, g2):
     return kE, kB
 
 
-def main():
-    os.makedirs(OUT, exist_ok=True)
+def load_catalog(log=print):
     d = pd.read_csv(CAT, usecols=["ra", "dec", "zphot", "zp2", "gamma1", "gamma2", "weight"])
     n_all = len(d)
     # Drop galaxies with a second photo-z solution (risky redshifts) and keep the usable range.
     d = d[d.zp2.isna() & (d.zphot > SOURCE_EDGES[0]) & (d.zphot < SOURCE_EDGES[-1])].reset_index(drop=True)
-    print(f"{len(d)} of {n_all} galaxies kept")
+    log(f"{len(d)} of {n_all} galaxies kept")
+    return d
 
-    # Flat projection about the field centre. x grows westward so the image has east on the left.
+
+def sky_grid(d):
+    """Flat projection about the field centre, in arcmin. x grows westward so the image has east on the left.
+    Returns (ra0, dec0, x, y, edges). Shared with the mock pipeline so both use the same pixels."""
     ra0, dec0 = d.ra.median(), d.dec.median()
     x = -(d.ra - ra0) * np.cos(np.radians(dec0)) * 60     # arcmin
     y = (d.dec - dec0) * 60
     half = max(np.abs(x).max(), np.abs(y).max()) + 1
     n = int(np.ceil(2 * half / PIX_ARCMIN))
-    edges = np.linspace(-half, half, n + 1)
+    return ra0, dec0, x, y, np.linspace(-half, half, n + 1)
+
+
+def reconstruct(d, signs=None, log=print):
+    """Run the 3D reconstruction on a shear catalog (real or mock).
+    signs: fixed (s1, s2) shear signs; None picks them from the data with the E/B test.
+    Returns (view, faint, meta, extra); extra has the analysis cube for statistics."""
+    # Flat projection about the field centre. x grows westward so the image has east on the left.
+    ra0, dec0, x, y, edges = sky_grid(d)
     hist = lambda v: np.histogram2d(y, x, bins=[edges, edges], weights=v)[0]   # rows = dec (increasing)
     sig = SMOOTH_ARCMIN / PIX_ARCMIN
 
@@ -128,14 +139,14 @@ def main():
     # E mode (a wrong g2 sign leaks it into B), and clusters are positive peaks (fixes overall sign).
     allsel = np.ones(len(d))
     tests = {}
-    for s1, s2 in [(1, 1), (1, -1), (-1, 1), (-1, -1)]:
+    for s1, s2 in ([tuple(signs)] if signs else [(1, 1), (1, -1), (-1, 1), (-1, -1)]):
         kE, kB = slice_kappa(allsel, s1, s2)
         e, b = kE[cover], kB[cover]
         skew = float(np.mean((e - e.mean()) ** 3) / e.std() ** 3)
         tests[(s1, s2)] = (float(e.var() / b.var()), skew)
-        print(f"  signs g1*{s1:+d} g2*{s2:+d}: E/B variance ratio {e.var() / b.var():.2f}, E skewness {skew:+.2f}")
+        log(f"  signs g1*{s1:+d} g2*{s2:+d}: E/B variance ratio {e.var() / b.var():.2f}, E skewness {skew:+.2f}")
     s1, s2 = max(tests, key=lambda k: (round(tests[k][0], 2), tests[k][1]))
-    print(f"using g1*{s1:+d}, g2*{s2:+d}")
+    log(f"using g1*{s1:+d}, g2*{s2:+d}")
 
     # Per source slice: kappa maps, noise level (from the B mode), and lensing efficiency.
     chi_l = np.array([comoving(z) for z in LENS_Z])
@@ -184,14 +195,14 @@ def main():
         xa, ya = ycen[c0 + xi[k]], ycen[r0 + yi[k]]
         peaks.append(dict(ra=round(ra0 - xa / 60 / np.cos(np.radians(dec0)), 4), dec=round(dec0 + ya / 60, 4),
                           z=float(LENS_Z[li[k]]), value=round(float(cube[li[k], yi[k], xi[k]]), 3)))
-    print("strongest 3D peaks:", peaks[:5])
+    log("strongest 3D peaks:", peaks[:5])
     # Sanity check: kappa behind the strongest peak, per source slice. A real lens at z_L shows
     # ~0 for sources in front of it and a rising signal for sources behind it.
     if len(order):
         k0 = order[0]
         prof = [(f"{lo}-{hi}", round(float(K[s, r0 + yi[k0], c0 + xi[k0]]), 4), round(float(np.sqrt(noise[s])), 4))
                 for s, (lo, hi) in enumerate(zip(SOURCE_EDGES[:-1], SOURCE_EDGES[1:]))]
-        print("kappa vs source slice at strongest peak (slice, kappa, noise):", prof)
+        log("kappa vs source slice at strongest peak (slice, kappa, noise):", prof)
 
     # Resample for the viewer: depth (redshift) fastest, then sky x, then sky y.
     z_near, z_far = float(LENS_Z[0] - 0.05), float(LENS_Z[-1] + 0.05)
@@ -219,8 +230,6 @@ def main():
             else:
                 view[j, i] = place_lenses(prof, zc)
                 faint[j, i] = place_lenses(prof, zc, FAINT_Z_WIDTH)
-    view.tofile(os.path.join(OUT, "cosmos_3d.f32.bin"))
-    faint.tofile(os.path.join(OUT, "cosmos_3d_faint.f32.bin"))
 
     meta = dict(
         source="COSMOS HST weak-lensing catalog (Leauthaud et al. 2007), our 3D rebuild",
@@ -246,6 +255,15 @@ def main():
               "likely redshift as a Gaussian of width %.2f in z; the real uncertainty is larger." % Z_WIDTH
               if METHOD == "mf" else "Line-of-sight resolution is poor: structures are smeared along redshift."),
     )
+    extra = dict(cube=cube, inner=inner_c, cover=cov, peak_values=cube[li, yi, xi], peak_planes=LENS_Z[li])
+    return view, faint, meta, extra
+
+
+def main():
+    os.makedirs(OUT, exist_ok=True)
+    view, faint, meta, _ = reconstruct(load_catalog())
+    view.tofile(os.path.join(OUT, "cosmos_3d.f32.bin"))
+    faint.tofile(os.path.join(OUT, "cosmos_3d_faint.f32.bin"))
     with open(os.path.join(OUT, "cosmos_3d.json"), "w") as f:
         json.dump(meta, f, indent=1)
     print(f"wrote {OUT}/cosmos_3d.f32.bin {view.shape} and cosmos_3d.json")

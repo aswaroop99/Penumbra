@@ -57,8 +57,11 @@
   body[data-active="sim"] [data-mode~="sim"],
   body[data-active="box"] [data-mode~="box"],
   body[data-active="slices"] [data-mode~="slices"] { display: block; }
-  body[data-active="box"][data-boxsrc="cosmos"] .cosmo,
-  body[data-boxsrc="cosmos"] .sim-only, body:not([data-boxsrc="cosmos"]) .cosmos-only { display: none; }
+  body[data-active="box"]:not([data-boxsrc="sim"]) .cosmo,
+  body:not([data-boxsrc="sim"]) .sim-only, body[data-boxsrc="sim"] .cosmos-only,
+  body:not([data-boxsrc="compare"]) .compare-only, body[data-boxsrc="compare"] .not-compare { display: none; }
+  .stat { display: flex; justify-content: space-between; gap: 8px; font-variant-numeric: tabular-nums; margin: 3px 0; }
+  .stat b { font-weight: 600; }
 
   #hud { position: absolute; top: 64px; right: 18px; max-width: min(380px, calc(100% - 330px)); text-align: right; pointer-events: none; z-index: 3; }
   #hud .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
@@ -129,7 +132,18 @@
   <div data-mode="box">
     <h2>Data</h2>
     <div class="row seg"><button class="btn" data-src="cosmos" aria-pressed="true">COSMOS (real)</button><button class="btn" data-src="sim" aria-pressed="false">Simulation</button></div>
-    <div class="hint cosmos-only">Click COSMOS again to fly to the strongest structure.</div>
+    <div class="row seg"><button class="btn" data-src="compare" aria-pressed="false">Compare with Planck prediction</button></div>
+    <div class="hint cosmos-only not-compare">Click COSMOS again to fly to the strongest structure.</div>
+    <div class="compare-only">
+      <h2>Planck prediction</h2>
+      <div class="row seg" id="mockPick"></div>
+      <div class="hint">Each mock is a different random universe with Planck's cosmology, seen through the same galaxies, noise and pipeline as the real map.</div>
+      <h2>Clumps above threshold</h2>
+      <div class="stat"><span>Hubble COSMOS (real)</span><b id="nReal">–</b></div>
+      <div class="stat"><span>Planck mock (shown)</span><b id="nMock">–</b></div>
+      <div class="stat"><span>All 3 mocks</span><b id="nMocks">–</b></div>
+      <div class="hint">Separate 3D peaks at or above the threshold. Three mocks are too few to call a difference significant.</div>
+    </div>
   </div>
 
   <div data-mode="sim box" class="cosmo">
@@ -535,28 +549,70 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   mcFaint.renderOrder = 1;
   box.scene.add(mcFaint);
 
+  // Planck-cosmology mock (compare mode): same look, warm colour so the two boxes are easy to tell apart.
+  const mockMaterial = new THREE.MeshPhongMaterial({ color: 0xffa64d, emissive: 0x5a2400, specular: 0xffe0bc,
+    shininess: 60, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: true });
+  const mcB = new MarchingCubes(RES, mockMaterial, false, false, 400000);
+  mcB.scale.setScalar(WORLD / 2);
+  const mcBFaint = new MarchingCubes(RES, new THREE.MeshBasicMaterial({ color: 0xffc9a0, transparent: true,
+    opacity: 0.11, side: THREE.DoubleSide, depthWrite: false }), false, false, 600000);
+  mcBFaint.scale.setScalar(WORLD / 2);
+  mcBFaint.renderOrder = 1;
+  box.scene.add(mcB, mcBFaint);
+  let mockMeta = null, mockIdx = 0, mockFailed = false;
+
   // Frame (wireframe box + axis labels) for one source. Labels are toggled one by one,
   // because CSS2DRenderer ignores a parent's visibility.
   const frames = {};
-  function makeFrame(name, NY, NZ, zNear, zFar, ticks) {
+  function makeFrame(name, NY, NZ, zNear, zFar, ticks, { yOff = 0, title = '', axes = true } = {}) {
     const hy = WORLD * NY / RES / 2, hz = WORLD * NZ / RES / 2, items = [];
-    items.push(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(WORLD, 2 * hy, 2 * hz)),
-      new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.55 })));
-    for (const z of ticks) {
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(WORLD, 2 * hy, 2 * hz)),
+      new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.55 }));
+    edges.position.y = yOff;
+    items.push(edges);
+    if (title) { const t = label(title); t.position.set(hw - 1.6, yOff + hy + 0.35, -hz); items.push(t); }
+    for (const z of axes ? ticks : []) {
       const l = label(`${lookbackGyr(z, 0.315).toFixed(1)} billion years ago<small>z = ${z.toFixed(2)}</small>`);
-      l.position.set(-hw + WORLD * (z - zNear) / (zFar - zNear), -hy - 0.45, hz);
+      l.position.set(-hw + WORLD * (z - zNear) / (zFar - zNear), yOff - hy - 0.45, hz);
       items.push(l);
     }
-    const ax = label('<span class="axis">nearer · more recent  ←  distance from Earth  →  farther · earlier</span>');
-    ax.position.set(0, -hy - 1.6, hz); items.push(ax);
-    const ra = label('<span class="axis">right ascension</span>'); ra.position.set(-hw - 0.2, -hy, 0); items.push(ra);
-    const dec = label('<span class="axis">declination</span>'); dec.position.set(-hw - 0.2, 0, hz + 0.2); items.push(dec);
+    if (axes) {
+      const ax = label('<span class="axis">nearer · more recent  ←  distance from Earth  →  farther · earlier</span>');
+      ax.position.set(0, yOff - hy - 1.6, hz); items.push(ax);
+      const ra = label('<span class="axis">right ascension</span>'); ra.position.set(-hw - 0.2, yOff - hy, 0); items.push(ra);
+      const dec = label('<span class="axis">declination</span>'); dec.position.set(-hw - 0.2, yOff, hz + 0.2); items.push(dec);
+    }
     items.forEach(o => box.scene.add(o));
-    frames[name] = { items, hy, hz, zNear, zFar };
+    frames[name] = { items, hy, hz, zNear, zFar, yOff };
   }
-  function showFrame(name) {
-    for (const [n, f] of Object.entries(frames)) f.items.forEach(o => { o.visible = n === name; });
+  function showFrame(...names) {
+    for (const [n, f] of Object.entries(frames)) f.items.forEach(o => { o.visible = names.includes(n); });
   }
+  // Copy a source grid into a marching-cubes field (centred in the RES cube) and polygonise.
+  function fill(m, g, iso) {
+    m.reset();
+    const f = m.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
+    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
+      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
+    }
+    m.isolation = iso;
+    m.update();
+  }
+  // Values of the separate 3D peaks (local maxima over the 26 neighbours) in a COSMOS-layout grid.
+  function peakValues(g) {
+    const out = [], { NX, NY, NZ } = g;
+    for (let Y = 1; Y < NY - 1; Y++) for (let Z = 1; Z < NZ - 1; Z++) for (let X = 2; X < NX - 2; X++) {
+      const v = g.get(X, Y, Z);
+      if (v < 1) continue;
+      let top = true;
+      for (let a = -1; a <= 1 && top; a++) for (let b = -1; b <= 1 && top; b++) for (let c = -1; c <= 1; c++) {
+        if ((a || b || c) && g.get(X + c, Y + a, Z + b) > v) { top = false; break; }
+      }
+      if (top) out.push(v);
+    }
+    return out;
+  }
+  const compareOffset = () => frames.cmpTop ? frames.cmpTop.yOff : 0;
 
   box.camera.position.set(-4.2, 5, 12.5);
   if (innerWidth < innerHeight) box.camera.position.multiplyScalar(1.8);   // fit the long box on portrait screens
@@ -566,43 +622,51 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
 
   let threshold = 0;
   function drawClumps() {
-    const g = grids[src];
+    const real = src !== 'sim', g = grids[real ? 'cosmos' : 'sim'];
     if (!g) return;
     const frac = +$('frac').value;
-    if (src === 'cosmos') {
+    if (real) {
       threshold = +$('sig').value;
     } else {
       const sorted = Float32Array.from(g.data).sort();
       threshold = Math.max(0.05, sorted[Math.floor((1 - frac) * (sorted.length - 1))]);
     }
-    mc.reset();
-    const f = mc.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
-    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
-      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
-    }
-    mc.isolation = threshold;
-    mc.update();
+    const off = src === 'compare' ? compareOffset() : 0;
+    mc.position.y = mcFaint.position.y = off;
+    mcB.position.y = mcBFaint.position.y = -off;
+    fill(mc, g, threshold);
+    const gm = grids['mock' + mockIdx];
+    mcB.visible = src === 'compare' && !!gm;
+    if (mcB.visible) fill(mcB, gm, threshold);
     $('fracval').textContent = `${Math.round(frac * 100)}%`;
     $('sigval').textContent = `${threshold.toFixed(1)}σ`;
-    $('fracnote').textContent = src === 'cosmos'
+    $('fracnote').textContent = real
       ? `Solid: lens detections above ${threshold.toFixed(1)}σ.`
       : 'Share of the box drawn as dark-matter clumps (the densest regions).';
+    if (src === 'compare') updateStats();
     drawFaint();
   }
 
+  function updateStats() {
+    const n = (vals) => vals.filter(v => v >= threshold).length;
+    const real = grids.cosmos, mocks = (mockMeta?.files || []).map((_, i) => grids['mock' + i]).filter(Boolean);
+    real.peaks ??= peakValues(real);
+    mocks.forEach(g => { g.peaks ??= peakValues(g); });
+    $('nReal').textContent = n(real.peaks);
+    $('nMock').textContent = grids['mock' + mockIdx] ? n(grids['mock' + mockIdx].peaks) : '–';
+    $('nMocks').textContent = mocks.length ? mocks.map(g => n(g.peaks)).join(' · ') : '–';
+  }
+
   function drawFaint() {
-    const g = grids.cosmosFaint;
-    mcFaint.visible = src === 'cosmos' && !!g && $('faintOn').checked;
+    const g = grids.cosmosFaint, gm = grids['mockFaint' + mockIdx];
+    const on = $('faintOn').checked;
+    mcFaint.visible = src !== 'sim' && !!g && on;
+    mcBFaint.visible = src === 'compare' && !!gm && on;
     if (!mcFaint.visible) return;
     // Keep the haze strictly below the clump threshold so the two layers never claim the same level.
     const t = Math.min(+$('faintSig').value, threshold - 0.1);
-    mcFaint.reset();
-    const f = mcFaint.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
-    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
-      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
-    }
-    mcFaint.isolation = t;
-    mcFaint.update();
+    fill(mcFaint, g, t);
+    if (mcBFaint.visible) fill(mcBFaint, gm, t);
     $('faintval').textContent = `${t.toFixed(1)}σ`;
     $('faintnote').textContent = `Haze: signal from ${t.toFixed(1)}σ to ${threshold.toFixed(1)}σ. Not detections. ` +
       'At this level much of it is random galaxy-shape noise, and it smears along the distance axis. ' +
@@ -662,7 +726,14 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
         if (fd.length === data.length) grids.cosmosFaint = { ...grids.cosmos, data: fd, get: (X, Y, Z) => fd[X + nd * (Z + nx * Y)] };
       } catch (e) { console.warn('COSMOS faint layer not found; rerun prep/cosmos_3d.py', e); }
       const { z_near, z_far } = cosmosMeta, step = z_far - z_near;
-      makeFrame('cosmos', ny, nx, z_near, z_far, [0.1, 0.4, 0.7, 1.0, 1.3].filter(z => z > z_near && z < z_far + 1e-6));
+      const ticks = [0.1, 0.4, 0.7, 1.0, 1.3].filter(z => z > z_near && z < z_far + 1e-6);
+      makeFrame('cosmos', ny, nx, z_near, z_far, ticks);
+      // Compare mode: real map on top, Planck mock below, same axes.
+      const off = WORLD * ny / RES / 2 + 0.8;
+      makeFrame('cmpTop', ny, nx, z_near, z_far, ticks, { yOff: off, axes: false,
+        title: '<span style="color:#8fb4ff">■</span> Hubble COSMOS: real data' });
+      makeFrame('cmpBot', ny, nx, z_near, z_far, ticks, { yOff: -off,
+        title: '<span style="color:#ffa64d">■</span> Planck prediction: simulated' });
       // Mark the strongest structure.
       const p = cosmosMeta.peaks[0], b = cosmosMeta.bounds, f = frames.cosmos;
       peakMarker.position.set(-hw + WORLD * (p.z - z_near) / step,
@@ -677,14 +748,59 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
     }
   }
 
+  // ---------- Planck-cosmology mocks (data/planck_mock, made by prep/planck_mock.py) ----------
+  async function loadMocks() {
+    try {
+      mockMeta = await (await getData('planck_mock/planck_mock.json')).json();
+      const [ny, nx, nd] = cosmosMeta.shape, n = ny * nx * nd;
+      await Promise.all(mockMeta.files.map(async (file, i) => {
+        const data = new Float32Array(await (await getData('planck_mock/' + file)).arrayBuffer());
+        if (data.length !== n) throw new Error(`${file}: expected ${n} values, got ${data.length}`);
+        grids['mock' + i] = { ...grids.cosmos, data, get: (X, Y, Z) => data[X + nd * (Z + nx * Y)], peaks: undefined };
+        const ff = mockMeta.faint_files?.[i];
+        if (ff) {
+          const fd = new Float32Array(await (await getData('planck_mock/' + ff)).arrayBuffer());
+          if (fd.length === n) grids['mockFaint' + i] = { ...grids.cosmos, data: fd, get: (X, Y, Z) => fd[X + nd * (Z + nx * Y)] };
+        }
+      }));
+      const pick = $('mockPick');
+      pick.innerHTML = '';
+      mockMeta.files.forEach((_, i) => {
+        const b = document.createElement('button');
+        b.className = 'btn'; b.textContent = `Mock ${i + 1}`;
+        b.setAttribute('aria-pressed', String(i === mockIdx));
+        b.onclick = () => {
+          mockIdx = i;
+          pick.querySelectorAll('button').forEach((x, j) => x.setAttribute('aria-pressed', String(j === i)));
+          drawClumps();
+        };
+        pick.appendChild(b);
+      });
+    } catch (e) {
+      mockFailed = true;
+      console.warn('Planck mocks not found; run prep/planck_mock.py', e);
+    }
+  }
+
   async function setSource(name) {
-    if (name === 'cosmos' && !grids.cosmos && !cosmosFailed) { busy(true); await loadCosmos(); busy(false); }
-    if (name === 'cosmos' && cosmosFailed) name = 'sim';
+    const wasCompare = src === 'compare';
+    if (name !== 'sim' && !grids.cosmos && !cosmosFailed) { busy(true); await loadCosmos(); busy(false); }
+    if (name === 'compare' && !cosmosFailed && !mockMeta && !mockFailed) { busy(true); await loadMocks(); busy(false); }
+    if (name === 'compare' && mockFailed) name = 'cosmos';
+    if (name !== 'sim' && cosmosFailed) name = 'sim';
     src = name;
     document.querySelectorAll('[data-src]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.src === src)));
     if (src === 'sim' && !grids.sim) await buildSim();
-    showFrame(src);
-    peakMarker.visible = peakLabel.visible = src === 'cosmos';
+    if (src === 'compare') showFrame('cmpTop', 'cmpBot'); else showFrame(src);
+    // Keep the strongest-structure marker on the real map, wherever that box sits.
+    if (frames.cosmos) {
+      const dy = (src === 'compare' ? compareOffset() : 0) - (peakMarker.userData.dy || 0);
+      peakMarker.position.y += dy; peakLabel.position.y += dy;
+      peakMarker.userData.dy = src === 'compare' ? compareOffset() : 0;
+    }
+    if (src === 'compare' && !wasCompare) flyTo(new THREE.Vector3(-6, 3.6, 16.5), new THREE.Vector3(-1.4, -0.4, 0));
+    else if (wasCompare && src !== 'compare') flyTo(new THREE.Vector3(-4.2, 5, 12.5), new THREE.Vector3(0, -0.3, 0));
+    peakMarker.visible = peakLabel.visible = src !== 'sim';
     document.body.dataset.boxsrc = src;
     if (document.body.dataset.active === 'box') $('caption').textContent = box.caption;
     drawClumps();
@@ -692,6 +808,9 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   box.rebuild = () => setSource(src);   // first show
   box.onCosmo = async () => { grids.sim = null; if (src === 'sim') { await buildSim(); drawClumps(); } };
   let flight = null;
+  function flyTo(p1, q1) {
+    flight = { t0: performance.now(), p0: box.camera.position.clone(), p1, q0: box.controls.target.clone(), q1 };
+  }
   function flyToPeak() {
     const t = peakMarker.position.clone();
     flight = { t0: performance.now(), p0: box.camera.position.clone(), p1: t.clone().add(new THREE.Vector3(-1.2, 1.4, 3.6)),
@@ -716,14 +835,21 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   $('faintSig').oninput = () => drawFaint();
   $('faintOn').onchange = () => drawFaint();
 
-  box.hud = () => src === 'cosmos'
+  box.hud = () => src === 'compare'
+    ? ['Hubble vs. Planck prediction', `Same patch of sky, same galaxies and pipeline · mock ${mockIdx + 1} of ${mockMeta?.files.length ?? 0}`]
+    : src === 'cosmos'
     ? ['Dark matter in 3D: COSMOS', `A ${cosmosMeta ? (cosmosMeta.width_arcmin / 60).toFixed(1) : '1.4'}° patch of sky seen by Hubble, out to z ≈ ${cosmosMeta ? cosmosMeta.z_far.toFixed(1) : '1.3'}`]
     : ['Dark matter in 3D: simulated', `Clumpier toward the near side: structure has had longer to grow · S8 = ${params.s8.toFixed(2)}`];
-  box.source = () => src === 'cosmos' && cosmosMeta
+  box.source = () => src === 'compare' && cosmosMeta && mockMeta
+    ? `<b class="real">Survey data</b>Top: Hubble COSMOS shapes (Leauthaud et al. 2007), our 3D rebuild.<br>` +
+      `<b class="sim">Simulated</b>Bottom: ${mockMeta.cosmology.name} (σ<sub>8</sub> = ${mockMeta.cosmology.sigma8}, Ω<sub>m</sub> = ${mockMeta.cosmology.omega_m}, S8 = ${mockMeta.cosmology.S8}), not observations.`
+    : src === 'cosmos' && cosmosMeta
     ? `<b class="real">Survey data</b>Hubble COSMOS galaxy shapes (Leauthaud et al. 2007, <a href="${cosmosMeta.source_url}" target="_blank" rel="noopener">IRSA</a>), ${cosmosMeta.n_galaxies.toLocaleString()} galaxies. Our 3D rebuild, not the published map.`
     : '<b class="sim">Simulated</b>Built from the in-browser simulation, not observations. Style after Massey et al. 2007 (<a href="https://science.nasa.gov/mission/hubble/science/science-highlights/mapping-the-cosmic-web/" target="_blank" rel="noopener">NASA</a>).';
-  box.captionFor = () => src === 'cosmos'
-    ? 'Our rebuild of the Hubble COSMOS 3D dark-matter map (Massey et al. 2007) from the public galaxy-shape catalog. Galaxies are split by distance, each group gives a lensing mass map, and the change from group to group places the mass in depth. Solid clumps show where a lens is detected with high significance. The faint purple haze is low-confidence structure below that threshold: much of it is noise, so read it as "possibly something here", not as mapped filaments. Depth resolution is poor, so clumps stretch along the distance axis. The strongest structure sits at z ≈ 0.7, where the known COSMOS cluster at z ≈ 0.73 is. Not to scale: the real volume is a long, narrow cone.'
+  box.captionFor = () => src === 'compare'
+    ? 'Top: our rebuild of the Hubble COSMOS 3D map. Bottom: what Planck’s cosmology predicts the same map should look like. The Planck CMB itself is a single surface far behind this volume and has no depth, so we use what it measures: how much matter there is and how clumpy it has grown. We simulate matter along this sightline with those numbers, lens the real COSMOS galaxies through it, add their real shape noise, and run the identical pipeline. Each mock is a random universe, so clumps are not expected to line up with the real ones. Compare how many clumps there are and how strong, not where they are.'
+    : src === 'cosmos'
+    ?'Our rebuild of the Hubble COSMOS 3D dark-matter map (Massey et al. 2007) from the public galaxy-shape catalog. Galaxies are split by distance, each group gives a lensing mass map, and the change from group to group places the mass in depth. Solid clumps show where a lens is detected with high significance. The faint purple haze is low-confidence structure below that threshold: much of it is noise, so read it as "possibly something here", not as mapped filaments. Depth resolution is poor, so clumps stretch along the distance axis. The strongest structure sits at z ≈ 0.7, where the known COSMOS cluster at z ≈ 0.73 is. Not to scale: the real volume is a long, narrow cone.'
     : 'Styled after the Hubble COSMOS 3D dark-matter map (Massey et al. 2007), but built from the in-browser simulation, not telescope data. The box runs from about 3 to 8 billion years ago. Distances are not to scale: the real survey volume is a long, narrow cone.';
   Object.defineProperty(box, 'caption', { get: box.captionFor });
 }

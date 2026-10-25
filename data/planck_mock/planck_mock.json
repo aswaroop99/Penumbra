@@ -1,0 +1,10 @@
+{
+ "title": "Planck-cosmology prediction for the COSMOS 3D mass map",
+ "cosmology": {"name": "Planck 2018 base LCDM", "sigma8": 0.8111, "omega_m": 0.3149, "S8": 0.831, "H0": 67.4, "ns": 0.965},
+ "method": "Lognormal matter field in 60 slabs (z 0.00-3.00) with CAMB halofit power; real COSMOS galaxy positions and photo-z (true z scattered by 0.04(1+z)); Born-approximation reduced shear; real shape noise (measured shapes, randomly rotated); then the same reconstruction as the real map (prep/cosmos_3d.py).",
+ "caveat": "A random universe with Planck's cosmology, statistically like the real one. It does not model the actual structures behind COSMOS, so individual clumps are not expected to line up.",
+ "files": ["planck_mock_0.f32.bin", "planck_mock_1.f32.bin", "planck_mock_2.f32.bin"],
+ "faint_files": ["planck_mock_0_faint.f32.bin", "planck_mock_1_faint.f32.bin", "planck_mock_2_faint.f32.bin"],
+ "grid_like": "../cosmos/cosmos_3d.json (same shape, bounds, redshift axis and layout)",
+ "stats_note": "Hand-written manifest for the 3 exported realizations. Peak-count statistics are not computed yet: run prep/planck_mock.py to regenerate this file with them."
+}
