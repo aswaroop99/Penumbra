@@ -85,7 +85,8 @@ function penumbraData(): Plugin {
 
 export default defineConfig({
   plugins: [penumbraData()],
-  server: { port: 5173 },
+  // The Python venv and data dirs contain .html/.json files; don't reload the page when they change.
+  server: { port: 5173, watch: { ignored: ['**/venv/**', '**/.venv/**', '**/data/**'] } },
   build: {
     rollupOptions: {
       // Two pages: the cosmic-web app (index.html) and the sky-layer viewer (layers.html).
