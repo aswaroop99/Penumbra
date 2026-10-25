@@ -86,6 +86,12 @@ function penumbraData(): Plugin {
 export default defineConfig({
   plugins: [penumbraData()],
   server: { port: 5173 },
+  build: {
+    rollupOptions: {
+      // Two pages: the cosmic-web app (index.html) and the sky-layer viewer (layers.html).
+      input: { main: resolve(ROOT, 'index.html'), layers: resolve(ROOT, 'layers.html') },
+    },
+  },
   test: {
     environment: 'node',
     include: ['src/**/*.test.ts'],

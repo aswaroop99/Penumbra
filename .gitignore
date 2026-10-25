@@ -7,6 +7,8 @@ build/
 dist/
 *.egg-info/
 .eggs/
+.ipynb_checkpoints/
+__MACOSX/
 
 # Virtual environments
 .venv/
@@ -36,7 +38,12 @@ node_modules/
 # Local env files
 .env.local
 
-# Large survey / CMB datasets (download locally)
+# Raw survey data (~2.4 GB). Fetch with: bash get_dark_matter_data.sh --planck
 dark_universe_data/
+
+# Large data formats, in case they land elsewhere
+*.fits
+*.npy
+*.zip
 
 .cursor/

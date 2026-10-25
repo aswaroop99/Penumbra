@@ -1,10 +1,12 @@
 import './styles.css';
-import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from './collab/client';
-import type { Annotation } from './generated/types';
-import { loadManifest, manifestVersion, type Manifest } from './lib/manifest';
-import { cleanRoomName } from './lib/room';
-import { throttle } from './lib/throttle';
-import { binColor, FlyViewer, hex, type HoverInfo, type PlaceInfo } from './viewer/FlyViewer';
+import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from '../collab/client';
+import { initialProfile, saveProfile } from '../collab/profile';
+import type { Annotation } from '../generated/types';
+import { el } from '../lib/dom';
+import { loadManifest, manifestVersion, type Manifest } from '../lib/manifest';
+import { cleanRoomName } from '../lib/room';
+import { throttle } from '../lib/throttle';
+import { binColor, FlyViewer, hex, type HoverInfo, type PlaceInfo } from '../viewer/FlyViewer';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -12,41 +14,16 @@ const $ = <T extends HTMLElement>(id: string): T => {
   return el as T;
 };
 
-const PALETTE = ['#4cc9f0', '#f72585', '#ffd166', '#06d6a0', '#b388ff', '#ff9f68', '#9bf6ff', '#caffbf'];
 const DEFAULT_READOUT = 'Hover over a layer to read κ';
 const STATUS_LABEL = { connecting: 'Connecting…', connected: 'Connected', error: 'Offline' } as const;
 
+/**
+ * The layer viewer and the cosmic-web page use different shared-view encodings, so they
+ * default to different rooms (and rooms are bound to a per-page map version).
+ */
 function initialRoom(): string {
   const q = new URLSearchParams(location.search).get('room');
-  return (q && cleanRoomName(q)) || cleanRoomName(DEFAULT_ROOM) || 'penumbra-demo';
-}
-
-function initialProfile(): Profile {
-  try {
-    const raw = localStorage.getItem('penumbra.profile');
-    if (raw) {
-      const p = JSON.parse(raw) as Partial<Profile>;
-      if (typeof p.name === 'string' && p.name && typeof p.color === 'string' && /^#[0-9a-f]{6}$/i.test(p.color)) {
-        return { name: p.name.slice(0, 32), color: p.color };
-      }
-    }
-  } catch {
-    /* ignore corrupt storage */
-  }
-  return {
-    name: `Guest-${Math.floor(1000 + Math.random() * 9000)}`,
-    color: PALETTE[Math.floor(Math.random() * PALETTE.length)],
-  };
-}
-
-function el<K extends keyof HTMLElementTagNameMap>(
-  tag: K,
-  props: Partial<HTMLElementTagNameMap[K]> & { className?: string } = {},
-  ...children: (Node | string)[]
-): HTMLElementTagNameMap[K] {
-  const node = Object.assign(document.createElement(tag), props);
-  node.append(...children);
-  return node;
+  return (q && cleanRoomName(q)) || cleanRoomName(`${DEFAULT_ROOM}-layers`) || 'penumbra-layers';
 }
 
 function showFatal(title: string, message: string, retry?: () => void) {
@@ -315,11 +292,7 @@ async function start() {
 
   const commitProfile = (p: Profile) => {
     profile = p;
-    try {
-      localStorage.setItem('penumbra.profile', JSON.stringify(p));
-    } catch {
-      /* ignore */
-    }
+    saveProfile(p);
     collab.setProfile(p);
   };
   nameInput.onblur = () => {

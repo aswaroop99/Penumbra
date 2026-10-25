@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
-    <title>Penumbra — dark matter, together</title>
+    <title>Penumbra — layer viewer</title>
   </head>
   <body>
     <div id="app">
@@ -17,6 +17,7 @@
           <button id="collapse" aria-expanded="true">Hide</button>
         </div>
         <div id="panelBody">
+          <div class="sub"><a href="./" style="color: var(--accent)">← Cosmic web</a></div>
           <div class="sub" id="source"></div>
 
           <h2>Layers (looking deeper →)</h2>
@@ -87,6 +88,6 @@
       <div id="note"></div>
       <div id="toast" class="toast" hidden></div>
     </div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/layers/main.ts"></script>
   </body>
 </html>
