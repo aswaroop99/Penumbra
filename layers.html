@@ -5,9 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Penumbra — layer viewer</title>
+    <!-- Bridge console fonts (non-blocking; system fallbacks in bridge-tokens.css when offline). Tokens + bar CSS are imported from the page's main.ts. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" />
   </head>
   <body>
     <div id="app">
+      <header class="pb-bar overlay">
+        <a class="pb-back" href="./" title="Back to the front page">← Front page</a>
+        <div class="pb-brand">Penumbra <span>· Layer viewer</span></div>
+        <nav class="pb-tabs" aria-label="Pages">
+          <a class="pb-tab" href="guide.html">Tour</a>
+          <a class="pb-tab" href="web.html">DES filaments</a>
+          <a class="pb-tab" href="layers.html" aria-current="page">Layer viewer</a>
+        </nav>
+      </header>
+
       <div id="loading" class="fullscreen-msg">Loading layers…</div>
 
       <!-- Viewer controls (from the viewer branch) -->
@@ -17,7 +31,6 @@
           <button id="collapse" aria-expanded="true">Hide</button>
         </div>
         <div id="panelBody">
-          <div class="sub"><a href="./" style="color: var(--accent)">← Cosmic web</a> · <a href="guide.html" style="color: var(--accent)">Tour</a> · <a href="web.html" style="color: var(--accent)">DES filaments</a></div>
           <div class="sub" id="source"></div>
 
           <h2>Layers (looking deeper →)</h2>

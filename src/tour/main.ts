@@ -1,4 +1,6 @@
 import './tour.css';
+import '../styles/bridge-tokens.css';
+import '../styles/bridge-bar.css';
 import { drawLensingField } from './lensing';
 import teamStatus from './team_status.json';
 

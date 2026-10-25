@@ -19,8 +19,8 @@
 * { box-sizing: border-box; }
 html { background: var(--ink); }
 body {
-  margin: 0; color: var(--text); font: 15px/1.55 system-ui, -apple-system, 'Segoe UI', sans-serif;
-  background: radial-gradient(1200px 600px at 75% -10%, rgba(10, 15, 51, 0.9), transparent), var(--ink);
+  margin: 0; color: var(--text); font: 16.5px/1.5 var(--br-font-body);
+  background: var(--br-bg);
 }
 a { color: var(--cmb); }
 h1, h2, h3 { margin: 0; text-wrap: balance; line-height: 1.15; font-weight: 650; letter-spacing: 0.005em; }
@@ -29,18 +29,6 @@ button { font: inherit; color: inherit; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .eyebrow { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 .num { font-variant-numeric: tabular-nums; }
-
-.site-top {
-  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px;
-  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px));
-  background: linear-gradient(rgba(4, 3, 11, 0.95), rgba(4, 3, 11, 0.75)); backdrop-filter: blur(6px);
-  border-bottom: 1px solid var(--line);
-}
-.brand { font-weight: 650; }
-.brand span { color: var(--muted); font-weight: 400; }
-.links { margin-left: auto; display: flex; gap: 16px; }
-.links a { color: var(--muted); text-decoration: none; }
-.links a:hover { color: var(--text); }
 
 .wrap { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
@@ -75,6 +63,22 @@ button { font: inherit; color: inherit; }
 .stops .t { font-size: 13px; line-height: 1.25; }
 .stops button[aria-current='step'] { border-color: var(--accent); background: rgba(255, 179, 71, 0.12); }
 .stops button[aria-current='step'] .n { color: var(--accent); }
+/* Bridge console theme for the stop tabs (same look as the front page's mode tabs; chamfer + --br-* tokens from src/styles) */
+.stops { gap: 4px; }
+.stops button {
+  border-radius: 0; background-color: var(--br-panel); color: var(--br-muted); border: var(--br-stroke) solid var(--br-red-dim);
+  clip-path: var(--br-clip-btn);
+  background-image: var(--pb-cut-line); background-size: var(--br-chamfer-btn) var(--br-chamfer-btn);
+  background-position: right bottom; background-repeat: no-repeat;
+}
+.stops button:hover { color: var(--br-ice); border-color: var(--br-red); }
+.stops .n { font-family: var(--br-font-mono); letter-spacing: 0.08em; color: var(--br-muted); }
+.stops .t { font-family: var(--br-font-label); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; }
+.stops button[aria-current='step'] {
+  background-color: var(--br-hatch-off); color: var(--br-ice); border-color: var(--br-red); box-shadow: inset 0 -2px 0 var(--br-red);
+}
+.stops button[aria-current='step'] .n { color: var(--br-ice-2); }
+.stops button:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 1px; }
 .stop { margin-top: 20px; display: grid; gap: 14px; }
 .stop h2 { font-size: clamp(24px, 2.8vw, 30px); }
 .stop .body { font-size: 16.5px; max-width: 62ch; display: grid; gap: 10px; }
@@ -147,5 +151,4 @@ footer li { break-inside: avoid; margin-bottom: 4px; }
 @media (max-width: 480px) {
   .stops { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .stops button { min-height: auto; }
-  .links { gap: 12px; }
 }

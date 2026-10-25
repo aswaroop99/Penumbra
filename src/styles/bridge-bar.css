@@ -1,0 +1,218 @@
+/* Penumbra · Bridge console top bar for the secondary pages (Tour, DES filaments, Layer viewer).
+   Matches the header + mode tabs of the front page (src/cosmic/cosmic.css, "Bridge console theme"):
+   chamfered tabs, mono labels, red hairlines. Needs src/styles/bridge-tokens.css for the --br-* tokens.
+   Markup (same on every page):
+     <header class="pb-bar [overlay]">
+       <a class="pb-back" href="./">← Front page</a>
+       <div class="pb-brand">Penumbra <span>· Page name</span></div>
+       <nav class="pb-tabs" aria-label="Pages"><a class="pb-tab" href="…" [aria-current="page"]>…</a></nav>
+     </header>
+   `.overlay` floats the bar over a full-screen canvas page; without it the bar is sticky (scrolling page). */
+:root {
+  --br-clip-btn: polygon(0 0, 100% 0, 100% calc(100% - var(--br-chamfer-btn)), calc(100% - var(--br-chamfer-btn)) 100%, 0 100%);
+  --pb-cut-line: linear-gradient(to top right, transparent calc(50% - 0.7px), var(--br-red-dim) calc(50% - 0.7px), var(--br-red-dim) calc(50% + 0.7px), transparent calc(50% + 0.7px));
+  --pb-bar-h: 52px;
+}
+
+.pb-bar {
+  position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 16px;
+  min-height: var(--pb-bar-h); padding: 8px max(16px, env(safe-area-inset-right, 0px)) 8px max(16px, env(safe-area-inset-left, 0px));
+  background: linear-gradient(rgba(11, 12, 14, 0.94), rgba(11, 12, 14, 0.72));
+  border-bottom: var(--br-stroke) solid var(--br-red-dim);
+  box-shadow: inset 0 -4px 0 -3px rgba(192, 57, 43, 0.35);
+  backdrop-filter: blur(6px);
+}
+/* floats over a full-screen canvas; only the controls take clicks */
+.pb-bar.overlay { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; }
+.pb-bar.overlay > * { pointer-events: auto; }
+
+.pb-brand {
+  font-family: var(--br-font-head); font-weight: 700; font-size: 18px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--br-ice); white-space: nowrap;
+}
+.pb-brand span { font-family: var(--br-font-label); font-size: 11px; letter-spacing: 0.1em; color: var(--br-muted); font-weight: 400; }
+
+/* chamfered button: "← Front page" */
+.pb-back {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; text-decoration: none; cursor: pointer;
+  font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--br-ice);
+  padding: 7px 14px; border: var(--br-stroke) solid var(--br-red); border-radius: 0; clip-path: var(--br-clip-btn);
+  background: var(--pb-cut-line) right bottom / var(--br-chamfer-btn) var(--br-chamfer-btn) no-repeat, var(--br-hatch-off);
+}
+.pb-back:hover { background-color: var(--br-crimson); }
+.pb-back:focus-visible, .pb-tab:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 1px; }
+
+/* page tabs: same look as the front page's mode tabs */
+.pb-tabs {
+  margin-left: auto; display: flex; gap: 2px; padding: 3px; border-radius: 0; background-color: var(--br-panel);
+  border: var(--br-stroke) solid var(--br-red-dim); clip-path: var(--br-clip-btn);
+  background-image: var(--pb-cut-line); background-size: var(--br-chamfer-btn) var(--br-chamfer-btn);
+  background-position: right bottom; background-repeat: no-repeat;
+}
+.pb-tab {
+  border-radius: 0; font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--br-muted); padding: 6px 14px; border: var(--br-stroke) solid transparent; text-decoration: none; white-space: nowrap;
+}
+.pb-tab:hover { color: var(--br-ice); }
+.pb-tab[aria-current='page'] {
+  background: var(--br-hatch-off); color: var(--br-ice); font-weight: 500;
+  border-color: var(--br-red); box-shadow: inset 0 -2px 0 var(--br-red);
+}
+
+@media (max-width: 640px) {
+  .pb-bar { flex-wrap: wrap; gap: 8px; }
+  .pb-brand span { display: none; }
+  .pb-tab { padding: 5px 9px; letter-spacing: 0.06em; }
+  /* full-screen pages: keep the bar one row so it never covers the panels (the front page also hides its links here) */
+  .pb-bar.overlay .pb-tabs { display: none; }
+}
+
+/* =====================================================================
+   Panels, cards, readouts, buttons, inputs, chips (all text rectangles)
+   Same shell as the front page (src/cosmic/cosmic.css): chamfered top-right + bottom-left,
+   red double outline, ice L-brackets. Selectors cover Tour (.panel/.card/...), DES filaments
+   and Layer viewer (#panel/#collab/#readout/...). Unmatched selectors on a page are harmless.
+   ===================================================================== */
+:root {
+  --text: var(--br-ice);
+  --muted: var(--br-muted);
+  --danger: #FF8A7A;
+  --pb-ch: 18px;   /* panel corner cut */
+  --pb-br: 20px;   /* bracket arm length */
+}
+html, body { background: var(--br-bg); font-family: var(--br-font-body); }
+:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 2px; }
+input[type='checkbox'], input[type='radio'] { accent-color: var(--br-red); }
+
+/* ---- large panels ---- */
+#panel, #collab, .panel {
+  border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - var(--pb-ch)) 0, 100% var(--pb-ch), 100% 100%, var(--pb-ch) 100%, 0 calc(100% - var(--pb-ch)));
+  outline: var(--br-stroke) solid rgba(192, 57, 43, 0.55);
+  outline-offset: calc(-1 * (var(--br-inset) + var(--br-stroke)));
+  /* "scroll" attachment keeps the brackets on the box while a panel's content scrolls */
+  background:
+    var(--br-ice-h, linear-gradient(var(--br-ice), var(--br-ice))) left top / var(--pb-br) var(--br-bracket-w) no-repeat,
+    linear-gradient(var(--br-ice), var(--br-ice)) left top / var(--br-bracket-w) var(--pb-br) no-repeat,
+    linear-gradient(var(--br-ice), var(--br-ice)) right bottom / var(--pb-br) var(--br-bracket-w) no-repeat,
+    linear-gradient(var(--br-ice), var(--br-ice)) right bottom / var(--br-bracket-w) var(--pb-br) no-repeat,
+    var(--pb-cut-line) right top / var(--pb-ch) var(--pb-ch) no-repeat,
+    var(--pb-cut-line) left bottom / var(--pb-ch) var(--pb-ch) no-repeat,
+    var(--br-panel-glass);
+  backdrop-filter: blur(6px);
+}
+#panel, #collab { padding: 16px 18px; }
+.panel.tour, .panel.chart, .panel.project { padding: 22px 24px; }
+
+/* ---- small cards / readouts: 10px cut, no double outline ---- */
+.panel.card, .results .r, .reader-features li, #readout, .field, .tags span {
+  --pb-ch: 10px; --pb-br: 12px;
+}
+.panel.card, .results .r, .reader-features li, #readout {
+  border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0; outline: none; backdrop-filter: none;
+  clip-path: polygon(0 0, calc(100% - var(--pb-ch)) 0, 100% var(--pb-ch), 100% 100%, var(--pb-ch) 100%, 0 calc(100% - var(--pb-ch)));
+  background:
+    linear-gradient(var(--br-ice), var(--br-ice)) left top / var(--pb-br) var(--br-bracket-w) no-repeat,
+    linear-gradient(var(--br-ice), var(--br-ice)) left top / var(--br-bracket-w) var(--pb-br) no-repeat,
+    linear-gradient(var(--br-ice), var(--br-ice)) right bottom / var(--pb-br) var(--br-bracket-w) no-repeat,
+    linear-gradient(var(--br-ice), var(--br-ice)) right bottom / var(--br-bracket-w) var(--pb-br) no-repeat,
+    var(--pb-cut-line) right top / var(--pb-ch) var(--pb-ch) no-repeat,
+    var(--pb-cut-line) left bottom / var(--pb-ch) var(--pb-ch) no-repeat,
+    var(--br-panel-glass);
+}
+.results .r, .reader-features li { background-color: var(--br-panel-raised); }
+#readout { font-family: var(--br-font-mono); font-size: 13px; letter-spacing: 0.03em; color: var(--br-ice); padding: 8px 12px; }
+.field { border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0; clip-path: polygon(0 0, calc(100% - var(--pb-ch)) 0, 100% var(--pb-ch), 100% 100%, var(--pb-ch) 100%, 0 calc(100% - var(--pb-ch))); }
+
+/* ---- panel headings ---- */
+#panel h2, #collab h2 {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--br-font-label); font-weight: 500; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--br-ice-2); margin: 16px 0 8px; padding-bottom: 5px; border-bottom: var(--br-stroke) solid var(--br-red-dim);
+}
+#panel h2:first-child, #collab section:first-child h2 { margin-top: 0; }
+#panel h2::before, #collab h2::before { content: ''; width: 6px; height: 6px; background: var(--br-red); flex: none; }
+#panel h1, #collab h1, .panel h1, .panel h2, .panel h3, .hero h1, .board-head h2 {
+  font-family: var(--br-font-head); font-weight: 700; letter-spacing: 0.04em;
+}
+#panel h1 { font-size: 17px; line-height: 1.2; letter-spacing: 0.06em; text-transform: uppercase; color: var(--br-ice); }
+.eyebrow { font-family: var(--br-font-label); font-size: 11px; letter-spacing: 0.12em; color: var(--br-ice-2); }
+#collab section + section { border-top: 0; margin-top: 14px; }
+.sub, .hint, .note, .dim { color: var(--br-muted); }
+code { font-family: var(--br-font-mono); background: var(--br-hatch-off); border-radius: 0; }
+#reader { border-color: var(--br-red-dim); }
+
+/* ---- buttons (10px cut bottom-right) ---- */
+#collapse, #reset, button.wide, #collab button:not(.link):not(.flag-main), .field figcaption button, .ask {
+  font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--br-ice); background-color: transparent; border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0;
+  padding: 7px 14px; clip-path: var(--br-clip-btn); cursor: pointer;
+  background-image: var(--pb-cut-line); background-size: var(--br-chamfer-btn) var(--br-chamfer-btn);
+  background-position: right bottom; background-repeat: no-repeat;
+}
+#collapse:hover:not(:disabled), #reset:hover:not(:disabled), button.wide:hover:not(:disabled),
+#collab button:hover:not(:disabled):not(.link):not(.flag-main), .field figcaption button:hover, .ask:hover {
+  background-color: var(--br-hatch-off); border-color: var(--br-red); color: var(--br-ice);
+}
+button.active, button[aria-pressed='true'], .field figcaption button[aria-pressed='true'],
+#collab button[aria-pressed='true']:not(.link) { background-color: var(--br-crimson); color: var(--br-ice); border-color: var(--br-red); }
+.ask { text-align: left; }
+.ghost { font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--br-muted); }
+.ghost:hover { color: var(--br-ice); }
+button.link { color: var(--br-muted); }
+button.link:hover { color: var(--br-ice); }
+.reader-text { color: var(--br-ice); }
+.reader-text:hover:not(:disabled) { color: var(--br-ice-2); }
+
+/* ---- inputs ---- */
+#collab input:not([type='range']):not([type='checkbox']):not([type='radio']), #collab textarea, select {
+  font-family: var(--br-font-mono); font-size: 12.5px; background: var(--br-panel-raised); color: var(--br-ice);
+  border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0;
+}
+#collab input[type='color'] { background: var(--br-panel-raised); }
+#collab input[aria-invalid='true'] { border-color: var(--br-red); }
+
+/* ---- rows, values, lists ---- */
+.row > span:first-child { font-family: var(--br-font-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--br-ice-2); }
+#layers .row > span:first-child { font-family: inherit; font-size: inherit; letter-spacing: 0; text-transform: none; color: inherit; }
+#peaks li:hover, #peaks li:focus-visible { background: var(--br-hatch-off); color: var(--br-ice); border-radius: 0; }
+.flags li { border-radius: 0; }
+.flags li.focus, .reader-features li.focus { border-color: var(--br-red); }
+.reader-features li.focus { background-color: var(--br-hatch-off); }
+
+/* ---- sliders: hatch gauge with ice end cap ---- */
+.row input[type='range'] {
+  -webkit-appearance: none; appearance: none; height: 12px; margin: 0; padding: 0; background: transparent;
+  border: var(--br-stroke) solid var(--br-crimson); border-radius: 0; overflow: hidden; cursor: pointer;
+}
+.row input[type='range']::-webkit-slider-runnable-track { height: 100%; background: var(--br-hatch), var(--br-hatch-off); border: 0; }
+.row input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 3px; height: 10px; background: var(--br-ice); border: 0;
+  box-shadow: 1003px 0 0 1000px var(--br-hatch-off);
+}
+.row input[type='range']::-moz-range-track { height: 10px; background: var(--br-hatch-off); border: 0; }
+.row input[type='range']::-moz-range-progress { height: 10px; background: var(--br-hatch); }
+.row input[type='range']::-moz-range-thumb { width: 3px; height: 10px; background: var(--br-ice); border: 0; border-radius: 0; }
+
+/* ---- chips / tags / badges: square, label font ---- */
+.tag, .chip, .badge, .tags span {
+  border-radius: 0; font-family: var(--br-font-label); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.badge { background: var(--br-hatch-off); color: var(--br-ice); border: var(--br-stroke) solid var(--br-red); }
+.tags span { background: var(--br-panel-raised); border: var(--br-stroke) solid var(--br-red-dim); clip-path: none; color: var(--br-muted); }
+.tag { background: var(--br-hatch-off); color: var(--br-ice-2); }
+
+/* ---- toast ---- */
+.toast {
+  border-radius: 0; border: var(--br-stroke) solid var(--br-red-dim); clip-path: var(--br-clip-btn);
+  font-family: var(--br-font-label); font-size: 12px; background: var(--br-panel-glass);
+}
+.toast.error { color: var(--danger); border-color: var(--br-red); }
+.fullscreen-msg { background: var(--br-bg); font-family: var(--br-font-label); letter-spacing: 0.06em; }
+
+/* ---- tour page extras ---- */
+.results .r { font-size: 15px; }
+.ms .done .dot, .ms .active .dot { border-radius: 0; }
+.ms .dot { border-radius: 0; }
+.stop-nav { border-top-color: var(--br-red-dim); }
+.ms li { border-bottom-color: var(--br-red-dim); }

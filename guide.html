@@ -5,14 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
     <title>Penumbra Tour</title>
+    <!-- Bridge console fonts (non-blocking; system fallbacks in bridge-tokens.css when offline). Tokens + bar CSS are imported from the page's main.ts. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" />
   </head>
   <body>
-    <header class="site-top">
-      <div class="brand">Penumbra <span>· Tour</span></div>
-      <nav class="links">
-        <a href="./">Cosmic web</a>
-        <a href="layers.html">Layer viewer</a>
-        <a href="web.html">DES filaments</a>
+    <header class="pb-bar">
+      <a class="pb-back" href="./" title="Back to the front page">← Front page</a>
+      <div class="pb-brand">Penumbra <span>· Tour</span></div>
+      <nav class="pb-tabs" aria-label="Pages">
+        <a class="pb-tab" href="guide.html" aria-current="page">Tour</a>
+        <a class="pb-tab" href="web.html">DES filaments</a>
+        <a class="pb-tab" href="layers.html">Layer viewer</a>
       </nav>
     </header>
 

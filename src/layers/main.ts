@@ -1,4 +1,6 @@
 import './styles.css';
+import '../styles/bridge-tokens.css';
+import '../styles/bridge-bar.css';
 import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from '../collab/client';
 import { initialProfile, saveProfile } from '../collab/profile';
 import type { Annotation } from '../generated/types';

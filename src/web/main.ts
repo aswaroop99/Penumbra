@@ -1,4 +1,6 @@
 import './styles.css';
+import '../styles/bridge-tokens.css';
+import '../styles/bridge-bar.css';
 import { el } from '../lib/dom';
 import { pixelToSky, skyToPixel, type LaeaProjection } from '../lib/laea';
 
