@@ -56,6 +56,13 @@ describe('parseManifest', () => {
     expect(() => parseManifest(m2)).toThrow(/plain file name/);
   });
 
+  it('keeps an optional inference pointer and drops an unsafe one', () => {
+    expect(parseManifest({ ...minimal(), inference: 'inference.json' }).inference).toBe('inference.json');
+    expect(parseManifest(minimal()).inference).toBeUndefined();
+    expect(parseManifest({ ...minimal(), inference: '../x.json' }).inference).toBeUndefined();
+    expect(parseManifest({ ...minimal(), inference: 'a/b.json' }).inference).toBeUndefined();
+  });
+
   it('rejects peaks pointing at missing layers', () => {
     const m = minimal();
     m.peaks[0].bin = 3;
@@ -69,6 +76,12 @@ describe('manifestVersion', () => {
     const b = manifestVersion(parseManifest(JSON.parse(JSON.stringify(real))));
     expect(a).toBe(b);
     expect(a.length).toBeLessThanOrEqual(64);
+  });
+
+  it('ignores the inference pointer, so existing rooms stay valid', () => {
+    const plain = parseManifest(minimal());
+    const pointed = parseManifest({ ...minimal(), inference: 'inference.json' });
+    expect(manifestVersion(pointed)).toBe(manifestVersion(plain));
   });
 
   it('changes when geometry changes', () => {

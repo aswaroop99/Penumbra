@@ -1185,5 +1185,6 @@
    "bin": 3
   }
  ],
- "note": "Layers are mass projected toward more distant sources (overlapping), not depth slices."
+ "note": "Layers are mass projected toward more distant sources (overlapping), not depth slices.",
+ "inference": "inference.json"
 }

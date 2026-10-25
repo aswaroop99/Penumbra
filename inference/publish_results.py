@@ -39,6 +39,14 @@ def interval(samples):
             "lo95": float(q[0]), "hi95": float(q[4])}
 
 
+def sigma8_from(samples):
+    """sigma8 per posterior sample, from S8 = sigma8 * sqrt(Omega_m / 0.3).
+
+    Done sample by sample (not from the two medians) so the Omega_m-S8 correlation
+    carries through into the sigma8 interval."""
+    return samples[:, 1] / np.sqrt(samples[:, 0] / 0.3)
+
+
 def _read(path, what):
     p = Path(path)
     if not p.exists():
@@ -47,7 +55,7 @@ def _read(path, what):
 
 
 def build_artifact(posterior_path, comparison_path, manifest, coverage_path=None, truth=None,
-                   max_points=1500, seed=0):
+                   max_points=1500, seed=0, fingerprint=None):
     samples, post = load_posterior(posterior_path)
     comp = _read(comparison_path, "comparison")
     if coverage_path is None:
@@ -79,7 +87,7 @@ def build_artifact(posterior_path, comparison_path, manifest, coverage_path=None
     pts = np.round(samples[idx], 4).tolist()
 
     mcmc = comp.get("comparison_posterior")
-    return {
+    art = {
         "version": SCHEMA_VERSION,
         "method": post["method"],
         "data": post["data"],
@@ -87,6 +95,7 @@ def build_artifact(posterior_path, comparison_path, manifest, coverage_path=None
         "synthetic": "toy" in source.lower(),
         "S8": interval(samples[:, 1]),
         "Omega_m": interval(samples[:, 0]),
+        "sigma8": interval(sigma8_from(samples)),
         "training": {"n_train": meta.get("n_train"), "n_heldout": meta.get("n_heldout"),
                      "n_features": meta.get("n_features"), "n_samples": int(len(samples))},
         "trust": trust,
@@ -106,11 +115,14 @@ def build_artifact(posterior_path, comparison_path, manifest, coverage_path=None
         "truth": truth,
         "samples": pts,
     }
+    if fingerprint:  # run_inference.py's cache key; the viewer ignores it
+        art["fingerprint"] = fingerprint
+    return art
 
 
 def validate_artifact(a):
     """Cheap sanity checks before publishing; the viewer re-validates strictly."""
-    for k in ("S8", "Omega_m"):
+    for k in ("S8", "Omega_m", "sigma8"):
         s = a[k]
         if not (s["lo95"] <= s["lo68"] <= s["median"] <= s["hi68"] <= s["hi95"]):
             raise ValueError(f"{k} interval is not ordered: {s}")
@@ -130,11 +142,11 @@ def truth_from_map(path):
 
 
 def publish(posterior, comparison, manifest_path, out, coverage=None, truth_map=None, max_points=1500,
-            update_manifest=True):
+            update_manifest=True, fingerprint=None):
     manifest_path = Path(manifest_path)
     manifest = json.loads(manifest_path.read_text())
     truth = truth_from_map(truth_map) if truth_map else None
-    art = build_artifact(posterior, comparison, manifest, coverage, truth, max_points)
+    art = build_artifact(posterior, comparison, manifest, coverage, truth, max_points, fingerprint=fingerprint)
     validate_artifact(art)
     out = Path(out)
     out.write_text(json.dumps(art, separators=(",", ":")))

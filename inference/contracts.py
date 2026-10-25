@@ -145,6 +145,9 @@ def validate_posterior(obj):
         raise ValueError("non-finite posterior samples")
     if not (0.0 < s[:, 0].min() and s[:, 0].max() < 1.0):
         raise ValueError("Omega_m samples outside (0, 1): wrong column order?")
+    # Swapped columns put S8 (~0.8) where Omega_m (~0.3) belongs; no plausible matter density is that high.
+    if not (0.05 < np.median(s[:, 0]) < 0.7):
+        raise ValueError("Omega_m median implausible: wrong column order?")
     if not (0.2 < np.median(s[:, 1]) < 1.5):
         raise ValueError("S8 median implausible: wrong column order or sigma8 instead of S8?")
     for k in ("method", "data"):
