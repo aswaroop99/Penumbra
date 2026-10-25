@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { ManifestError, manifestVersion, parseManifest } from './manifest';
 
-const real = JSON.parse(readFileSync(new URL('../../manifest.json', import.meta.url), 'utf8'));
+const real = JSON.parse(readFileSync(new URL('../../data/manifest.json', import.meta.url), 'utf8'));
 
 function minimal() {
   return {

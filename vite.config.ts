@@ -7,7 +7,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
 const DATA_DIR = resolve(ROOT, 'data');
-const MANIFEST = resolve(ROOT, 'manifest.json');
+// manifest.json lives next to the layer files it describes (moved there on the viewer branch).
+// It is still served/emitted at `/manifest.json` as well, so the app's fetch URL is unchanged.
+const MANIFEST = resolve(DATA_DIR, 'manifest.json');
 
 const MIME: Record<string, string> = {
   '.png': 'image/png',
