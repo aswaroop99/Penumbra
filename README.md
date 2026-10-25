@@ -12,8 +12,10 @@ The viewer puts three datasets on one shared sky:
 
 | Path | What it is |
 |---|---|
-| `viewer/index.html` | three.js fly-through viewer (no build step; loads three from a CDN) |
-| `viewer/cosmic-web.html` | Cosmic web simulator in the style of NASA's Hubble cosmic-web page: a live Zel'dovich simulation, a Massey-style 3D clump map, and the survey layers as line-of-sight slices. Each view shows where its data comes from |
+| `index.html`, `src/cosmic/` | **The app's frontend**: the cosmic web simulator (live Zel'dovich simulation, Massey-style 3D clump map, survey layers as line-of-sight slices) with SpacetimeDB rooms, presenter/follow and flags |
+| `layers.html`, `src/layers/`, `src/viewer/` | The sky-sphere layer viewer, also backed by SpacetimeDB (its own default room) |
+| `src/collab/`, `spacetimedb/` | SpacetimeDB client and server module (shared by both pages) |
+| `viewer/index.html`, `viewer/cosmic-web.html` | The original standalone viewer pages from the viewer branch: no build step, no multiplayer, three from a CDN. Kept as reference |
 | `data/` | Exported viewer layers: PNGs, float16 grids, and `manifest.json`. See `data/README_for_frontend.md` |
 | `get_dark_matter_data.sh` | Downloads the raw survey data into `dark_universe_data/` |
 | `dark_universe_data/` | Raw data (~2.4 GB). **Git-ignored**, so each teammate fetches it with the script |
@@ -44,15 +46,24 @@ What you end up with:
 | `cosmos/cosmos_wl_source_catalog.csv` | 261,123 COSMOS galaxies with shapes (γ1, γ2) and photo-z |
 | `planck/COM_CMB_IQU-smica_2048_R3.00_full.fits` | Planck 2018 SMICA CMB map, Nside 2048, **galactic** coords (rotate to equatorial before use) |
 
-## Running the viewer
-
-Serve the repo root (the viewer loads `../data/`), then open the viewer page:
+## Running the app
 
 ```bash
-python3 -m http.server 8000
+npm install && (cd spacetimedb && npm install)
+npm run stdb:start      # terminal 1: local SpacetimeDB
+npm run stdb:publish    # once: publish the module as database "penumbra"
+npm run dev             # terminal 2: http://localhost:5173
 ```
 
-Open http://localhost:8000/viewer/ for the layer viewer, or http://localhost:8000/viewer/cosmic-web.html for the cosmic web simulator.
+- `/` is the cosmic web app. `/layers.html` is the layer viewer.
+- Without SpacetimeDB both pages still work locally; the room panel shows "Offline".
+- Open two tabs on the same `?room=` to try multiplayer: one tab clicks **Share my view**, the other **Follow presenter**.
+- The two pages use different shared-view encodings, so they never share a room: the cosmic web joins `penumbra-demo`, the layer viewer `penumbra-demo-layers`.
+- The standalone pages in `viewer/` still work with `python3 -m http.server 8000` from the repo root (open `/viewer/`).
+
+### How the cosmic web page uses the backend
+
+The SpacetimeDB module is unchanged. The cosmic web view is carried in the existing `update_view` fields (see `src/cosmic/viewCodec.ts`): `active_layer` is the tab (plus the universe number on Simulate), `view_ra`/`view_dec` are S8/Ωm (Simulate, 3D map) or the sky patch centre (Survey slices), `spread` is time, clump volume or slice spacing, and `view_yaw`/`view_pitch`/`view_zoom` are the orbit camera. Panning and the Survey slices Zoom slider are not shared. Flags are sky-anchored `(ra, dec, bin)`, so they are placed on the Survey slices tab.
 
 ## Data sources
 

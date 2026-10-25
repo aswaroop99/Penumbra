@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>Penumbra Cosmic Web</title>
+  </head>
+  <body data-active="sim">
+    <div id="loading" class="fullscreen-msg">Loading layers…</div>
+
+    <header>
+      <div class="brand">Penumbra <span>· Cosmic Web</span></div>
+      <nav role="tablist">
+        <button role="tab" data-tab="sim" aria-selected="true">Simulate</button>
+        <button role="tab" data-tab="box" aria-selected="false">3D map</button>
+        <button role="tab" data-tab="slices" aria-selected="false">Survey slices</button>
+      </nav>
+      <button id="roomToggle" class="room-toggle" aria-expanded="false" aria-controls="collab" title="Room, people and flags">
+        <span id="dot" class="dot connecting"></span>
+        <span id="roomLabel">Room</span>
+        <span id="roomCount" class="count">0</span>
+      </button>
+      <a href="layers.html">Layer viewer →</a>
+    </header>
+
+    <!-- Viewer controls (from the viewer branch's cosmic-web page) -->
+    <aside id="panel">
+      <div data-mode="sim">
+        <h2>Time</h2>
+        <div class="row"><button class="btn primary" id="play">▶ Play from the early universe</button></div>
+        <div class="row">
+          <span>Redshift</span><input id="zslider" type="range" min="0" max="1" step="0.001" value="1" /><span class="val" id="zval"></span>
+        </div>
+        <h2>Camera</h2>
+        <div class="row"><label><input id="fly" type="checkbox" /> Fly through the web</label></div>
+        <div class="row"><span>Glow</span><input id="glow" type="range" min="0.3" max="2.5" step="0.05" value="1" /></div>
+        <div class="row"><button class="btn" id="reseed">Next universe</button></div>
+      </div>
+
+      <div data-mode="sim box">
+        <h2>Cosmology</h2>
+        <div class="row">
+          <span>S8</span><input id="s8" type="range" min="0.6" max="1.0" step="0.01" value="0.80" /><span class="val" id="s8val"></span>
+        </div>
+        <div class="hint">How clumpy matter is today. DES lensing ≈ 0.78, Planck CMB ≈ 0.83.</div>
+        <div class="row">
+          <span>Ω<sub>m</sub></span><input id="om" type="range" min="0.2" max="0.45" step="0.005" value="0.315" /><span class="val" id="omval"></span>
+        </div>
+        <div class="hint">Fraction of the universe's energy in matter. Planck ≈ 0.315.</div>
+      </div>
+
+      <div data-mode="box">
+        <h2>Clumps</h2>
+        <div class="row">
+          <span>Volume</span><input id="frac" type="range" min="0.02" max="0.2" step="0.005" value="0.07" /><span class="val" id="fracval"></span>
+        </div>
+        <div class="hint">Share of the box drawn as dark-matter clumps (the densest regions).</div>
+      </div>
+
+      <div data-mode="sim box">
+        <h2>View</h2>
+        <div class="row"><label><input id="spin" type="checkbox" /> Auto-rotate</label></div>
+      </div>
+
+      <div data-mode="slices">
+        <h2>Sky region</h2>
+        <div class="row"><select id="region"></select></div>
+        <div class="hint">The same patch of sky in every slice, centred on one of the strongest mass peaks inside the survey.</div>
+        <h2>Slices</h2>
+        <div class="row"><span>Spacing</span><input id="gap" type="range" min="1.5" max="5" step="0.1" value="3" /></div>
+        <div class="row">
+          <span>Zoom</span><input id="crop" type="range" min="150" max="700" step="10" value="320" /><span class="val" id="cropval"></span>
+        </div>
+      </div>
+      <div class="hint" style="margin-top: 12px">Drag to rotate · scroll or pinch to zoom · right-drag or two-finger drag to pan</div>
+    </aside>
+
+    <!-- Collaboration (backed by SpacetimeDB) -->
+    <aside id="collab" aria-label="Collaboration" hidden>
+      <section>
+        <h2>Room <span id="status" class="status">Connecting…</span></h2>
+        <p id="offline" class="small error-text" hidden></p>
+        <form id="roomForm" class="row">
+          <input id="roomInput" aria-label="Room name" maxlength="40" />
+          <button id="roomJoin" type="submit" class="btn">Join</button>
+        </form>
+        <p id="roomInvalid" class="small error-text" hidden>Use 1–32 letters, numbers or dashes.</p>
+        <button id="copyLink" class="btn wide">Copy invite link</button>
+        <p id="actionError" class="small error-text" role="alert" hidden>
+          <span id="actionErrorText"></span> <button id="dismissError" class="link">dismiss</button>
+        </p>
+      </section>
+
+      <section>
+        <h2>You</h2>
+        <div class="row">
+          <input id="nameInput" aria-label="Display name" maxlength="32" />
+          <input id="colorInput" type="color" aria-label="Colour" />
+        </div>
+      </section>
+
+      <section>
+        <h2>People (<span id="peopleCount">0</span>)</h2>
+        <ul id="people" class="people"></ul>
+        <div class="row">
+          <button id="share" class="btn">Share my view</button>
+          <button id="follow" class="btn" aria-pressed="false">Follow presenter</button>
+        </div>
+        <p id="presenterNote" class="hint" hidden></p>
+      </section>
+
+      <section>
+        <h2>Flags (<span id="flagCount">0</span>)</h2>
+        <button id="annotate" class="btn wide" aria-pressed="false">Add a flag</button>
+        <p class="hint">Flags pin a comment to a spot on a survey layer, so they live on the Survey slices tab.</p>
+        <form id="composer" class="composer" hidden>
+          <p id="draftInfo" class="small hint"></p>
+          <textarea id="flagText" placeholder="What do you see here?" maxlength="280" rows="3"></textarea>
+          <div class="row">
+            <button id="postFlag" type="submit" class="btn primary" disabled>Post flag</button>
+            <button id="cancelFlag" type="button" class="btn">Cancel</button>
+          </div>
+        </form>
+        <ul id="flags" class="flags"></ul>
+      </section>
+    </aside>
+
+    <div id="hud"><div class="big" id="hudBig"></div><div class="small" id="hudSmall"></div><div id="source"></div></div>
+    <div id="cursorHint" class="toast" hidden>Click a survey layer to place a flag · Esc to cancel</div>
+    <div id="notice" class="toast error" role="status" hidden></div>
+    <div id="caption"></div>
+    <div id="busy">Computing…</div>
+
+    <script type="module" src="/src/cosmic/main.ts"></script>
+  </body>
+</html>
