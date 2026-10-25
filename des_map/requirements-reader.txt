@@ -1,0 +1,7 @@
+numpy>=1.26,<3
+scipy>=1.11,<2
+healpy>=1.17,<2
+matplotlib>=3.8,<4
+openai>=2,<4
+jsonschema>=4.20,<5
+anthropic>=1,<2
