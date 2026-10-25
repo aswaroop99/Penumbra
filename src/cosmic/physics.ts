@@ -195,6 +195,80 @@ export interface DisplacementParams {
   Rs: number;
 }
 
+/** √P(k) shape (n_s = 0.965, BBKS transfer) that colours unit white noise into the linear field. */
+const powerAmp = (k: number, om: number): number => Math.sqrt(Math.pow(k, 0.965)) * transferBBKS(k, om);
+
+/** Real-space rms of noise × √P × W(k), via Parseval (no FFT needed). */
+function linearRms(noise: KField, dims: Vec3, L: Vec3, om: number, W: (k: number) => number): number {
+  const N = dims[0] * dims[1] * dims[2];
+  let ss = 0;
+  forEachMode(dims, L, (i, _kx, _ky, _kz, k2) => {
+    if (k2 === 0) return;
+    const k = Math.sqrt(k2);
+    const a = powerAmp(k, om) * W(k);
+    ss += (noise.re[i] * noise.re[i] + noise.im[i] * noise.im[i]) * a * a;
+  });
+  return Math.sqrt(ss) / N;
+}
+
+/** Factor that turns noise × √P into a linear field with the requested σ8 (8 Mpc/h top-hat). */
+const sigma8Scale = (noise: KField, dims: Vec3, L: Vec3, om: number, sigma8: number): number =>
+  sigma8 / linearRms(noise, dims, L, om, (k) => tophat(8 * k));
+
+/**
+ * rms of the σ8-normalised linear field (z = 0) smoothed with a Gaussian of radius R (Mpc/h).
+ * Sets the scale of a "ν-sigma" seed.
+ */
+export function linearSigmaR(
+  noise: KField,
+  dims: Vec3,
+  L: Vec3,
+  { om, sigma8 }: { om: number; sigma8: number },
+  R: number
+): number {
+  return (
+    sigma8Scale(noise, dims, L, om, sigma8) *
+    linearRms(noise, dims, L, om, (k) => Math.exp(-0.5 * k * k * R * R))
+  );
+}
+
+/**
+ * Zel'dovich displacement from a Fourier-space density field: Ψ_k = i k δ_k / k² · exp(−k²Rs²/2).
+ * Drops k = 0 and the Nyquist planes (keeps Ψ real). Consumes dRe/dIm.
+ */
+function psiFromDelta(
+  dRe: Float64Array,
+  dIm: Float64Array,
+  dims: Vec3,
+  L: Vec3,
+  Rs: number,
+  scale: number
+): [Float32Array, Float32Array, Float32Array] {
+  const N = dims[0] * dims[1] * dims[2];
+  const ps = [0, 1, 2].map(
+    () => [new Float64Array(N), new Float64Array(N)] as [Float64Array, Float64Array]
+  );
+  const nyq = dims.map((n, a) => (Math.PI * n) / L[a]);
+  forEachMode(dims, L, (i, kx, ky, kz, k2) => {
+    if (k2 === 0) return;
+    const g = Math.exp(-0.5 * k2 * Rs * Rs) / k2;
+    const dr = dRe[i] * g;
+    const di = dIm[i] * g;
+    [kx, ky, kz].forEach((ka, a) => {
+      if (Math.abs(Math.abs(ka) - nyq[a]) < 1e-9) return; // drop the Nyquist plane: keeps Ψ real
+      ps[a][0][i] = -ka * di; // Ψ_k = i k δ_k / k²
+      ps[a][1][i] = ka * dr;
+    });
+  });
+  const out = ps.map(([re, im]) => {
+    fft3(re, im, dims, true);
+    const f = new Float32Array(N);
+    for (let i = 0; i < N; i++) f[i] = re[i] * scale;
+    return f;
+  });
+  return out as [Float32Array, Float32Array, Float32Array];
+}
+
 /**
  * Displacement field Ψ (Mpc/h) at z = 0, normalised so the linear field has the requested σ8.
  * Returns one Float32Array per axis.
@@ -206,37 +280,72 @@ export function displacementField(
   { om, sigma8, Rs }: DisplacementParams
 ): [Float32Array, Float32Array, Float32Array] {
   const N = dims[0] * dims[1] * dims[2];
-  const r8: [Float64Array, Float64Array] = [new Float64Array(N), new Float64Array(N)];
-  const ps = [0, 1, 2].map(
-    () => [new Float64Array(N), new Float64Array(N)] as [Float64Array, Float64Array]
-  );
-  const nyq = dims.map((n, a) => (Math.PI * n) / L[a]);
-  forEachMode(dims, L, (i, kx, ky, kz, k2) => {
+  const dRe = new Float64Array(N);
+  const dIm = new Float64Array(N);
+  forEachMode(dims, L, (i, _kx, _ky, _kz, k2) => {
     if (k2 === 0) return;
-    const k = Math.sqrt(k2);
-    const T = transferBBKS(k, om);
-    const amp = Math.sqrt(Math.pow(k, 0.965)) * T;
-    const w8 = tophat(8 * k);
-    r8[0][i] = noise.re[i] * amp * w8;
-    r8[1][i] = noise.im[i] * amp * w8;
-    const g = (amp * Math.exp(-0.5 * k2 * Rs * Rs)) / k2;
-    const dr = noise.re[i] * g;
-    const di = noise.im[i] * g;
-    [kx, ky, kz].forEach((ka, a) => {
-      if (Math.abs(Math.abs(ka) - nyq[a]) < 1e-9) return; // drop the Nyquist plane: keeps Ψ real
-      ps[a][0][i] = -ka * di; // Ψ_k = i k δ_k / k²
-      ps[a][1][i] = ka * dr;
+    const amp = powerAmp(Math.sqrt(k2), om);
+    dRe[i] = noise.re[i] * amp;
+    dIm[i] = noise.im[i] * amp;
+  });
+  return psiFromDelta(dRe, dIm, dims, L, Rs, sigma8Scale(noise, dims, L, om, sigma8));
+}
+
+/**
+ * Amplitude of a seed of peak height ν (in units of σ_R). A Gaussian bump of width R, smoothed
+ * on its own scale R, keeps 2^(−3/2) of its height; this makes it add ν σ_R to the R-smoothed field.
+ */
+export const seedAmplitude = (nu: number, sigmaR: number): number => 2 * Math.SQRT2 * nu * sigmaR;
+
+/** A planted density bump: centre (box coordinates centred on 0, Mpc/h), Gaussian radius R, height A. */
+export interface Seed {
+  x: number;
+  y: number;
+  z: number;
+  R: number;
+  A: number;
+}
+
+/**
+ * Extra displacement (Mpc/h, z = 0) from Gaussian bumps added to the linear density field:
+ * δ_seed(x) = Σ A_i exp(−|x − x_i|² / 2R_i²), periodic (minimum-image distance).
+ * Uses the same Zel'dovich operator and truncation as `displacementField`; add it after
+ * the σ8 normalisation so a seed never rescales the rest of the universe.
+ */
+export function seedDisplacement(
+  seeds: readonly Seed[],
+  dims: Vec3,
+  L: Vec3,
+  Rs: number
+): [Float32Array, Float32Array, Float32Array] {
+  const [nx, ny, nz] = dims;
+  const N = nx * ny * nz;
+  if (seeds.length === 0) return [new Float32Array(N), new Float32Array(N), new Float32Array(N)];
+  const re = new Float64Array(N);
+  const im = new Float64Array(N);
+  // Grid samples sit at cell centres, matching how particles look up Ψ.
+  const wrap = (d: number, La: number) => d - La * Math.round(d / La);
+  for (const s of seeds) {
+    const inv = 1 / (2 * s.R * s.R);
+    const dx = Float64Array.from({ length: nx }, (_, x) => {
+      const d = wrap(((x + 0.5) * L[0]) / nx - L[0] / 2 - s.x, L[0]);
+      return Math.exp(-d * d * inv);
     });
-  });
-  fft3(r8[0], r8[1], dims, true);
-  let ss = 0;
-  for (let i = 0; i < N; i++) ss += r8[0][i] * r8[0][i];
-  const scale = sigma8 / Math.sqrt(ss / N);
-  const out = ps.map(([re, im]) => {
-    fft3(re, im, dims, true);
-    const f = new Float32Array(N);
-    for (let i = 0; i < N; i++) f[i] = re[i] * scale;
-    return f;
-  });
-  return out as [Float32Array, Float32Array, Float32Array];
+    const dy = Float64Array.from({ length: ny }, (_, y) => {
+      const d = wrap(((y + 0.5) * L[1]) / ny - L[1] / 2 - s.y, L[1]);
+      return Math.exp(-d * d * inv);
+    });
+    const dz = Float64Array.from({ length: nz }, (_, z) => {
+      const d = wrap(((z + 0.5) * L[2]) / nz - L[2] / 2 - s.z, L[2]);
+      return Math.exp(-d * d * inv);
+    });
+    // The Gaussian is separable, so build it from three 1D profiles.
+    for (let z = 0, i = 0; z < nz; z++)
+      for (let y = 0; y < ny; y++) {
+        const yz = s.A * dy[y] * dz[z];
+        for (let x = 0; x < nx; x++, i++) re[i] += yz * dx[x];
+      }
+  }
+  fft3(re, im, dims, false);
+  return psiFromDelta(re, im, dims, L, Rs, 1);
 }

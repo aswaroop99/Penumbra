@@ -39,6 +39,20 @@
         <div class="row"><label><input id="fly" type="checkbox" /> Autopilot through the web</label></div>
         <div class="row"><span>Glow</span><input id="glow" type="range" min="0.3" max="2.5" step="0.05" value="1" /></div>
         <div class="row"><button class="btn" id="reseed">Next universe</button></div>
+        <h2>Plant a seed</h2>
+        <div class="row"><label><input id="plant" type="checkbox" /> Plant seeds (click in the box)</label></div>
+        <div class="row">
+          <label><input id="seedPeak" type="radio" name="seedKind" checked /> Peak</label>
+          <label><input id="seedVoid" type="radio" name="seedKind" /> Void</label>
+        </div>
+        <div class="row">
+          <span>Strength ν</span><input id="seedNu" type="range" min="0.5" max="4" step="0.1" value="2.5" /><span class="val" id="seedNuVal"></span>
+        </div>
+        <div class="row">
+          <span>Size R</span><input id="seedR" type="range" min="4" max="16" step="1" value="8" /><span class="val" id="seedRVal"></span>
+        </div>
+        <div class="row"><button class="btn" id="clearSeeds">Clear seeds</button></div>
+        <div class="hint">A seed nudges one early-universe ripple taller (or deeper, for a void). Press play: gravity does the rest. Clusters form at peaks and filaments bridge nearby ones. ν is roughly the peak height in standard deviations; R is in Mpc/h. Method: Zel’dovich approximation; very strong seeds overshoot at late times.</div>
       </div>
 
       <div data-mode="box">

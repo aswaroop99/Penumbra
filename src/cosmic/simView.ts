@@ -4,11 +4,15 @@ import {
   displacementField,
   growth,
   H,
+  linearSigmaR,
   lookbackGyr,
+  seedAmplitude,
+  seedDisplacement,
   sigma8From,
   whiteNoiseK,
   mulberry32,
   type KField,
+  type Seed,
   type Vec3,
 } from './physics';
 import { createShipRig } from './ship';
@@ -20,12 +24,14 @@ const PLAY_LABEL = '▶ Play from the early universe';
 /** View 1: particles moved by the Zel'dovich approximation, rendered live. */
 export function createSimView(ctx: Ctx): View {
   const base = makeBase(ctx, 0x04030b, 55, 0.5, 4000);
+  const canvas = ctx.renderer.domElement;
   const NG = 64;
   const L = 160;
   const dims: Vec3 = [NG, NG, NG];
   const N = NG ** 3;
   const cell = L / NG;
   const ZMAX = 30;
+  const RS = 3.0;
 
   let universe = 0;
   let noise: KField | null = null;
@@ -33,6 +39,9 @@ export function createSimView(ctx: Ctx): View {
   let playing = false;
   let fly = false;
   const state = { z: 0, D: 1 };
+  /** Planted seeds: ν (peak height in σ) and R are kept; the amplitude is set per cosmology at rebuild. */
+  const seeds: { x: number; y: number; z: number; nu: number; R: number; marker: THREE.Object3D }[] = [];
+  let basePsi: [Float32Array, Float32Array, Float32Array] | null = null;
 
   const q = new Float32Array(N * 3);
   const psiAttr = new Float32Array(N * 3);
@@ -155,31 +164,150 @@ export function createSimView(ctx: Ctx): View {
     $('play').textContent = on ? '❚❚ Pause' : PLAY_LABEL;
   };
 
-  const rebuild = serial(async (newNoise = false) => {
+  /** Ψ seen by the particles: the universe's own field plus any planted seeds. */
+  function fillPsi() {
+    if (!noise || !basePsi) return;
+    const LL: Vec3 = [L, L, L];
+    const params = { om: ctx.params.om, sigma8: sigma8From(ctx.params.s8, ctx.params.om) };
+    const sigR = new Map<number, number>();
+    const planted: Seed[] = seeds.map((s) => {
+      if (!sigR.has(s.R)) sigR.set(s.R, linearSigmaR(noise!, dims, LL, params, s.R));
+      return { x: s.x, y: s.y, z: s.z, R: s.R, A: seedAmplitude(s.nu, sigR.get(s.R)!) };
+    });
+    const extra = planted.length ? seedDisplacement(planted, dims, LL, RS) : null;
+    for (let p = 0; p < N; p++) {
+      const x = Math.min(NG - 1, Math.floor((q[3 * p] + L / 2) / cell));
+      const y = Math.min(NG - 1, Math.floor((q[3 * p + 1] + L / 2) / cell));
+      const z = Math.min(NG - 1, Math.floor((q[3 * p + 2] + L / 2) / cell));
+      const i = x + NG * (y + NG * z);
+      for (let a = 0; a < 3; a++) psiAttr[3 * p + a] = basePsi[a][i] + (extra ? extra[a][i] : 0);
+    }
+    geo.attributes.psi.needsUpdate = true;
+  }
+
+  /** `seedsOnly` skips the universe's own field (unchanged) and only redoes the seeds. */
+  const rebuild = serial(async (newNoise = false, seedsOnly = false) => {
     ctx.busy(true);
     await nextFrame();
     if (newNoise || !noise) {
       noise = whiteNoiseK(dims, UNIVERSE_SEEDS[universe]);
       placeParticles();
     }
-    const psi = displacementField(noise, dims, [L, L, L], {
-      om: ctx.params.om,
-      sigma8: sigma8From(ctx.params.s8, ctx.params.om),
-      Rs: 3.0,
-    });
-    for (let p = 0; p < N; p++) {
-      const x = Math.min(NG - 1, Math.floor((q[3 * p] + L / 2) / cell));
-      const y = Math.min(NG - 1, Math.floor((q[3 * p + 1] + L / 2) / cell));
-      const z = Math.min(NG - 1, Math.floor((q[3 * p + 2] + L / 2) / cell));
-      const i = x + NG * (y + NG * z);
-      psiAttr[3 * p] = psi[0][i];
-      psiAttr[3 * p + 1] = psi[1][i];
-      psiAttr[3 * p + 2] = psi[2][i];
+    if (!seedsOnly || !basePsi) {
+      basePsi = displacementField(noise, dims, [L, L, L], {
+        om: ctx.params.om,
+        sigma8: sigma8From(ctx.params.s8, ctx.params.om),
+        Rs: RS,
+      });
     }
-    geo.attributes.psi.needsUpdate = true;
+    fillPsi();
     setZ(zs);
     ctx.busy(false);
   });
+
+  // ------------------------------------------------------------ seeds
+  const markerGeo = new THREE.SphereGeometry(1, 16, 12);
+  const ringGeo = new THREE.RingGeometry(0.92, 1, 48);
+  function makeMarker(peak: boolean, R: number): THREE.Object3D {
+    const color = peak ? 0xffa64d : 0x5aa8ff;
+    const g = new THREE.Group();
+    const core = new THREE.Mesh(
+      markerGeo,
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthWrite: false })
+    );
+    core.scale.setScalar(1.4);
+    const halo = new THREE.Mesh(
+      markerGeo,
+      new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.12,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      })
+    );
+    halo.scale.setScalar(R);
+    // A ring at the seed radius that always faces the camera.
+    const ring = new THREE.Mesh(
+      ringGeo,
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.55, depthWrite: false, side: THREE.DoubleSide })
+    );
+    ring.scale.setScalar(R);
+    ring.onBeforeRender = (_r, _s, cam) => ring.quaternion.copy(cam.quaternion);
+    g.add(halo, core, ring);
+    return g;
+  }
+  const seedLayer = new THREE.Group();
+  base.scene.add(seedLayer);
+
+  let planting = false;
+  const syncCursor = () => {
+    canvas.style.cursor = planting && base.controls.enabled ? 'crosshair' : '';
+  };
+  const syncSeedCount = () => {
+    const n = seeds.length;
+    $('clearSeeds').textContent = n ? `Clear seeds (${n})` : 'Clear seeds';
+  };
+
+  function plantAt(clientX: number, clientY: number) {
+    const r = canvas.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((clientX - r.left) / r.width) * 2 - 1,
+      -((clientY - r.top) / r.height) * 2 + 1
+    );
+    const ray = new THREE.Raycaster();
+    ray.setFromCamera(ndc, base.camera);
+    // A plane through the box centre, facing the camera.
+    const normal = base.camera.getWorldDirection(new THREE.Vector3());
+    const plane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, new THREE.Vector3());
+    const hit = ray.ray.intersectPlane(plane, new THREE.Vector3());
+    if (!hit) return;
+    hit.clampScalar(-L / 2, L / 2);
+    const peak = $<HTMLInputElement>('seedPeak').checked;
+    const nu = Math.max(-4, Math.min(4, (peak ? 1 : -1) * +$<HTMLInputElement>('seedNu').value));
+    const R = +$<HTMLInputElement>('seedR').value;
+    const marker = makeMarker(peak, R);
+    marker.position.copy(hit);
+    seedLayer.add(marker);
+    seeds.push({ x: hit.x, y: hit.y, z: hit.z, nu, R, marker });
+    syncSeedCount();
+    // Back to the early universe, so Play shows the seed growing.
+    setPlaying(false);
+    zs = 0;
+    void rebuild(false, true);
+  }
+
+  let down: { x: number; y: number } | null = null;
+  canvas.addEventListener('pointerdown', (e) => {
+    down = { x: e.clientX, y: e.clientY };
+  });
+  canvas.addEventListener('pointerup', (e) => {
+    const start = down;
+    down = null;
+    // controls.enabled is true only while this tab is showing and not flying.
+    if (!start || !planting || !base.controls.enabled || e.button !== 0) return;
+    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 4) return;
+    plantAt(e.clientX, e.clientY);
+  });
+
+  $<HTMLInputElement>('plant').onchange = (e) => {
+    planting = (e.target as HTMLInputElement).checked;
+    syncCursor();
+  };
+  const syncSeedVals = () => {
+    $('seedNuVal').textContent = (+$<HTMLInputElement>('seedNu').value).toFixed(1);
+    $('seedRVal').textContent = String(+$<HTMLInputElement>('seedR').value);
+  };
+  $<HTMLInputElement>('seedNu').oninput = syncSeedVals;
+  $<HTMLInputElement>('seedR').oninput = syncSeedVals;
+  syncSeedVals();
+  $('clearSeeds').onclick = () => {
+    if (!seeds.length) return;
+    for (const s of seeds) seedLayer.remove(s.marker);
+    seeds.length = 0;
+    syncSeedCount();
+    void rebuild(false, true);
+  };
 
   const syncUniverseLabel = () => {
     $('reseed').textContent = `Next universe (${universe + 1}/${UNIVERSE_SEEDS.length})`;
@@ -209,7 +337,8 @@ export function createSimView(ctx: Ctx): View {
     fly = on;
     flyBox().checked = on;
     base.controls.enabled = !fly;
-    boxLines.visible = scaleBar.visible = !fly;
+    boxLines.visible = scaleBar.visible = seedLayer.visible = !fly;
+    syncCursor();
     mat.uniforms.uFade.value = fly ? 1 : 0;
     if (fly) {
       base.camera.position.set(0, 0, 0);
@@ -236,12 +365,12 @@ export function createSimView(ctx: Ctx): View {
     dom: ctx.renderer.domElement,
     onInput: () => ctx.interacted(),
     onEnter: () => {
-      boxLines.visible = scaleBar.visible = false;
+      boxLines.visible = scaleBar.visible = seedLayer.visible = false;
       mat.uniforms.uFade.value = 1;
       syncShipButton();
     },
     onExit: () => {
-      boxLines.visible = scaleBar.visible = true;
+      boxLines.visible = scaleBar.visible = seedLayer.visible = true;
       mat.uniforms.uFade.value = 0;
       mat.uniforms.uCenter.value.set(0, 0, 0);
       syncShipButton();
@@ -276,8 +405,8 @@ export function createSimView(ctx: Ctx): View {
     ...base,
     rebuild,
     caption:
-      'A small simulation, built live in your browser. It starts from tiny random ripples in an almost smooth early universe, and gravity draws matter into sheets, filaments and knots. Purple shows dark matter; white shows the densest knots, where galaxies form. Method: Zel’dovich approximation (first-order perturbation theory), not a full N-body run.',
-    onShow: () => {},
+      'A small simulation, built live in your browser. It starts from tiny random ripples in an almost smooth early universe, and gravity draws matter into sheets, filaments and knots. Purple shows dark matter; white shows the densest knots, where galaxies form. Plant your own seeds (extra early ripples, or voids) and watch them grow; seeded spots are made up, not real places on the sky. Method: Zel’dovich approximation (first-order perturbation theory), not a full N-body run; very strong seeds overshoot at late times.',
+    onShow: () => syncCursor(),
     onHide: () => ship.exit(),
     orbitEnabled: () => !fly && !ship.active,
     tick(now) {
