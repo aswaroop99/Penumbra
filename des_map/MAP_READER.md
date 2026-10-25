@@ -169,6 +169,21 @@ multiple rotations from one simulation. Report held-out coverage, fiducial bias,
 and comparison to the MCMC baseline before interpreting DES cosmology. The
 reader itself does not establish these validations.
 
+## Publish to the viewer
+
+`./run-vlm-demo` now also writes `data/reader.json`, the one file the website reads
+(contract in `data/README_for_frontend.md`, loader in `src/lib/reader.ts`). For any other run:
+
+```bash
+./run-reader export-site --analysis reader_runs/des/analysis \
+  --manifest ../data/manifest.json --out ../data/reader.json
+```
+
+Each cited evidence ID is resolved to measured RA/Dec. Pins are linked to site
+peaks only if the reader and `export_view.py` analysed the same map (`source`
+and coordinates match); otherwise the file says so and the viewer shows separate
+markers. Provider error messages are never exported.
+
 ## Output contract
 
 | File | Contents |

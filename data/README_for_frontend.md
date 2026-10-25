@@ -25,3 +25,26 @@ and your frontend keeps working unchanged. Build to the manifest, not to the pix
 Nothing changes on your side. The pipeline reruns `export_view.py` on the real map and overwrites
 these files with the same names/schema. Your viewer should read `manifest.json` at load time and
 never hard-code bounds, shapes, or layer counts.
+
+## Optional: `reader.json` (AI map-reader layer)
+
+Written offline by `./run-vlm-demo` (or `./run-reader export-site --analysis <run> --manifest ../data/manifest.json --out ../data/reader.json`).
+Served at `/data/reader.json` like every other file here. Load it with `loadReader()` from `src/lib/reader.ts`;
+it resolves to `null` if the file is absent, so the viewer must work without it. No API key or model call
+ever reaches the browser.
+
+- `status`: `ok` | `abstained` | `local_only` (no model run) | `vlm_failed`. Show the overview/features only for `ok`.
+- `overview`, `features[]`: Claude's text. Each feature has `kind` (`measured_extremum`, `visual_hypothesis`,
+  `quality_concern`), `text`, `requires_followup`, `targets[]` and `refs[]`.
+- `targets[]`: `{id, type: peak|trough, bin, ra, dec, kappa, kappa_over_reference_rms}`, real measured positions
+  for every ID Claude cited. Use these as pins / "fly to" targets.
+- `alignment.aligned`: `true` only if the reader analysed the **same map** as `manifest.json`. Then
+  `target.site_peak.index` points into `manifest.peaks` (or is `null` if no site peak lies within one reader pixel).
+  If `false`, read `alignment.reasons` and draw the pins as their own markers, not as site peaks.
+- `objects[]`: all measured extrema, available even when no model ran.
+- `measurement_limitations`, `model_limitations`, `disclaimer`, `is_toy`, `source`: show the disclaimer next to
+  any AI text, and label toy data as toy.
+
+Rules: render every string with `textContent` (never `innerHTML`). `kappa_over_reference_rms` is **not** a
+detection significance. Call Claude's text "AI description of the map's shape", never a measurement, and
+never show it next to S8/Ωm as if it fed the inference.

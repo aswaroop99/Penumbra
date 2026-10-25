@@ -1,0 +1,436 @@
+{
+ "schema": "penumbra.reader/1",
+ "generated_at": "2026-10-25T04:22:31+00:00",
+ "source": "TOY held-out map; not DES",
+ "is_toy": true,
+ "coord": "C",
+ "map_sha256": "0d30f8f94c61eca7bf3b43ffc039d286035af6ff233e23166cfd549a2382bd0a",
+ "config_sha256": "355e1eb85b07dbff4e8f4daab9529fc8160fa892d39f93464f6a0347c0072cfb",
+ "alignment": {
+  "aligned": false,
+  "reasons": [
+   "Reader analysed 'TOY held-out map; not DES', site shows 'toy_sims (not physics)'"
+  ]
+ },
+ "objects": [
+  {
+   "id": "peak:bin0:0",
+   "type": "peak",
+   "bin": 0,
+   "ra": 57.65625,
+   "dec": -41.81031,
+   "kappa": 0.042385404285155075,
+   "kappa_over_reference_rms": 5.546395954692685
+  },
+  {
+   "id": "peak:bin0:1",
+   "type": "peak",
+   "bin": 0,
+   "ra": 71.71875,
+   "dec": -24.62432,
+   "kappa": 0.021729742263814453,
+   "kappa_over_reference_rms": 2.8434730450535373
+  },
+  {
+   "id": "peak:bin0:2",
+   "type": "peak",
+   "bin": 0,
+   "ra": 66.09375,
+   "dec": -35.68533,
+   "kappa": 0.02142650267779564,
+   "kappa_over_reference_rms": 2.803792243570974
+  },
+  {
+   "id": "peak:bin0:3",
+   "type": "peak",
+   "bin": 0,
+   "ra": 52.82609,
+   "dec": -55.87335,
+   "kappa": 0.019386246383664915,
+   "kappa_over_reference_rms": 2.5368119127907804
+  },
+  {
+   "id": "peak:bin0:4",
+   "type": "peak",
+   "bin": 0,
+   "ra": 333.28125,
+   "dec": -22.02431,
+   "kappa": 0.017992207272094787,
+   "kappa_over_reference_rms": 2.354393152854499
+  },
+  {
+   "id": "peak:bin0:5",
+   "type": "peak",
+   "bin": 0,
+   "ra": 64.6875,
+   "dec": -25.94448,
+   "kappa": 0.017888153011709526,
+   "kappa_over_reference_rms": 2.340777000346276
+  },
+  {
+   "id": "peak:bin0:6",
+   "type": "peak",
+   "bin": 0,
+   "ra": 35.68966,
+   "dec": -46.57185,
+   "kappa": 0.017199405241220347,
+   "kappa_over_reference_rms": 2.2506500353574648
+  },
+  {
+   "id": "peak:bin0:7",
+   "type": "peak",
+   "bin": 0,
+   "ra": 41.08696,
+   "dec": -55.87335,
+   "kappa": 0.0170220127490622,
+   "kappa_over_reference_rms": 2.227437115308867
+  },
+  {
+   "id": "trough:bin0:0",
+   "type": "trough",
+   "bin": 0,
+   "ra": 81.5625,
+   "dec": -31.38817,
+   "kappa": -0.017372751397837095,
+   "kappa_over_reference_rms": -2.2733334670254126
+  },
+  {
+   "id": "trough:bin0:1",
+   "type": "trough",
+   "bin": 0,
+   "ra": 24.10714,
+   "dec": -48.14121,
+   "kappa": -0.01660348723462032,
+   "kappa_over_reference_rms": -2.1726704271201895
+  },
+  {
+   "id": "trough:bin0:2",
+   "type": "trough",
+   "bin": 0,
+   "ra": 348.33333,
+   "dec": -49.70239,
+   "kappa": -0.015160537507037067,
+   "kappa_over_reference_rms": -1.983851406354221
+  },
+  {
+   "id": "trough:bin0:3",
+   "type": "trough",
+   "bin": 0,
+   "ra": 352.96875,
+   "dec": -24.62432,
+   "kappa": -0.01322467968901251,
+   "kappa_over_reference_rms": -1.730532270867949
+  },
+  {
+   "id": "trough:bin0:4",
+   "type": "trough",
+   "bin": 0,
+   "ra": 33.75,
+   "dec": -37.1689,
+   "kappa": -0.011297178695142802,
+   "kappa_over_reference_rms": -1.4783066782289909
+  },
+  {
+   "id": "trough:bin0:5",
+   "type": "trough",
+   "bin": 0,
+   "ra": 8.4375,
+   "dec": -37.1689,
+   "kappa": -0.011254571404718595,
+   "kappa_over_reference_rms": -1.4727312470815284
+  },
+  {
+   "id": "trough:bin0:6",
+   "type": "trough",
+   "bin": 0,
+   "ra": 91.40625,
+   "dec": -30.0,
+   "kappa": -0.011111403938166588,
+   "kappa_over_reference_rms": -1.4539968862627557
+  },
+  {
+   "id": "trough:bin0:7",
+   "type": "trough",
+   "bin": 0,
+   "ra": 9.84375,
+   "dec": -41.81031,
+   "kappa": -0.011058936683099995,
+   "kappa_over_reference_rms": -1.44713121690881
+  }
+ ],
+ "measurement_limitations": [
+  "Projected convergence map; source-redshift layers overlap and are not independent 3D slices.",
+  "Extrema are map features, not confirmed clusters or voids; apparent bridges are not confirmed filaments.",
+  "Reference RMS is not a noise-only uncertainty; no detection significance is measured.",
+  "Pseudo power uses an approximate sky-fraction correction, shared by data and sims.",
+  "No cosmological posterior or coverage validation is supplied to this reader."
+ ],
+ "disclaimer": "AI-written description of map morphology, checked only for valid references to measured features. It is not a measurement and is never used for cosmological inference.",
+ "status": "ok",
+ "model": {
+  "provider": "anthropic",
+  "model": "claude-sonnet-5-5",
+  "response_id": "msg_011CgN6ZD3SXHNsHFqpH3rCJ"
+ },
+ "overview": "Toy held-out projected convergence map (bin 0, 240 arcmin smoothing, uncalibrated, not DES). The strongest positive extremum is peak:bin0:0, which sits in a red clump in the lower left of the footprint. Other red peaks lie nearby, and there are blue troughs on the left and elsewhere. Gray areas are unobserved, not voids. Extrema are map features only, and the reference RMS is not a noise-only sigma or a detection significance.",
+ "features": [
+  {
+   "kind": "measured_extremum",
+   "text": "Highest positive convergence extremum in the map, in the red clump at lower left. Its kappa/reference-RMS ratio is the largest listed, but it is not a significance and not a confirmed cluster.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin0:0",
+     "type": "peak",
+     "bin": 0,
+     "ra": 57.65625,
+     "dec": -41.81031,
+     "kappa": 0.042385404285155075,
+     "kappa_over_reference_rms": 5.546395954692685
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin0",
+     "label": "image:bin0"
+    }
+   ]
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "A group of secondary positive extrema (peak:bin0:1, peak:bin0:2, peak:bin0:5) in the same left-hand red region, with a fourth (peak:bin0:3) further south. Peak:bin0:4 is isolated in the upper right and peak:bin0:6 is mid-field. These are map maxima only.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin0:1",
+     "type": "peak",
+     "bin": 0,
+     "ra": 71.71875,
+     "dec": -24.62432,
+     "kappa": 0.021729742263814453,
+     "kappa_over_reference_rms": 2.8434730450535373
+    },
+    {
+     "id": "peak:bin0:2",
+     "type": "peak",
+     "bin": 0,
+     "ra": 66.09375,
+     "dec": -35.68533,
+     "kappa": 0.02142650267779564,
+     "kappa_over_reference_rms": 2.803792243570974
+    },
+    {
+     "id": "peak:bin0:5",
+     "type": "peak",
+     "bin": 0,
+     "ra": 64.6875,
+     "dec": -25.94448,
+     "kappa": 0.017888153011709526,
+     "kappa_over_reference_rms": 2.340777000346276
+    },
+    {
+     "id": "peak:bin0:3",
+     "type": "peak",
+     "bin": 0,
+     "ra": 52.82609,
+     "dec": -55.87335,
+     "kappa": 0.019386246383664915,
+     "kappa_over_reference_rms": 2.5368119127907804
+    },
+    {
+     "id": "peak:bin0:4",
+     "type": "peak",
+     "bin": 0,
+     "ra": 333.28125,
+     "dec": -22.02431,
+     "kappa": 0.017992207272094787,
+     "kappa_over_reference_rms": 2.354393152854499
+    },
+    {
+     "id": "peak:bin0:6",
+     "type": "peak",
+     "bin": 0,
+     "ra": 35.68966,
+     "dec": -46.57185,
+     "kappa": 0.017199405241220347,
+     "kappa_over_reference_rms": 2.2506500353574648
+    },
+    {
+     "id": "peak:bin0:7",
+     "type": "peak",
+     "bin": 0,
+     "ra": 41.08696,
+     "dec": -55.87335,
+     "kappa": 0.0170220127490622,
+     "kappa_over_reference_rms": 2.227437115308867
+    }
+   ],
+   "refs": []
+  },
+  {
+   "kind": "measured_extremum",
+   "text": "Negative convergence extrema (troughs) are listed, with the deepest, trough:bin0:0, in a blue region at left near trough:bin0:6. Others (trough:bin0:1, trough:bin0:2, trough:bin0:3) are scattered across the field. They are not confirmed voids, and gray is not a void.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "trough:bin0:0",
+     "type": "trough",
+     "bin": 0,
+     "ra": 81.5625,
+     "dec": -31.38817,
+     "kappa": -0.017372751397837095,
+     "kappa_over_reference_rms": -2.2733334670254126
+    },
+    {
+     "id": "trough:bin0:6",
+     "type": "trough",
+     "bin": 0,
+     "ra": 91.40625,
+     "dec": -30.0,
+     "kappa": -0.011111403938166588,
+     "kappa_over_reference_rms": -1.4539968862627557
+    },
+    {
+     "id": "trough:bin0:1",
+     "type": "trough",
+     "bin": 0,
+     "ra": 24.10714,
+     "dec": -48.14121,
+     "kappa": -0.01660348723462032,
+     "kappa_over_reference_rms": -2.1726704271201895
+    },
+    {
+     "id": "trough:bin0:2",
+     "type": "trough",
+     "bin": 0,
+     "ra": 348.33333,
+     "dec": -49.70239,
+     "kappa": -0.015160537507037067,
+     "kappa_over_reference_rms": -1.983851406354221
+    },
+    {
+     "id": "trough:bin0:3",
+     "type": "trough",
+     "bin": 0,
+     "ra": 352.96875,
+     "dec": -24.62432,
+     "kappa": -0.01322467968901251,
+     "kappa_over_reference_rms": -1.730532270867949
+    },
+    {
+     "id": "trough:bin0:4",
+     "type": "trough",
+     "bin": 0,
+     "ra": 33.75,
+     "dec": -37.1689,
+     "kappa": -0.011297178695142802,
+     "kappa_over_reference_rms": -1.4783066782289909
+    },
+    {
+     "id": "trough:bin0:5",
+     "type": "trough",
+     "bin": 0,
+     "ra": 8.4375,
+     "dec": -37.1689,
+     "kappa": -0.011254571404718595,
+     "kappa_over_reference_rms": -1.4727312470815284
+    },
+    {
+     "id": "trough:bin0:7",
+     "type": "trough",
+     "bin": 0,
+     "ra": 9.84375,
+     "dec": -41.81031,
+     "kappa": -0.011058936683099995,
+     "kappa_over_reference_rms": -1.44713121690881
+    }
+   ],
+   "refs": []
+  },
+  {
+   "kind": "visual_hypothesis",
+   "text": "Visually, red positive convergence appears to run as a connected band from peak:bin0:0 through peak:bin0:2 toward peak:bin0:1 and peak:bin0:5. This could be a bridge-like morphology, but it is only a visual impression and not a confirmed filament. It may be affected by smoothing and projection.",
+   "requires_followup": true,
+   "targets": [
+    {
+     "id": "peak:bin0:0",
+     "type": "peak",
+     "bin": 0,
+     "ra": 57.65625,
+     "dec": -41.81031,
+     "kappa": 0.042385404285155075,
+     "kappa_over_reference_rms": 5.546395954692685
+    },
+    {
+     "id": "peak:bin0:2",
+     "type": "peak",
+     "bin": 0,
+     "ra": 66.09375,
+     "dec": -35.68533,
+     "kappa": 0.02142650267779564,
+     "kappa_over_reference_rms": 2.803792243570974
+    },
+    {
+     "id": "peak:bin0:1",
+     "type": "peak",
+     "bin": 0,
+     "ra": 71.71875,
+     "dec": -24.62432,
+     "kappa": 0.021729742263814453,
+     "kappa_over_reference_rms": 2.8434730450535373
+    },
+    {
+     "id": "peak:bin0:5",
+     "type": "peak",
+     "bin": 0,
+     "ra": 64.6875,
+     "dec": -25.94448,
+     "kappa": 0.017888153011709526,
+     "kappa_over_reference_rms": 2.340777000346276
+    }
+   ],
+   "refs": [
+    {
+     "id": "image:bin0",
+     "label": "image:bin0"
+    }
+   ]
+  },
+  {
+   "kind": "quality_concern",
+   "text": "The map is clumpy, with small-scale red and blue patches that follow the pixel and footprint geometry. The peak counts in the summary are not calibrated against the reference, so visual clumpiness should not be over-interpreted.",
+   "requires_followup": true,
+   "targets": [],
+   "refs": [
+    {
+     "id": "image:bin0",
+     "label": "image:bin0"
+    },
+    {
+     "id": "summary:1",
+     "label": "bin0_peaks_240.0arcmin_snr[0,1)"
+    },
+    {
+     "id": "summary:2",
+     "label": "bin0_peaks_240.0arcmin_snr[1,2)"
+    },
+    {
+     "id": "summary:3",
+     "label": "bin0_peaks_240.0arcmin_snr[2,3)"
+    },
+    {
+     "id": "summary:5",
+     "label": "bin0_peaks_240.0arcmin_snr[4,1e+09)"
+    }
+   ]
+  }
+ ],
+ "model_limitations": [
+  "Source is a TOY held-out map with TOY lognormal reference simulations; it is not physics or DES, and the color scale is a fixed fiducial one that is uncalibrated.",
+  "Projected convergence; layers are not independent 3D slices.",
+  "Extrema are not confirmed clusters or voids; apparent bridges are not confirmed filaments.",
+  "Reference RMS is not noise-only uncertainty; no detection significance, mass, redshift or cosmological parameter can be inferred.",
+  "Gray masked regions are unobserved, and the irregular footprint edges and pixelization may affect the visual morphology.",
+  "No calibrated posterior is supplied."
+ ]
+}

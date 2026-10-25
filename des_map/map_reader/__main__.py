@@ -98,6 +98,10 @@ def main():
     p.add_argument("--maps", nargs="+", required=True)
     p.add_argument("--config", required=True)
     p.add_argument("--out", required=True)
+    p = sub.add_parser("export-site", help="Write the browser JSON (data/reader.json) for the viewer")
+    p.add_argument("--analysis", required=True, help="An analyze --out directory")
+    p.add_argument("--manifest", help="Site manifest.json, used to decide whether pins match site peaks")
+    p.add_argument("--out", required=True)
     p = sub.add_parser("demo", help="Small reproducible TOY demonstration; not a DES result")
     p.add_argument("--out", default="reader_runs/toy")
     a = ap.parse_args()
@@ -132,6 +136,11 @@ def main():
         print(f"Frozen {cfg['length']} features: {digest(cfg)}")
     elif a.cmd == "analyze":
         analyze(a.map, json.loads(Path(a.config).read_text()), a.out, a.model, a.question, a.top_k, provider=a.provider)
+    elif a.cmd == "export-site":
+        from .export_site import export_site
+        payload = export_site(a.analysis, a.out, a.manifest)
+        aligned = "matched to site peaks" if payload["alignment"]["aligned"] else "standalone pins (map differs from site)"
+        print(f"Saved {a.out}: status={payload['status']}, {len(payload['features'])} feature(s), {aligned}")
     elif a.cmd == "batch":
         cfg = json.loads(Path(a.config).read_text())
         paths = expand(a.maps)
