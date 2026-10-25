@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+READER_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ -f "$READER_ROOT/.env" ]; then
+  set -a
+  . "$READER_ROOT/.env"
+  set +a
+fi
+export OMP_NUM_THREADS="${OMP_NUM_THREADS:-2}"
+export MPLCONFIGDIR="${MPLCONFIGDIR:-/tmp/dm-reader-mpl}"
+cd "$READER_ROOT/des_map"
+# bin/penumbra-python picks the conda env "penumbra" or a repo venv (.venv-map-reader, .venv, venv).
+exec "$READER_ROOT/bin/penumbra-python" -m map_reader "$@"

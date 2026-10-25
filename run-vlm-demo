@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+READER_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+if [ -f "$READER_ROOT/.env" ]; then
+  set -a
+  . "$READER_ROOT/.env"
+  set +a
+fi
+if [ ! -f "$READER_ROOT/des_map/reader_runs/toy/config.json" ]; then
+  "$READER_ROOT/run-reader" demo --out reader_runs/toy
+fi
+READER_PROVIDER="${VLM_PROVIDER:-anthropic}"
+case "$READER_PROVIDER" in
+  anthropic) READER_MODEL="${VLM_MODEL:-claude-sonnet-5-5}" ;;
+  openai) READER_MODEL="${VLM_MODEL:-${OPENAI_VISION_MODEL:-gpt-4.1-mini}}" ;;
+  *) echo 'VLM_PROVIDER must be anthropic or openai' >&2; exit 2 ;;
+esac
+OUT="reader_runs/toy/vlm-$READER_PROVIDER"
+STATUS=0
+"$READER_ROOT/run-reader" analyze --map reader_runs/toy/obs.npz --config reader_runs/toy/config.json --out "$OUT" --provider "$READER_PROVIDER" --model "$READER_MODEL" "$@" || STATUS=$?
+# Refresh the viewer's data/reader.json even on failure, so the site shows the current status, not stale text.
+if [ -f "$READER_ROOT/des_map/$OUT/analysis.json" ]; then
+  "$READER_ROOT/run-reader" export-site --analysis "$OUT" --manifest ../data/manifest.json --out ../data/reader.json
+fi
+exit "$STATUS"

@@ -1,0 +1,63 @@
+#!/bin/sh
+# Run Python from the right Penumbra environment, so conda and venv packages never mix.
+#
+#   bin/penumbra-python prep/cosmos_3d.py
+#   bin/penumbra-python -m pytest des_map/tests -q
+#   bin/penumbra-python --which            # print the interpreter it would use
+#
+# It uses the first of these that exists and can import numpy + healpy:
+#   1. $PENUMBRA_PYTHON                      (explicit override, used as-is)
+#   2. the active conda env, if it is named "penumbra"
+#   3. the "penumbra" conda env, even when not activated
+#   4. repo venvs: .venv-map-reader/, .venv/, venv/
+# PYTHONPATH, PYTHONHOME and the per-user site-packages are cleared, so packages from
+# another env (or ~/.local) can't leak in. That leak is the usual cause of
+# "works in my shell, fails in the launcher" and of duplicate-OpenMP aborts with torch.
+set -eu
+ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+
+unset PYTHONPATH PYTHONHOME
+export PYTHONNOUSERSITE=1
+
+usable() {
+  [ -x "$1" ] && "$1" -c 'import numpy, healpy' >/dev/null 2>&1
+}
+
+pick() {
+  if [ -n "${PENUMBRA_PYTHON:-}" ]; then
+    echo "$PENUMBRA_PYTHON"; return 0
+  fi
+  if [ -n "${CONDA_PREFIX:-}" ] && [ "$(basename -- "$CONDA_PREFIX")" = penumbra ] && usable "$CONDA_PREFIX/bin/python"; then
+    echo "$CONDA_PREFIX/bin/python"; return 0
+  fi
+  for base in "${CONDA_EXE:+$(dirname -- "$(dirname -- "$CONDA_EXE")")}" \
+              "$HOME/miniconda3" "$HOME/miniforge3" "$HOME/mambaforge" "$HOME/anaconda3" \
+              /opt/homebrew/Caskroom/miniconda/base /opt/miniconda3; do
+    [ -n "$base" ] || continue
+    if usable "$base/envs/penumbra/bin/python"; then
+      echo "$base/envs/penumbra/bin/python"; return 0
+    fi
+  done
+  for v in .venv-map-reader .venv venv; do
+    if usable "$ROOT/$v/bin/python"; then
+      echo "$ROOT/$v/bin/python"; return 0
+    fi
+  done
+  return 1
+}
+
+if ! PY=$(pick); then
+  cat >&2 <<'EOF'
+penumbra-python: no usable Python environment found (needs numpy + healpy).
+Create one (see README "Python environments"):
+  conda env create -f environment.yml                        # recommended
+  python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
+Or point at an interpreter: PENUMBRA_PYTHON=/path/to/python
+EOF
+  exit 1
+fi
+
+if [ "${1:-}" = --which ]; then
+  echo "$PY"; exit 0
+fi
+exec "$PY" "$@"

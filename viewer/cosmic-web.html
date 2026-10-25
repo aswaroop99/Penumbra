@@ -1,0 +1,960 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penumbra Cosmic Web</title>
+<style>
+  :root {
+    --navy: #0a0f33; --ink: #04030b; --panel: rgba(10, 15, 48, .84); --line: rgba(160, 190, 255, .18);
+    --text: #e8ecff; --muted: #9aa6d6; --accent: #6aa8ff; --purple: #a37bff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--text);
+               font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  canvas { display: block; }
+  /* 3D labels sit below the panel and never take clicks (CSS2DObject turns pointer events back on per label). */
+  .labels { position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .labels * { pointer-events: none !important; }
+
+  header { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px;
+           padding: 10px 16px; background: linear-gradient(rgba(4,3,11,.85), rgba(4,3,11,0)); z-index: 5; }
+  .brand { font-weight: 650; letter-spacing: .02em; white-space: nowrap; }
+  .brand span { color: var(--muted); font-weight: 400; }
+  nav { display: flex; gap: 4px; background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
+  nav button { background: none; border: 0; color: var(--muted); padding: 5px 12px; border-radius: 999px; cursor: pointer; font: inherit; white-space: nowrap; }
+  nav button[aria-selected="true"] { background: var(--accent); color: #061036; font-weight: 600; }
+  header a { margin-left: auto; color: var(--muted); text-decoration: none; white-space: nowrap; }
+  header a:hover { color: var(--text); }
+
+  #panel { position: absolute; top: 60px; left: 16px; width: 280px; max-height: calc(100% - 140px); overflow: auto;
+           background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
+           backdrop-filter: blur(8px); user-select: none; z-index: 4; }
+  #panel h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 14px 0 6px; }
+  #panel h2:first-child { margin-top: 0; }
+  .row { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
+  .row > span:first-child { min-width: 64px; }
+  .row input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .val { min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .hint { color: var(--muted); font-size: 11px; margin: 2px 0 6px; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+  .swatch.faint { background: rgba(196, 170, 255, .45); border: 1px dashed rgba(220, 205, 255, .8); }
+  button.btn { background: rgba(106,168,255,.14); color: var(--text); border: 1px solid var(--line); border-radius: 8px;
+               padding: 6px 12px; cursor: pointer; font: inherit; }
+  button.btn:hover { background: rgba(106,168,255,.26); }
+  button.primary { background: var(--accent); color: #061036; font-weight: 600; border-color: transparent; }
+  select { flex: 1; min-width: 0; background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px; font: inherit; }
+  label { cursor: pointer; }
+  .seg { gap: 4px; } .seg .btn { flex: 1; }
+  .pick { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
+  .pick button { text-align: left; background: none; border: 1px solid transparent; color: var(--text); border-radius: 6px;
+                 padding: 5px 8px; cursor: pointer; font: inherit; font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; gap: 8px; }
+  .pick button:hover { background: rgba(255,255,255,.07); }
+  .pick button[aria-selected="true"] { background: rgba(106,168,255,.2); border-color: rgba(106,168,255,.5); }
+  .pick button span:last-child { color: var(--muted); }
+  button.btn[aria-pressed="true"], button.btn[aria-pressed="true"]:hover { background: var(--accent); color: #061036; font-weight: 600; border-color: transparent; }
+  [data-mode] { display: none; }
+  body[data-active="sim"] [data-mode~="sim"],
+  body[data-active="box"] [data-mode~="box"],
+  body[data-active="slices"] [data-mode~="slices"] { display: block; }
+  body[data-active="box"][data-boxsrc="cosmos"] .cosmo,
+  body[data-boxsrc="cosmos"] .sim-only, body:not([data-boxsrc="cosmos"]) .cosmos-only { display: none; }
+
+  #hud { position: absolute; top: 64px; right: 18px; max-width: min(380px, calc(100% - 330px)); text-align: right; pointer-events: none; z-index: 3; }
+  #hud .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: .01em; }
+  #hud .small { color: var(--muted); }
+  #source { margin-top: 8px; display: inline-block; text-align: left; pointer-events: auto; font-size: 11.5px;
+            background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; max-width: 100%; }
+  #source b { display: inline-block; font-size: 10px; letter-spacing: .06em; text-transform: uppercase; padding: 1px 6px;
+              border-radius: 4px; margin-right: 6px; color: #061036; }
+  #source b.sim { background: #b9a3ff; } #source b.toy { background: #ffc46b; } #source b.real { background: #7ee0a3; }
+  #source a { color: var(--accent); }
+  #caption { position: absolute; bottom: 14px; right: 18px; max-width: 420px; color: var(--muted); font-size: 11.5px;
+             text-align: right; pointer-events: none; z-index: 3; }
+  #busy { position: absolute; bottom: 14px; left: 16px; background: var(--panel); border: 1px solid var(--line);
+          border-radius: 8px; padding: 6px 10px; display: none; z-index: 4; }
+
+  .lbl { color: #dfe7ff; font-size: 12px; text-align: center; white-space: nowrap; text-shadow: 0 1px 3px #000; }
+  .lbl small { display: block; color: var(--muted); font-size: 10.5px; }
+  .axis { color: var(--muted); font-size: 11px; letter-spacing: .04em; white-space: nowrap; }
+
+  @media (max-width: 640px) {
+    header { flex-wrap: wrap; gap: 8px; }
+    header a { display: none; }
+    #panel { top: auto; bottom: 16px; left: 16px; right: 16px; width: auto; max-height: 42%; }
+    #hud { top: 96px; max-width: calc(100% - 32px); } #hud .big { font-size: 20px; }
+    #caption, #busy { display: none !important; }
+  }
+</style>
+</head>
+<body data-active="sim">
+<script>
+  // Opened straight from disk (file://)? Browsers block loading ../data from there, so nothing would work.
+  if (location.protocol === 'file:') {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const url = 'http://localhost:8000/viewer/' + page;
+    document.addEventListener('DOMContentLoaded', () => {
+      const d = document.createElement('div');
+      d.setAttribute('role', 'alert');
+      d.style.cssText = 'position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,3,11,.94);color:#e8ecff;font:15px/1.5 system-ui,sans-serif;text-align:center';
+      d.innerHTML = '<div style="max-width:460px"><div style="font-size:20px;font-weight:650;margin-bottom:8px">Open this page through the local server</div>' +
+        'This file was opened straight from disk, and browsers won\'t let it load the map data from there.<br><br>' +
+        'In the repo folder, run <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px">python3 serve.py</code>, then open<br>' +
+        '<a style="color:#6aa8ff" href="' + url + '">' + url + '</a></div>';
+      document.body.appendChild(d);
+    });
+  }
+</script>
+<header>
+  <div class="brand">Penumbra <span>· Cosmic Web</span></div>
+  <nav role="tablist">
+    <button role="tab" data-tab="sim" aria-selected="true">Simulate</button>
+    <button role="tab" data-tab="box" aria-selected="false">3D map</button>
+    <button role="tab" data-tab="slices" aria-selected="false">Survey slices</button>
+  </nav>
+  <a href="index.html">Layer viewer →</a>
+</header>
+
+<aside id="panel">
+  <div data-mode="sim">
+    <h2>Time</h2>
+    <div class="row"><button class="btn primary" id="play">▶ Play from the early universe</button></div>
+    <div class="row"><span>Redshift</span><input id="zslider" type="range" min="0" max="1" step="0.001" value="1"><span class="val" id="zval"></span></div>
+    <h2>Camera</h2>
+    <div class="row"><label><input id="fly" type="checkbox"> Fly through the web</label></div>
+    <div class="row"><span>Glow</span><input id="glow" type="range" min="0.3" max="2.5" step="0.05" value="1"></div>
+    <div class="row"><button class="btn" id="reseed">New random universe</button></div>
+  </div>
+
+  <div data-mode="box">
+    <h2>Data</h2>
+    <div class="row seg"><button class="btn" data-src="cosmos" aria-pressed="true">COSMOS (real)</button><button class="btn" data-src="sim" aria-pressed="false">Simulation</button></div>
+    <div class="hint cosmos-only">Click COSMOS again to fly to the strongest structure.</div>
+  </div>
+
+  <div data-mode="sim box" class="cosmo">
+    <h2>Cosmology</h2>
+    <div class="row"><span>S8</span><input id="s8" type="range" min="0.6" max="1.0" step="0.01" value="0.80"><span class="val" id="s8val"></span></div>
+    <div class="hint">How clumpy matter is today. DES lensing ≈ 0.78, Planck CMB ≈ 0.83.</div>
+    <div class="row"><span>Ω<sub>m</sub></span><input id="om" type="range" min="0.2" max="0.45" step="0.005" value="0.315"><span class="val" id="omval"></span></div>
+    <div class="hint">Fraction of the universe's energy in matter. Planck ≈ 0.315.</div>
+  </div>
+
+  <div data-mode="box">
+    <h2>Clumps</h2>
+    <div class="row sim-only"><span>Volume</span><input id="frac" type="range" min="0.02" max="0.2" step="0.005" value="0.07"><span class="val" id="fracval"></span></div>
+    <div class="row cosmos-only"><span>Threshold</span><input id="sig" type="range" min="1.5" max="4.5" step="0.1" value="2.0"><span class="val" id="sigval"></span></div>
+    <div class="hint" id="fracnote"></div>
+    <div class="cosmos-only">
+      <h2>Low-confidence structure</h2>
+      <div class="row"><label><input id="faintOn" type="checkbox" checked> <span class="swatch faint"></span>Show faint haze</label></div>
+      <div class="row"><span>Above</span><input id="faintSig" type="range" min="0.5" max="2.0" step="0.1" value="1.0"><span class="val" id="faintval"></span></div>
+      <div class="hint" id="faintnote"></div>
+    </div>
+  </div>
+
+  <div data-mode="sim box">
+    <h2>View</h2>
+    <div class="row"><label><input id="spin" type="checkbox"> Auto-rotate</label></div>
+  </div>
+
+  <div data-mode="slices">
+    <h2>Sky region</h2>
+    <div id="region" class="pick" role="listbox" aria-label="Sky region"></div>
+    <div class="hint">The same patch of sky in every slice, centred on one of the strongest mass peaks inside the survey.</div>
+    <h2>Slices</h2>
+    <div class="row"><span>Spacing</span><input id="gap" type="range" min="1.5" max="5" step="0.1" value="3"></div>
+    <div class="row"><span>Zoom</span><input id="crop" type="range" min="150" max="700" step="10" value="320"><span class="val" id="cropval"></span></div>
+  </div>
+  <div class="hint" style="margin-top:12px">Drag to rotate · scroll or pinch to zoom · right-drag or two-finger drag to pan</div>
+</aside>
+
+<div id="hud"><div class="big" id="hudBig"></div><div class="small" id="hudSmall"></div><div id="source"></div></div>
+<div id="caption"></div>
+<div id="busy">Computing…</div>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
+
+const $ = id => document.getElementById(id);
+const DATA = '../data/';
+const getData = (path) => fetch(DATA + path, { cache: 'no-cache' });
+
+// =====================================================================
+// Cosmology helpers (flat ΛCDM, h = 0.674)
+// =====================================================================
+const H = 0.674, HUBBLE_TIME_GYR = 977.8 / (100 * H);
+function ageGyr(z, om) {          // age of the universe at redshift z
+  const ol = 1 - om;
+  return 2 / (3 * Math.sqrt(ol)) * HUBBLE_TIME_GYR * Math.asinh(Math.sqrt(ol / om) * Math.pow(1 + z, -1.5));
+}
+const lookbackGyr = (z, om) => ageGyr(0, om) - ageGyr(z, om);
+function growth(z, om) {          // linear growth factor, D(0) = 1 (Carroll, Press & Turner 1992)
+  const g = (zz) => {
+    const a3 = Math.pow(1 + zz, 3), e2 = om * a3 + (1 - om);
+    const omz = om * a3 / e2, olz = (1 - om) / e2;
+    return 2.5 * omz / (Math.pow(omz, 4 / 7) - olz + (1 + omz / 2) * (1 + olz / 70));
+  };
+  return g(z) / (g(0) * (1 + z));
+}
+function transferBBKS(k, om) {    // k in h/Mpc
+  const q = k / (om * H);
+  return Math.log(1 + 2.34 * q) / (2.34 * q) *
+    Math.pow(1 + 3.89 * q + Math.pow(16.1 * q, 2) + Math.pow(5.46 * q, 3) + Math.pow(6.71 * q, 4), -0.25);
+}
+const tophat = x => x < 1e-4 ? 1 : 3 * (Math.sin(x) - x * Math.cos(x)) / (x * x * x);
+
+// =====================================================================
+// FFT (radix-2, any power-of-two box)
+// =====================================================================
+const fftCache = new Map();
+function getFFT(n) {
+  if (fftCache.has(n)) return fftCache.get(n);
+  const levels = Math.log2(n) | 0, rev = new Uint32Array(n);
+  for (let i = 0; i < n; i++) { let r = 0; for (let b = 0; b < levels; b++) r |= ((i >> b) & 1) << (levels - 1 - b); rev[i] = r; }
+  const cs = new Float64Array(n / 2), sn = new Float64Array(n / 2);
+  for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(2 * Math.PI * i / n); sn[i] = Math.sin(2 * Math.PI * i / n); }
+  const f = (re, im, inv) => {
+    for (let i = 0; i < n; i++) {
+      const j = rev[i];
+      if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+    }
+    for (let size = 2; size <= n; size <<= 1) {
+      const half = size >> 1, step = n / size;
+      for (let i = 0; i < n; i += size) {
+        for (let j = 0, k = 0; j < half; j++, k += step) {
+          const a = i + j, b = a + half, c = cs[k], s = inv ? sn[k] : -sn[k];
+          const tr = re[b] * c - im[b] * s, ti = re[b] * s + im[b] * c;
+          re[b] = re[a] - tr; im[b] = im[a] - ti; re[a] += tr; im[a] += ti;
+        }
+      }
+    }
+  };
+  fftCache.set(n, f);
+  return f;
+}
+function fft3(re, im, [nx, ny, nz], inv) {
+  const N = nx * ny * nz;
+  for (const [n, stride] of [[nx, 1], [ny, nx], [nz, nx * ny]]) {
+    const f = getFFT(n), lr = new Float64Array(n), li = new Float64Array(n);
+    for (let s = 0; s < N; s++) {
+      if (Math.floor(s / stride) % n !== 0) continue;   // only start of each line
+      for (let k = 0; k < n; k++) { lr[k] = re[s + k * stride]; li[k] = im[s + k * stride]; }
+      f(lr, li, inv);
+      for (let k = 0; k < n; k++) { re[s + k * stride] = lr[k]; im[s + k * stride] = li[k]; }
+    }
+  }
+  if (inv) for (let i = 0; i < N; i++) { re[i] /= N; im[i] /= N; }
+}
+// Calls fn(i, kx, ky, kz, k2) for every Fourier mode of the grid.
+function forEachMode([nx, ny, nz], [Lx, Ly, Lz], fn) {
+  for (let z = 0; z < nz; z++) {
+    const kz = 2 * Math.PI / Lz * (z <= nz / 2 ? z : z - nz);
+    for (let y = 0; y < ny; y++) {
+      const ky = 2 * Math.PI / Ly * (y <= ny / 2 ? y : y - ny);
+      for (let x = 0; x < nx; x++) {
+        const kx = 2 * Math.PI / Lx * (x <= nx / 2 ? x : x - nx);
+        fn(x + nx * (y + ny * z), kx, ky, kz, kx * kx + ky * ky + kz * kz);
+      }
+    }
+  }
+}
+
+// =====================================================================
+// Zel'dovich approximation: initial Gaussian field -> displacement field
+// =====================================================================
+function mulberry32(a) {
+  return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+function whiteNoiseK(dims, seed) {
+  const N = dims[0] * dims[1] * dims[2], rnd = mulberry32(seed);
+  const re = new Float64Array(N), im = new Float64Array(N);
+  for (let i = 0; i < N; i++) re[i] = Math.sqrt(-2 * Math.log(rnd() + 1e-12)) * Math.cos(2 * Math.PI * rnd());
+  fft3(re, im, dims, false);
+  return { re, im };
+}
+// Returns the displacement field Ψ (Mpc/h) at z = 0, normalised so the linear field has the requested σ8.
+// Rs is a Gaussian smoothing ("truncated Zel'dovich") that keeps the web sharp instead of smeared.
+function displacementField(noise, dims, L, { om, sigma8, Rs }) {
+  const N = dims[0] * dims[1] * dims[2];
+  const r8 = [new Float64Array(N), new Float64Array(N)];
+  const ps = [0, 1, 2].map(() => [new Float64Array(N), new Float64Array(N)]);
+  const nyq = dims.map((n, a) => Math.PI * n / L[a]);
+  forEachMode(dims, L, (i, kx, ky, kz, k2) => {
+    if (k2 === 0) return;
+    const k = Math.sqrt(k2), T = transferBBKS(k, om);
+    const amp = Math.sqrt(Math.pow(k, 0.965)) * T;
+    const w8 = tophat(8 * k);
+    r8[0][i] = noise.re[i] * amp * w8; r8[1][i] = noise.im[i] * amp * w8;
+    const g = amp * Math.exp(-0.5 * k2 * Rs * Rs) / k2;
+    const dr = noise.re[i] * g, di = noise.im[i] * g;
+    [kx, ky, kz].forEach((ka, a) => {
+      if (Math.abs(Math.abs(ka) - nyq[a]) < 1e-9) return;   // drop Nyquist plane: keeps Ψ real
+      ps[a][0][i] = -ka * di; ps[a][1][i] = ka * dr;         // Ψ_k = i k δ_k / k²
+    });
+  });
+  fft3(r8[0], r8[1], dims, true);
+  let ss = 0; for (let i = 0; i < N; i++) ss += r8[0][i] * r8[0][i];
+  const scale = sigma8 / Math.sqrt(ss / N);
+  return ps.map(([re, im]) => {
+    fft3(re, im, dims, true);
+    const out = new Float32Array(N);
+    for (let i = 0; i < N; i++) out[i] = re[i] * scale;
+    return out;
+  });
+}
+
+// =====================================================================
+// Shared UI state
+// =====================================================================
+const params = { s8: 0.80, om: 0.315 };
+const sigma8 = () => params.s8 / Math.sqrt(params.om / 0.3);
+const busy = on => { $('busy').style.display = on ? 'block' : 'none'; };
+const nextFrame = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+document.body.prepend(renderer.domElement);
+
+function makeView(bg, fov, near, far) {
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(bg);
+  const camera = new THREE.PerspectiveCamera(fov, innerWidth / innerHeight, near, far);
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.enabled = false;
+  const labels = new CSS2DRenderer();
+  labels.setSize(innerWidth, innerHeight);
+  labels.domElement.className = 'labels';
+  labels.domElement.style.display = 'none';
+  document.body.appendChild(labels.domElement);
+  return { scene, camera, controls, labels, tick: () => {}, onShow: () => {}, hud: () => ['', ''], caption: '', source: () => '' };
+}
+function label(html, cls = 'lbl') {
+  const el = document.createElement('div'); el.className = cls; el.innerHTML = html;
+  return new CSS2DObject(el);
+}
+
+// =====================================================================
+// View 1: Simulate — particles moved by the Zel'dovich approximation
+// =====================================================================
+const sim = makeView(0x04030b, 55, 0.5, 4000);
+{
+  const NG = 64, L = 160, dims = [NG, NG, NG], N = NG ** 3, cell = L / NG;
+  const ZMAX = 30;
+  let seed = 7, noise = null, psi = null;
+  let zs = 1, playing = false, fly = false;
+  const state = { z: 0, D: 1 };
+
+  const q = new Float32Array(N * 3), psiAttr = new Float32Array(N * 3), dens = new Float32Array(N);
+  const cellOf = new Uint32Array(N);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(q, 3));
+  geo.setAttribute('psi', new THREE.BufferAttribute(psiAttr, 3));
+  geo.setAttribute('dens', new THREE.BufferAttribute(dens, 1));
+  geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e6);
+
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uD: { value: 1 }, uL: { value: L }, uCenter: { value: new THREE.Vector3() },
+                uSize: { value: 1.3 }, uPR: { value: renderer.getPixelRatio() }, uGlow: { value: 1 }, uFade: { value: 0 } },
+    vertexShader: `
+      uniform float uD, uL, uSize, uPR, uFade; uniform vec3 uCenter;
+      attribute vec3 psi; attribute float dens;
+      varying float vDens; varying float vFade;
+      void main() {
+        vec3 p = position + uD * psi;
+        p = mod(p - uCenter + 0.5 * uL, uL) - 0.5 * uL + uCenter;   // periodic box
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        float s = uSize * (1.0 + 0.45 * log(1.0 + dens));
+        gl_PointSize = clamp(s * uPR * 300.0 / -mv.z, 0.0, 40.0);
+        vDens = dens;
+        vFade = mix(1.0, 1.0 - smoothstep(0.25 * uL, 0.5 * uL, -mv.z), uFade);
+      }`,
+    fragmentShader: `
+      uniform float uGlow, uD; varying float vDens; varying float vFade;
+      void main() {
+        vec2 c = gl_PointCoord - 0.5; float d2 = dot(c, c);
+        if (d2 > 0.25) discard;
+        float ld = log(1.0 + vDens);
+        float web = smoothstep(0.6, 1.6, ld);     // sheets and filaments (~top half of particles)
+        float knot = smoothstep(1.9, 2.7, ld);    // densest knots, ~top 5% (galaxies)
+        vec3 col = mix(vec3(0.45, 0.22, 1.0), vec3(1.0, 0.95, 0.9), knot);
+        // Early on everything is near-average density; show it as a faint, even haze.
+        float base = 0.025 + 0.16 * (1.0 - uD) * (1.0 - uD);
+        float a = (base + 0.17 * web + 0.6 * knot) * exp(-d2 * 14.0) * uGlow * vFade;
+        gl_FragColor = vec4(col, a);   // additive blending multiplies by alpha once
+      }`,
+  });
+  sim.scene.add(new THREE.Points(geo, mat));
+
+  const boxLines = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(L, L, L)),
+    new THREE.LineBasicMaterial({ color: 0x6f7cc9, transparent: true, opacity: 0.25 }));
+  sim.scene.add(boxLines);
+  const scaleBar = label(`<span class="axis">← ${L / H | 0} million parsecs (≈ ${(L / H * 3.26 / 1000).toFixed(1)} billion light-years) →</span>`);
+  scaleBar.position.set(0, -L / 2 - 8, L / 2);
+  sim.scene.add(scaleBar);
+
+  const HOME = new THREE.Vector3(150, 110, 230);
+  sim.camera.position.copy(HOME);
+  sim.controls.autoRotateSpeed = 0.35;
+
+  function placeParticles() {
+    const rnd = mulberry32(seed * 31 + 1);
+    let p = 0;
+    for (let z = 0; z < NG; z++) for (let y = 0; y < NG; y++) for (let x = 0; x < NG; x++, p++) {
+      // small jitter hides the starting lattice
+      q[3 * p] = (x + 0.5 + (rnd() - 0.5) * 0.9) * cell - L / 2;
+      q[3 * p + 1] = (y + 0.5 + (rnd() - 0.5) * 0.9) * cell - L / 2;
+      q[3 * p + 2] = (z + 0.5 + (rnd() - 0.5) * 0.9) * cell - L / 2;
+    }
+    geo.attributes.position.needsUpdate = true;
+  }
+  // Density for colouring, counted on a coarser grid (2 sim cells wide) so it's less noisy.
+  const NC = NG / 2, CC = L / NC, PER = N / NC ** 3;
+  function updateDensity() {
+    const D = state.D, counts = new Float32Array(NC ** 3);
+    for (let p = 0; p < N; p++) {
+      let idx = 0, mul = 1;
+      for (let a = 0; a < 3; a++) {
+        let v = (q[3 * p + a] + D * psiAttr[3 * p + a] + L / 2) % L; if (v < 0) v += L;
+        idx += Math.min(NC - 1, (v / CC) | 0) * mul; mul *= NC;
+      }
+      cellOf[p] = idx; counts[idx]++;
+    }
+    for (let p = 0; p < N; p++) dens[p] = counts[cellOf[p]] / PER;
+    geo.attributes.dens.needsUpdate = true;
+  }
+  function setZ(s) {
+    zs = s;
+    state.z = Math.pow(1 + ZMAX, 1 - s) - 1;
+    state.D = growth(state.z, params.om);
+    mat.uniforms.uD.value = state.D;
+    $('zslider').value = s;
+    $('zval').textContent = state.z < 10 ? state.z.toFixed(2) : state.z.toFixed(1);
+    updateDensity();
+  }
+  async function rebuild(newNoise = false) {
+    busy(true); await nextFrame();
+    if (newNoise || !noise) { noise = whiteNoiseK(dims, seed); placeParticles(); }
+    psi = displacementField(noise, dims, [L, L, L], { om: params.om, sigma8: sigma8(), Rs: 3.0 });
+    for (let p = 0; p < N; p++) {
+      const x = Math.min(NG - 1, Math.floor((q[3 * p] + L / 2) / cell));
+      const y = Math.min(NG - 1, Math.floor((q[3 * p + 1] + L / 2) / cell));
+      const z = Math.min(NG - 1, Math.floor((q[3 * p + 2] + L / 2) / cell));
+      const i = (x + NG * (y + NG * z));
+      psiAttr[3 * p] = psi[0][i]; psiAttr[3 * p + 1] = psi[1][i]; psiAttr[3 * p + 2] = psi[2][i];
+    }
+    geo.attributes.psi.needsUpdate = true;
+    setZ(zs);
+    busy(false);
+  }
+  sim.rebuild = rebuild;
+
+  $('zslider').oninput = e => { playing = false; $('play').textContent = '▶ Play from the early universe'; setZ(+e.target.value); };
+  $('play').onclick = () => {
+    playing = !playing;
+    if (playing && zs >= 0.999) setZ(0);
+    $('play').textContent = playing ? '❚❚ Pause' : '▶ Play from the early universe';
+  };
+  $('glow').oninput = e => { mat.uniforms.uGlow.value = +e.target.value; };
+  $('reseed').onclick = () => { seed = (Math.random() * 1e9) | 0; rebuild(true); };
+
+  const flyDir = new THREE.Vector3(1, 0.37, 0.21).normalize();
+  $('fly').onchange = e => {
+    fly = e.target.checked;
+    sim.controls.enabled = !fly;
+    boxLines.visible = scaleBar.visible = !fly;
+    mat.uniforms.uFade.value = fly ? 1 : 0;
+    if (fly) { sim.camera.position.set(0, 0, 0); }
+    else { sim.camera.position.copy(HOME); sim.controls.target.set(0, 0, 0); mat.uniforms.uCenter.value.set(0, 0, 0); }
+  };
+
+  let last = performance.now();
+  sim.tick = (now) => {
+    const dt = Math.min(0.1, (now - last) / 1000); last = now;
+    if (playing) {
+      const s = Math.min(1, zs + dt / 14);
+      setZ(s);
+      if (s >= 1) { playing = false; $('play').textContent = '▶ Play from the early universe'; }
+    }
+    if (fly) {
+      sim.camera.position.addScaledVector(flyDir, 14 * dt);
+      sim.camera.lookAt(sim.camera.position.clone().add(flyDir));
+      mat.uniforms.uCenter.value.copy(sim.camera.position);
+    }
+  };
+  sim.hud = () => {
+    const lb = lookbackGyr(state.z, params.om), age = ageGyr(state.z, params.om);
+    return [state.z < 0.005 ? 'Today' : `${lb.toFixed(1)} billion years ago`,
+            `redshift z = ${state.z.toFixed(2)} · universe ${age.toFixed(1)} Gyr old · clumping ${(state.D * 100).toFixed(0)}% of today`];
+  };
+  sim.source = () => '<b class="sim">Simulated</b>Generated in your browser from random initial conditions. No telescope data. Defaults: Planck 2018 (Ω<sub>m</sub>) and DES Y3 (S8).';
+  sim.caption = 'A small simulation, built live in your browser. It starts from tiny random ripples in an almost smooth early universe, and gravity draws matter into sheets, filaments and knots. Purple shows dark matter; white shows the densest knots, where galaxies form. Method: Zel’dovich approximation (first-order perturbation theory), not a full N-body run.';
+}
+
+// =====================================================================
+// View 2: 3D map — real COSMOS rebuild (default) or the simulation,
+// drawn as Massey et al. (2007)-style clumps in a box
+// =====================================================================
+const box = makeView(0x0a0f33, 40, 0.1, 200);
+{
+  const RES = 128, WORLD = 10, hw = WORLD / 2;   // marching-cubes grid; world length of the long axis
+  let src = 'cosmos';                            // 'cosmos' | 'sim'
+  const grids = {};                              // per source: { NX, NY, NZ, get(X, Y, Z), data }
+  let cosmosMeta = null, cosmosFailed = false;
+
+  box.scene.add(new THREE.AmbientLight(0x6a7bd0, 0.9));
+  const key = new THREE.DirectionalLight(0xffffff, 1.6); key.position.set(3, 6, 5); box.scene.add(key);
+  const rim = new THREE.DirectionalLight(0x7fb2ff, 1.0); rim.position.set(-6, -2, -4); box.scene.add(rim);
+
+  const material = new THREE.MeshPhongMaterial({ color: 0x4d86ff, emissive: 0x0b1f6a, specular: 0xbcd4ff,
+    shininess: 60, transparent: true, opacity: 0.82, side: THREE.DoubleSide, depthWrite: true });
+  const mc = new MarchingCubes(RES, material, false, false, 400000);
+  mc.scale.setScalar(WORLD / 2);
+  box.scene.add(mc);
+
+  // Low-confidence haze (COSMOS only): weaker structure below the clump threshold, much of it noise.
+  // Drawn after the clumps, without depth writes, so the solid clumps show through it.
+  const faintMaterial = new THREE.MeshBasicMaterial({ color: 0xc4aaff, transparent: true, opacity: 0.13,
+    side: THREE.DoubleSide, depthWrite: false });
+  const mcFaint = new MarchingCubes(RES, faintMaterial, false, false, 600000);
+  mcFaint.scale.setScalar(WORLD / 2);
+  mcFaint.renderOrder = 1;
+  box.scene.add(mcFaint);
+
+  // Frame (wireframe box + axis labels) for one source. Labels are toggled one by one,
+  // because CSS2DRenderer ignores a parent's visibility.
+  const frames = {};
+  function makeFrame(name, NY, NZ, zNear, zFar, ticks) {
+    const hy = WORLD * NY / RES / 2, hz = WORLD * NZ / RES / 2, items = [];
+    items.push(new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(WORLD, 2 * hy, 2 * hz)),
+      new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.55 })));
+    for (const z of ticks) {
+      const l = label(`${lookbackGyr(z, 0.315).toFixed(1)} billion years ago<small>z = ${z.toFixed(2)}</small>`);
+      l.position.set(-hw + WORLD * (z - zNear) / (zFar - zNear), -hy - 0.45, hz);
+      items.push(l);
+    }
+    const ax = label('<span class="axis">nearer · more recent  ←  distance from Earth  →  farther · earlier</span>');
+    ax.position.set(0, -hy - 1.6, hz); items.push(ax);
+    const ra = label('<span class="axis">right ascension</span>'); ra.position.set(-hw - 0.2, -hy, 0); items.push(ra);
+    const dec = label('<span class="axis">declination</span>'); dec.position.set(-hw - 0.2, 0, hz + 0.2); items.push(dec);
+    items.forEach(o => box.scene.add(o));
+    frames[name] = { items, hy, hz, zNear, zFar };
+  }
+  function showFrame(name) {
+    for (const [n, f] of Object.entries(frames)) f.items.forEach(o => { o.visible = n === name; });
+  }
+
+  box.camera.position.set(-4.2, 5, 12.5);
+  if (innerWidth < innerHeight) box.camera.position.multiplyScalar(1.8);   // fit the long box on portrait screens
+  box.controls.target.set(0, -0.3, 0);
+  box.controls.autoRotateSpeed = 0.25;
+  box.controls.minDistance = 3; box.controls.maxDistance = 30;
+
+  let threshold = 0;
+  function drawClumps() {
+    const g = grids[src];
+    if (!g) return;
+    const frac = +$('frac').value;
+    if (src === 'cosmos') {
+      threshold = +$('sig').value;
+    } else {
+      const sorted = Float32Array.from(g.data).sort();
+      threshold = Math.max(0.05, sorted[Math.floor((1 - frac) * (sorted.length - 1))]);
+    }
+    mc.reset();
+    const f = mc.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
+    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
+      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
+    }
+    mc.isolation = threshold;
+    mc.update();
+    $('fracval').textContent = `${Math.round(frac * 100)}%`;
+    $('sigval').textContent = `${threshold.toFixed(1)}σ`;
+    $('fracnote').textContent = src === 'cosmos'
+      ? `Solid: lens detections above ${threshold.toFixed(1)}σ.`
+      : 'Share of the box drawn as dark-matter clumps (the densest regions).';
+    drawFaint();
+  }
+
+  function drawFaint() {
+    const g = grids.cosmosFaint;
+    mcFaint.visible = src === 'cosmos' && !!g && $('faintOn').checked;
+    if (!mcFaint.visible) return;
+    // Keep the haze strictly below the clump threshold so the two layers never claim the same level.
+    const t = Math.min(+$('faintSig').value, threshold - 0.1);
+    mcFaint.reset();
+    const f = mcFaint.field, oy = (RES - g.NY) / 2, oz = (RES - g.NZ) / 2;
+    for (let Z = 0; Z < g.NZ; Z++) for (let Y = 0; Y < g.NY; Y++) for (let X = 2; X < g.NX - 2; X++) {
+      f[X + RES * (Y + oy) + RES * RES * (Z + oz)] = g.get(X, Y, Z);
+    }
+    mcFaint.isolation = t;
+    mcFaint.update();
+    $('faintval').textContent = `${t.toFixed(1)}σ`;
+    $('faintnote').textContent = `Haze: signal from ${t.toFixed(1)}σ to ${threshold.toFixed(1)}σ. Not detections. ` +
+      'At this level much of it is random galaxy-shape noise, and it smears along the distance axis. ' +
+      'It may trace real filaments, but this data cannot tell them apart from noise.';
+  }
+
+  // ---------- simulation source ----------
+  const SIM = { dims: [128, 32, 32], L: [512, 128, 128], zNear: 0.25, zFar: 0.95 };
+  makeFrame('sim', 32, 32, SIM.zNear, SIM.zFar, [0.25, 0.25 + 0.7 / 3, 0.25 + 1.4 / 3, 0.95]);
+  let noise = null;
+  async function buildSim() {
+    const { dims, L } = SIM, [nx, ny, nz] = dims, N = nx * ny * nz, cell = L[0] / nx;
+    busy(true); await nextFrame();
+    if (!noise) noise = whiteNoiseK(dims, 2007);
+    const psi = displacementField(noise, dims, L, { om: params.om, sigma8: sigma8(), Rs: 4.0 });
+    // Light-cone: nearer slabs (small x) are seen later in cosmic time, so they've grown more.
+    const Dx = new Float64Array(nx);
+    for (let x = 0; x < nx; x++) Dx[x] = growth(SIM.zNear + (SIM.zFar - SIM.zNear) * (x + 0.5) / nx, params.om);
+    // Move one particle per cell, deposit with cloud-in-cell.
+    const rho = new Float64Array(N), im = new Float64Array(N);
+    for (let z = 0; z < nz; z++) for (let y = 0; y < ny; y++) for (let x = 0; x < nx; x++) {
+      const i = x + nx * (y + ny * z), D = Dx[x];
+      const gx = x + D * psi[0][i] / cell, gy = y + D * psi[1][i] / cell, gz = z + D * psi[2][i] / cell;
+      const x0 = Math.floor(gx), y0 = Math.floor(gy), z0 = Math.floor(gz);
+      const fx = gx - x0, fy = gy - y0, fz = gz - z0;
+      for (let c = 0; c < 8; c++) {
+        const dx = c & 1, dy = (c >> 1) & 1, dz = (c >> 2) & 1;
+        const w = (dx ? fx : 1 - fx) * (dy ? fy : 1 - fy) * (dz ? fz : 1 - fz);
+        const xi = ((x0 + dx) % nx + nx) % nx, yi = ((y0 + dy) % ny + ny) % ny, zi = ((z0 + dz) % nz + nz) % nz;
+        rho[xi + nx * (yi + ny * zi)] += w;
+      }
+    }
+    for (let i = 0; i < N; i++) rho[i] -= 1;
+    // Smooth like a lensing map would (~8 Mpc/h Gaussian).
+    fft3(rho, im, dims, false);
+    forEachMode(dims, L, (i, kx, ky, kz, k2) => { const g = Math.exp(-0.5 * k2 * 64); rho[i] *= g; im[i] *= g; });
+    fft3(rho, im, dims, true);
+    const data = Float32Array.from(rho);
+    grids.sim = { NX: nx, NY: ny, NZ: nz, data, get: (X, Y, Z) => data[X + nx * (Y + ny * Z)] };
+    busy(false);
+  }
+
+  // ---------- COSMOS source (data/cosmos, made by prep/cosmos_3d.py) ----------
+  const peakMarker = new THREE.Mesh(new THREE.TorusGeometry(0.28, 0.025, 8, 48),
+    new THREE.MeshBasicMaterial({ color: 0xffd34d }));
+  const peakLabel = label('');
+  box.scene.add(peakMarker, peakLabel);
+  async function loadCosmos() {
+    try {
+      cosmosMeta = await (await getData('cosmos/cosmos_3d.json')).json();
+      const data = new Float32Array(await (await getData('cosmos/cosmos_3d.f32.bin')).arrayBuffer());
+      const [ny, nx, nd] = cosmosMeta.shape;          // stored [y, x, depth], depth fastest
+      // Box axes: X = redshift (long), Y = declination (up), Z = right ascension.
+      grids.cosmos = { NX: nd, NY: ny, NZ: nx, data, get: (X, Y, Z) => data[X + nd * (Z + nx * Y)] };
+      try {   // optional low-confidence layer (older prep runs don't write it)
+        const fd = new Float32Array(await (await getData('cosmos/' + (cosmosMeta.faint_file || 'cosmos_3d_faint.f32.bin'))).arrayBuffer());
+        if (fd.length === data.length) grids.cosmosFaint = { ...grids.cosmos, data: fd, get: (X, Y, Z) => fd[X + nd * (Z + nx * Y)] };
+      } catch (e) { console.warn('COSMOS faint layer not found; rerun prep/cosmos_3d.py', e); }
+      const { z_near, z_far } = cosmosMeta, step = z_far - z_near;
+      makeFrame('cosmos', ny, nx, z_near, z_far, [0.1, 0.4, 0.7, 1.0, 1.3].filter(z => z > z_near && z < z_far + 1e-6));
+      // Mark the strongest structure.
+      const p = cosmosMeta.peaks[0], b = cosmosMeta.bounds, f = frames.cosmos;
+      peakMarker.position.set(-hw + WORLD * (p.z - z_near) / step,
+        -f.hy + 2 * f.hy * (p.dec - b.dec_min) / (b.dec_max - b.dec_min),
+        -f.hz + 2 * f.hz * (b.ra_max - p.ra) / (b.ra_max - b.ra_min));
+      peakMarker.rotation.y = Math.PI / 2;
+      peakLabel.position.copy(peakMarker.position).add(new THREE.Vector3(0, f.hy + 0.6 - peakMarker.position.y, 0));
+      peakLabel.element.innerHTML = `Strongest structure<small>z ≈ ${p.z.toFixed(1)} · ${p.value.toFixed(1)}σ · RA ${p.ra.toFixed(2)}°, Dec ${p.dec.toFixed(2)}°</small>`;
+    } catch (e) {
+      cosmosFailed = true;
+      console.warn('COSMOS 3D grid not found; run prep/cosmos_3d.py', e);
+    }
+  }
+
+  async function setSource(name) {
+    if (name === 'cosmos' && !grids.cosmos && !cosmosFailed) { busy(true); await loadCosmos(); busy(false); }
+    if (name === 'cosmos' && cosmosFailed) name = 'sim';
+    src = name;
+    document.querySelectorAll('[data-src]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.src === src)));
+    if (src === 'sim' && !grids.sim) await buildSim();
+    showFrame(src);
+    peakMarker.visible = peakLabel.visible = src === 'cosmos';
+    document.body.dataset.boxsrc = src;
+    if (document.body.dataset.active === 'box') $('caption').textContent = box.caption;
+    drawClumps();
+  }
+  box.rebuild = () => setSource(src);   // first show
+  box.onCosmo = async () => { grids.sim = null; if (src === 'sim') { await buildSim(); drawClumps(); } };
+  let flight = null;
+  function flyToPeak() {
+    const t = peakMarker.position.clone();
+    flight = { t0: performance.now(), p0: box.camera.position.clone(), p1: t.clone().add(new THREE.Vector3(-1.2, 1.4, 3.6)),
+               q0: box.controls.target.clone(), q1: t };
+  }
+  box.tick = now => {
+    if (!flight) return;
+    const k = Math.min(1, (now - flight.t0) / 1200), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+    box.camera.position.lerpVectors(flight.p0, flight.p1, e);
+    box.controls.target.lerpVectors(flight.q0, flight.q1, e);
+    if (k === 1) flight = null;
+  };
+  document.querySelectorAll('[data-src]').forEach(b => {
+    b.onclick = async () => {
+      const again = b.dataset.src === src;
+      await setSource(b.dataset.src);
+      if (again && src === 'cosmos') flyToPeak();
+    };
+  });
+  $('frac').oninput = () => drawClumps();
+  $('sig').oninput = () => drawClumps();
+  $('faintSig').oninput = () => drawFaint();
+  $('faintOn').onchange = () => drawFaint();
+
+  box.hud = () => src === 'cosmos'
+    ? ['Dark matter in 3D: COSMOS', `A ${cosmosMeta ? (cosmosMeta.width_arcmin / 60).toFixed(1) : '1.4'}° patch of sky seen by Hubble, out to z ≈ ${cosmosMeta ? cosmosMeta.z_far.toFixed(1) : '1.3'}`]
+    : ['Dark matter in 3D: simulated', `Clumpier toward the near side: structure has had longer to grow · S8 = ${params.s8.toFixed(2)}`];
+  box.source = () => src === 'cosmos' && cosmosMeta
+    ? `<b class="real">Survey data</b>Hubble COSMOS galaxy shapes (Leauthaud et al. 2007, <a href="${cosmosMeta.source_url}" target="_blank" rel="noopener">IRSA</a>), ${cosmosMeta.n_galaxies.toLocaleString()} galaxies. Our 3D rebuild, not the published map.`
+    : '<b class="sim">Simulated</b>Built from the in-browser simulation, not observations. Style after Massey et al. 2007 (<a href="https://science.nasa.gov/mission/hubble/science/science-highlights/mapping-the-cosmic-web/" target="_blank" rel="noopener">NASA</a>).';
+  box.captionFor = () => src === 'cosmos'
+    ? 'Our rebuild of the Hubble COSMOS 3D dark-matter map (Massey et al. 2007) from the public galaxy-shape catalog. Galaxies are split by distance, each group gives a lensing mass map, and the change from group to group places the mass in depth. Solid clumps show where a lens is detected with high significance. The faint purple haze is low-confidence structure below that threshold: much of it is noise, so read it as "possibly something here", not as mapped filaments. Depth resolution is poor, so clumps stretch along the distance axis. The strongest structure sits at z ≈ 0.7, where the known COSMOS cluster at z ≈ 0.73 is. Not to scale: the real volume is a long, narrow cone.'
+    : 'Styled after the Hubble COSMOS 3D dark-matter map (Massey et al. 2007), but built from the in-browser simulation, not telescope data. The box runs from about 3 to 8 billion years ago. Distances are not to scale: the real survey volume is a long, narrow cone.';
+  Object.defineProperty(box, 'caption', { get: box.captionFor });
+}
+
+// =====================================================================
+// View 3: Survey slices — the exported DES layers along the line of sight
+// =====================================================================
+const slices = makeView(0x0a0f33, 42, 0.1, 200);
+{
+  const BIN_Z = [0.2, 0.3, 0.4, 0.5];   // approximate lensing-sensitivity peak of each tomographic bin
+  const SIZE = 4;
+  let manifest = null, grids = [], loaded = false;
+  const planes = [], frames = [], tags = [];
+
+  // Earth + line of sight
+  const earth = new THREE.Mesh(new THREE.SphereGeometry(0.32, 32, 16),
+    new THREE.MeshBasicMaterial({ color: 0x4f8dff }));
+  earth.position.set(-7, 0, 0);
+  slices.scene.add(earth);
+  const glow = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 16),
+    new THREE.MeshBasicMaterial({ color: 0x4f8dff, transparent: true, opacity: 0.18 }));
+  glow.position.copy(earth.position); slices.scene.add(glow);
+  const el = label('Earth<small>observer</small>'); el.position.set(-7, -0.75, 0); slices.scene.add(el);
+  const sight = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-7, 0, 0), new THREE.Vector3(12, 0, 0)]),
+    new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.35 }));
+  slices.scene.add(sight);
+
+  slices.camera.position.set(-6.5, 5, 14);
+  slices.controls.target.set(0, 0, 0);
+  if (innerWidth < innerHeight) slices.camera.position.multiplyScalar(1.6);
+
+  function halfToFloat(h) {
+    const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 0x1f, f = h & 0x3ff;
+    if (e === 0) return s * Math.pow(2, -14) * (f / 1024);
+    if (e === 31) return f ? NaN : s * Infinity;
+    return s * Math.pow(2, e - 15) * (1 + f / 1024);
+  }
+  const STOPS = [[0, [5, 9, 38]], [0.4, [12, 30, 105]], [0.66, [38, 102, 222]], [0.86, [120, 196, 255]], [1, [240, 249, 255]]];
+  function blue(t) {
+    for (let i = 1; i < STOPS.length; i++) {
+      if (t <= STOPS[i][0]) {
+        const [t0, c0] = STOPS[i - 1], [t1, c1] = STOPS[i], u = (t - t0) / (t1 - t0);
+        return c0.map((c, k) => c + (c1[k] - c) * u);
+      }
+    }
+    return STOPS[STOPS.length - 1][1];
+  }
+
+  let center = null;
+  function paint() {
+    const [h, w] = manifest.layers[0].shape, S = +$('crop').value;
+    $('cropval').textContent = `${(S * (manifest.bounds.ra_max - manifest.bounds.ra_min) / w).toFixed(0)}°`;
+    const c0 = Math.max(0, Math.min(w - S, Math.round(center[0] - S / 2)));
+    const r0 = Math.max(0, Math.min(h - S, Math.round(center[1] - S / 2)));
+    const Sh = Math.min(S, h);
+    manifest.layers.forEach((Lr, b) => {
+      const cv = document.createElement('canvas'); cv.width = S; cv.height = Sh;
+      const ctx = cv.getContext('2d'), img = ctx.createImageData(S, Sh), g = grids[b];
+      for (let r = 0; r < Sh; r++) for (let c = 0; c < S; c++) {
+        const v = g[(r0 + r) * w + (c0 + c)], o = 4 * (r * S + c);
+        if (Number.isNaN(v)) { img.data.set([8, 14, 50, 150], o); continue; }
+        const t = Math.min(1, Math.max(0, (v / Lr.sigma + 1.5) / 5.5));
+        const [R, G, B] = blue(t); img.data[o] = R; img.data[o + 1] = G; img.data[o + 2] = B; img.data[o + 3] = 235;
+      }
+      ctx.putImageData(img, 0, 0);
+      const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+      planes[b].material.map?.dispose();
+      planes[b].material.map = tex; planes[b].material.needsUpdate = true;
+      planes[b].scale.set(1, Sh / S, 1); frames[b].scale.set(1, Sh / S, 1);
+    });
+  }
+  function layout() {
+    const gap = +$('gap').value;
+    planes.forEach((p, b) => {
+      const x = -2.5 + b * gap;
+      p.position.x = frames[b].position.x = x;
+      tags[b].position.set(x, -SIZE / 2 - 0.35, 0);
+    });
+  }
+  async function load() {
+    if (loaded) return; loaded = true;
+    busy(true);
+    manifest = await (await getData('manifest.json')).json();
+    grids = await Promise.all(manifest.layers.map(async Lr => {
+      const u16 = new Uint16Array(await (await getData(Lr.raw)).arrayBuffer());
+      const out = new Float32Array(u16.length);
+      for (let i = 0; i < u16.length; i++) out[i] = halfToFloat(u16[i]);
+      return out;
+    }));
+    const { ra_min, ra_max, dec_min, dec_max } = manifest.bounds, [h, w] = manifest.layers[0].shape;
+    const toPix = (raDeg, decDeg) => {
+      if (raDeg > ra_max) raDeg -= 360;
+      return [(ra_max - raDeg) / (ra_max - ra_min) * w, (dec_max - decDeg) / (dec_max - dec_min) * h];
+    };
+    const sel = $('region');
+    // Prefer peaks whose surrounding patch is fully inside the survey (no empty, masked corners).
+    const S0 = +$('crop').value;
+    const maskedShare = (p) => {
+      const [cx, cy] = toPix(p.ra, p.dec);
+      const c0 = Math.max(0, Math.min(w - S0, Math.round(cx - S0 / 2))), r0 = Math.max(0, Math.min(h - S0, Math.round(cy - S0 / 2)));
+      let nan = 0, n = 0;
+      for (let r = 0; r < S0; r += 8) for (let c = 0; c < S0; c += 8, n++) if (Number.isNaN(grids[0][(r0 + r) * w + c0 + c])) nan++;
+      return nan / n;
+    };
+    // Strongest peaks inside the survey, one per location (the same cluster shows up in several bins).
+    // Prefer patches that are mostly inside the survey (the real mask has small holes everywhere).
+    const sameSpot = (q, p) => Math.abs(q.dec - p.dec) < 1.5 && Math.abs(((q.ra - p.ra + 540) % 360) - 180) < 1.5;
+    const byHeight = [...manifest.peaks].sort((a, b) => b.snr - a.snr);
+    const top = [];
+    for (const maxMasked of [0.1, 0.3, 1.01]) {
+      for (const p of byHeight) {
+        if (top.length >= 8) break;
+        if (maskedShare(p) < maxMasked && !top.some(q => sameSpot(q, p))) top.push(p);
+      }
+    }
+    // A list of buttons rather than a <select>: native dropdowns don't open in some embedded browsers.
+    const choices = top.map((p, i) => ({ text: `Peak ${i + 1} · RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}°`, tag: `${p.snr.toFixed(1)}σ`,
+                                         at: () => toPix(p.ra, p.dec) }));
+    choices.push({ text: 'Middle of the survey', tag: '', at: () => [w / 2, h * 0.62] });
+    const pick = i => {
+      center = choices[i].at();
+      [...sel.children].forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
+      paint();
+    };
+    choices.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'option');
+      b.innerHTML = `<span>${c.text}</span><span>${c.tag}</span>`;
+      b.onclick = () => pick(i);
+      sel.appendChild(b);
+    });
+    sel.children[0].setAttribute('aria-selected', 'true');
+    center = choices[0].at();
+
+    manifest.layers.forEach((Lr, b) => {
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE),
+        new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthWrite: false }));
+      plane.rotation.y = -Math.PI / 2;   // face the observer
+      const frame = new THREE.LineSegments(new THREE.EdgesGeometry(plane.geometry),
+        new THREE.LineBasicMaterial({ color: 0xc8d4ff, transparent: true, opacity: 0.6 }));
+      frame.rotation.y = -Math.PI / 2;
+      const z = BIN_Z[b] ?? 0.2 + 0.1 * b;
+      const tag = label(`~${lookbackGyr(z, 0.315).toFixed(1)} billion years ago<small>${Lr.name} · sources near z ≈ ${z.toFixed(1)}</small>`);
+      slices.scene.add(plane, frame, tag);
+      planes.push(plane); frames.push(frame); tags.push(tag);
+    });
+    layout(); paint();
+    busy(false);
+  }
+  slices.onShow = load;
+  $('gap').oninput = () => planes.length && layout();
+  $('crop').oninput = debounce(() => planes.length && paint(), 120);
+
+  slices.hud = () => ['Looking deeper', manifest ? `${manifest.source} · ${manifest.smoothing_arcmin}′ smoothing` : 'Loading survey layers…'];
+  slices.source = () => {
+    if (!manifest) return '';
+    const toy = /toy/i.test(manifest.source);
+    return toy
+      ? `<b class="toy">Toy data</b>Stand-in maps from the team pipeline (<code>${manifest.source}</code>), shaped like DES Y3. Not real observations.`
+      : `<b class="real">Survey data</b>${manifest.source}`;
+  };
+  slices.caption = 'The same patch of sky in the four DES lensing layers. Each layer is the mass projected toward more distant galaxies, so the layers overlap; they are not separate slices of space. Times are approximate.';
+}
+
+// =====================================================================
+// Mode switching, shared controls, loop
+// =====================================================================
+const views = { sim, box, slices };
+let active = null;
+const built = new Set();
+async function show(name) {
+  if (active) { active.controls.enabled = false; active.labels.domElement.style.display = 'none'; }
+  active = views[name];
+  document.body.dataset.active = name;
+  document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  active.controls.enabled = !(name === 'sim' && $('fly').checked);
+  active.labels.domElement.style.display = '';
+  $('caption').textContent = active.caption;
+  try { localStorage.setItem('cw-tab', name); } catch {}
+  if (!built.has(name)) { built.add(name); if (active.rebuild) await active.rebuild(true); }
+  await active.onShow();
+}
+document.querySelectorAll('nav button').forEach(b => { b.onclick = () => show(b.dataset.tab); });
+
+const onCosmo = debounce(() => {
+  for (const name of built) (views[name].onCosmo ?? views[name].rebuild)?.();
+}, 180);
+for (const [id, key] of [['s8', 's8'], ['om', 'om']]) {
+  const out = $(id + 'val');
+  const sync = () => { params[key] = +$(id).value; out.textContent = (+$(id).value).toFixed(key === 'om' ? 3 : 2); };
+  sync();
+  $(id).oninput = () => { sync(); onCosmo(); };
+}
+
+// Auto-rotate: off by default, remembered per viewer.
+{
+  const spin = $('spin');
+  try { spin.checked = localStorage.getItem('cw-spin') === '1'; } catch {}
+  const apply = () => {
+    sim.controls.autoRotate = box.controls.autoRotate = spin.checked;
+    try { localStorage.setItem('cw-spin', spin.checked ? '1' : '0'); } catch {}
+  };
+  spin.onchange = apply; apply();
+}
+
+addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  for (const v of Object.values(views)) {
+    v.camera.aspect = innerWidth / innerHeight; v.camera.updateProjectionMatrix();
+    v.labels.setSize(innerWidth, innerHeight);
+  }
+});
+
+let hudKey = '';
+renderer.setAnimationLoop(now => {
+  if (!active) return;
+  active.tick(now);
+  if (active.controls.enabled) active.controls.update();
+  renderer.render(active.scene, active.camera);
+  active.labels.render(active.scene, active.camera);
+  const [big, small] = active.hud(), src = active.source(), k = big + small + src;
+  if (k !== hudKey) {
+    hudKey = k; $('hudBig').textContent = big; $('hudSmall').textContent = small;
+    $('source').innerHTML = src; $('source').style.display = src ? '' : 'none';
+  }
+});
+
+let start = 'sim';
+try { const s = localStorage.getItem('cw-tab'); if (s && views[s]) start = s; } catch {}
+show(start);
+window.__cw = { views, params };
+</script>
+</body>
+</html>
