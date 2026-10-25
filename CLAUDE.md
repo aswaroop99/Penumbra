@@ -67,7 +67,7 @@ The module is unchanged; views ride in the existing `update_view` fields (`src/c
 | `ra` / `dec` | S8 / Ωm | S8 / Ωm | patch centre |
 | `spread` | time | σ threshold (COSMOS) or clump volume (sim) | slice spacing |
 
-The camera (yaw/pitch/zoom) is shared relative to each view's orbit target. Haze settings and panning are not shared. The server's `MAX_LAYERS` = 16 limits `activeLayer`. The cosmic page joins `penumbra-demo`, the layer viewer `penumbra-demo-layers`.
+The camera (yaw/pitch/zoom) is shared relative to each view's orbit target. Haze settings and panning are not shared. The server's `MAX_LAYERS` = 16 limits `activeLayer`. The cosmic page and the layer viewer both join `penumbra-demo` (their view encodings differ, so presenter/follow across the two pages won't line up).
 
 ## Key facts that shape the design
 - **COSMOS is NOT inside the DES footprint** (DES ≈ RA −60°..100°, Dec −65°..+5°). Never imply COSMOS is part of the DES map.

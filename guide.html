@@ -5,24 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="dark" />
     <title>Penumbra Tour</title>
-    <!-- Bridge console fonts (non-blocking; system fallbacks in bridge-tokens.css when offline). Tokens + bar CSS are imported from the page's main.ts. -->
+    <link rel="stylesheet" href="/src/styles/bridge-tokens.css" />
+    <link rel="stylesheet" href="/src/styles/topbar.css" />
+    <!-- Bridge console fonts (non-blocking; system fallbacks in bridge-tokens.css when offline). -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" />
   </head>
   <body>
+    <!-- Site header: same markup/styles as index.html (see src/lib/topbar.ts). -->
     <header class="pb-bar">
-      <a class="pb-brand" href="./" title="Penumbra front page">Penumbra <span>· Cosmic Web</span></a>
-      <nav class="pb-tabs" aria-label="Views">
-        <a class="pb-tab" href="./?tab=sim">Simulate</a>
-        <a class="pb-tab" href="./?tab=box">3D map</a>
-        <a class="pb-tab" href="./?tab=slices">Survey slices</a>
+      <a class="pb-brand" href="./" title="Penumbra front page">Penumbra</a>
+      <nav class="pb-tabs" role="tablist" aria-label="Views">
+        <a class="pb-tab" role="tab" href="./?tab=sim">Simulate</a>
+        <a class="pb-tab" role="tab" href="./?tab=box">3D map</a>
+        <a class="pb-tab" role="tab" href="./?tab=slices">Survey slices</a>
       </nav>
       <nav class="pb-tabs pb-pages" aria-label="Pages">
         <a class="pb-tab" href="guide.html" aria-current="page">Tour</a>
         <a class="pb-tab" href="web.html">DES filaments</a>
         <a class="pb-tab" href="layers.html">Layer viewer</a>
       </nav>
+      <a class="room-toggle" href="./?room=penumbra-demo" title="Open the shared room on the front page">
+        <span>penumbra-demo</span>
+      </a>
     </header>
 
     <div class="wrap">

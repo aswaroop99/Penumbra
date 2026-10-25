@@ -24,7 +24,7 @@ canvas { display: block; touch-action: none; }
 
 /* ---- panels ---- */
 #panel, #collab {
-  position: absolute; top: 64px; max-height: calc(100% - 76px); overflow: auto;
+  position: absolute; top: calc(var(--pb-bar-h, 52px) + 12px); max-height: calc(100% - 76px); overflow: auto;
   background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
   backdrop-filter: blur(6px);
 }

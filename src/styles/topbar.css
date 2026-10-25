@@ -49,11 +49,31 @@
   color: var(--br-muted); padding: 6px 14px; border: var(--br-stroke) solid transparent; text-decoration: none; white-space: nowrap;
   background: none; cursor: pointer; font-weight: 400;
 }
+/* Secondary pages set global link colours; tabs always use the bar palette. */
+.pb-bar a.pb-tab { color: var(--br-muted); }
+.pb-bar a.pb-tab:hover { color: var(--br-ice); }
+.pb-bar a.pb-tab[aria-current='page'] { color: var(--br-ice); }
 .pb-tab:hover { color: var(--br-ice); }
 .pb-tab[aria-current='page'], .pb-tab[aria-selected='true'] {
   background: var(--br-hatch-off); color: var(--br-ice); font-weight: 500;
   border-color: var(--br-red); box-shadow: inset 0 -2px 0 var(--br-red);
 }
+
+.room-toggle {
+  display: inline-flex; align-items: center; gap: 7px; cursor: pointer; white-space: nowrap;
+  border-radius: 0; background-color: var(--br-panel); border: var(--br-stroke) solid var(--br-red-dim);
+  clip-path: var(--br-clip-btn); font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--br-ice); padding: 6px 12px;
+  background-image: var(--pb-cut-line); background-size: var(--br-chamfer-btn) var(--br-chamfer-btn);
+  background-position: right bottom; background-repeat: no-repeat;
+}
+/* Pages without a live collab connection (Tour, DES filaments) render the pill as a link to the shared room. */
+a.room-toggle { text-decoration: none; }
+a.room-toggle:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 1px; }
+.room-toggle:hover, .room-toggle[aria-expanded='true'] {
+  background-color: var(--br-hatch-off); border-color: var(--br-red);
+}
+.room-toggle .count { font-family: var(--br-font-mono); color: var(--br-ice-2); font-variant-numeric: tabular-nums; }
 
 /* medium widths: tighten so the whole bar (incl. the front page's room button) fits on one row */
 @media (max-width: 1280px) {

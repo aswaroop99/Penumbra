@@ -1,6 +1,6 @@
-import './styles.css';
 import '../styles/bridge-tokens.css';
 import '../styles/bridge-bar.css';
+import './styles.css';
 import { Collab, DEFAULT_ROOM, STDB_URI, type CollabState, type Profile, type SharedView } from '../collab/client';
 import { initialProfile, saveProfile } from '../collab/profile';
 import type { Annotation } from '../generated/types';
@@ -22,12 +22,12 @@ const DEFAULT_READOUT = 'Hover over a layer to read κ';
 const STATUS_LABEL = { connecting: 'Connecting…', connected: 'Connected', error: 'Offline' } as const;
 
 /**
- * The layer viewer and the cosmic-web page use different shared-view encodings, so they
- * default to different rooms (and rooms are bound to a per-page map version).
+ * The layer viewer joins the same default room as the cosmic-web page. Note the two pages use
+ * different shared-view encodings, so presenter/follow across them will not line up.
  */
 function initialRoom(): string {
   const q = new URLSearchParams(location.search).get('room');
-  return (q && cleanRoomName(q)) || cleanRoomName(`${DEFAULT_ROOM}-layers`) || 'penumbra-layers';
+  return (q && cleanRoomName(q)) || cleanRoomName(DEFAULT_ROOM) || 'penumbra-demo';
 }
 
 function showFatal(title: string, message: string, retry?: () => void) {
@@ -95,7 +95,6 @@ async function start() {
   $('loading').remove();
   if (import.meta.env.DEV) (window as unknown as { __viewer?: FlyViewer }).__viewer = viewer; // debugging only
   $('panel').hidden = false;
-  $('collab').hidden = false;
 
   // ------------------------------------------------------ viewer panel UI
   const { bounds } = manifest;
@@ -293,6 +292,16 @@ async function start() {
   nameInput.value = profile.name;
   colorInput.value = profile.color;
 
+  const drawer = $('collab');
+  const toggle = $('roomToggle');
+  const setDrawer = (open: boolean) => {
+    drawer.hidden = !open;
+    document.body.classList.toggle('collab-open', open);
+    toggle.setAttribute('aria-expanded', String(open));
+  };
+  toggle.onclick = () => setDrawer(drawer.hasAttribute('hidden'));
+  setDrawer(innerWidth >= 1100);
+
   // Fold the multiplayer panel down to its title bar.
   const collabBtn = $('collabCollapse');
   const collabBody = $('collabBody');
@@ -446,6 +455,8 @@ async function start() {
     if (!s) return;
     $('dot').className = `dot ${s.status}`;
     $('status').textContent = STATUS_LABEL[s.status];
+    $('roomLabel').textContent = roomId;
+    $('roomCount').textContent = String(s.participants.length);
     const offline = $('offline');
     offline.hidden = s.status !== 'error';
     if (s.status === 'error') {
