@@ -45,7 +45,7 @@
   <div class="row"><label><input id="showPeaks" type="checkbox" checked> Show peaks</label>
        <button id="reset">Reset view</button></div>
 
-  <h2>Fly to a peak (top S/N)</h2>
+  <h2>Fly to a peak (highest)</h2>
   <ul id="peaks"></ul>
   </div>
 </div>
@@ -171,7 +171,7 @@ const peaksUl = document.getElementById('peaks');
 [...m.peaks].sort((a, b) => b.snr - a.snr).slice(0, 15).forEach(p => {
   const li = document.createElement('li');
   const hex = '#' + BIN_COLORS[p.bin].toString(16).padStart(6, '0');
-  li.innerHTML = `<span><span class="swatch" style="background:${hex}"></span>RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}°</span><span>S/N ${p.snr.toFixed(1)}</span>`;
+  li.innerHTML = `<span><span class="swatch" style="background:${hex}"></span>RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}°</span><span>${p.snr.toFixed(1)}σ</span>`;
   li.onclick = () => flyToPeak(p);
   peaksUl.appendChild(li);
 });
@@ -241,7 +241,7 @@ renderer.domElement.addEventListener('pointermove', e => {
   const ph = raycaster.intersectObjects(visiblePeaks)[0];
   if (ph) {
     const p = ph.object.userData.peak;
-    readout.textContent = `Peak · bin ${p.bin} · RA ${p.ra.toFixed(2)}°, Dec ${p.dec.toFixed(2)}° · κ ${p.kappa.toFixed(4)} · S/N ${p.snr.toFixed(2)}`;
+    readout.textContent = `Peak · bin ${p.bin} · RA ${p.ra.toFixed(2)}°, Dec ${p.dec.toFixed(2)}° · κ ${p.kappa.toFixed(4)} (${p.snr.toFixed(1)}σ above the map average)${p.post_snr != null ? ` · ${p.post_snr.toFixed(1)}σ confidence across samples` : ''}`;
     return;
   }
 
