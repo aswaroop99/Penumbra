@@ -1,0 +1,23 @@
+# Python dependencies for Penumbra (data prep + inference lanes).
+# Tested with Python 3.11. Install with:
+#   python3 -m venv venv && source venv/bin/activate
+#   pip install -r requirements.txt
+# The 3D viewer's JS deps live in package.json (npm install).
+
+# --- Core numerics / sky maps ---
+numpy>=2.0
+scipy>=1.13
+healpy>=1.17
+astropy>=6.0
+pandas>=2.2          # COSMOS catalog CSV handling (prep step)
+pillow>=10.0         # PNG layer / texture export
+matplotlib>=3.8      # diagnostic and result figures
+
+# --- Inference (SBI + MCMC baseline) ---
+torch>=2.2           # CPU build is enough
+sbi>=0.23            # neural posterior estimation (normalizing flow)
+emcee>=3.1           # classic MCMC baseline
+scikit-learn>=1.4
+
+# --- Testing ---
+pytest>=8.0
