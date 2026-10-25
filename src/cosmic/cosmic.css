@@ -175,7 +175,7 @@ body.collab-open #hud { right: 312px; max-width: min(380px, calc(100% - 640px));
 #source b.toy { background: #ffc46b; }
 #source b.real { background: #7ee0a3; }
 #source a { color: var(--accent); }
-#caption { position: absolute; bottom: 14px; right: 18px; max-width: 420px; color: var(--muted); font-size: 11.5px; text-align: right; pointer-events: none; z-index: 3; }
+#caption { display: none; position: absolute; bottom: 14px; right: 18px; max-width: 420px; color: var(--muted); font-size: 11.5px; text-align: right; pointer-events: none; z-index: 3; }
 #busy { position: absolute; bottom: 14px; left: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; display: none; z-index: 4; }
 
 .toast {
