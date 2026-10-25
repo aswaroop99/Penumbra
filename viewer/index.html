@@ -31,6 +31,23 @@
 </style>
 </head>
 <body>
+<script>
+  // Opened straight from disk (file://)? Browsers block loading ../data from there, so nothing would work.
+  if (location.protocol === 'file:') {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const url = 'http://localhost:8000/viewer/' + page;
+    document.addEventListener('DOMContentLoaded', () => {
+      const d = document.createElement('div');
+      d.setAttribute('role', 'alert');
+      d.style.cssText = 'position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,3,11,.94);color:#e8ecff;font:15px/1.5 system-ui,sans-serif;text-align:center';
+      d.innerHTML = '<div style="max-width:460px"><div style="font-size:20px;font-weight:650;margin-bottom:8px">Open this page through the local server</div>' +
+        'This file was opened straight from disk, and browsers won\'t let it load the map data from there.<br><br>' +
+        'In the repo folder, run <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px">python3 serve.py</code>, then open<br>' +
+        '<a style="color:#6aa8ff" href="' + url + '">' + url + '</a></div>';
+      document.body.appendChild(d);
+    });
+  }
+</script>
 <div id="loading">Loading layers…</div>
 <div id="panel">
   <div class="row" style="margin:0"><h1>Penumbra</h1><button id="collapse" aria-expanded="true">Hide</button></div>
@@ -65,7 +82,9 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 const BASE = '../data/';
 const BIN_COLORS = [0x7fd8ff, 0x9dff8a, 0xffd34d, 0xff6b9e];
 
-const m = await (await fetch(BASE + 'manifest.json')).json();
+const m = await (await fetch(BASE + 'manifest.json', { cache: 'no-cache' })).json();
+// Version tag for images, so a browser never pairs a new manifest with old cached layers.
+const VER = encodeURIComponent(m.layers.map(L => L.vmax).join(','));
 const { ra_min, ra_max, dec_min, dec_max } = m.bounds;
 const [H_PX, W_PX] = m.layers[0].shape;
 // Plate carrée: keep the sky's degree aspect ratio.
@@ -118,7 +137,7 @@ const layerGroups = [];
 const raw = []; // Float32Array per layer, filled lazily
 
 await Promise.all(m.layers.map((L, i) => new Promise(res => {
-  loader.load(BASE + L.png, tex => {
+  loader.load(`${BASE}${L.png}?v=${VER}`, tex => {
     tex.colorSpace = THREE.SRGBColorSpace;
     tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity,
@@ -223,7 +242,7 @@ function halfToFloat(h) {
 async function loadRaw(i) {
   if (raw[i]) return raw[i];
   raw[i] = 'loading';
-  const buf = await (await fetch(BASE + m.layers[i].raw)).arrayBuffer();
+  const buf = await (await fetch(BASE + m.layers[i].raw, { cache: 'no-cache' })).arrayBuffer();
   const u16 = new Uint16Array(buf), out = new Float32Array(u16.length);
   for (let k = 0; k < u16.length; k++) out[k] = halfToFloat(u16[k]);
   raw[i] = out;

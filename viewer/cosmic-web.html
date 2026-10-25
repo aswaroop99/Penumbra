@@ -13,7 +13,9 @@
   html, body { margin: 0; height: 100%; overflow: hidden; background: var(--ink); color: var(--text);
                font: 13px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
   canvas { display: block; }
-  .labels { position: absolute; inset: 0; pointer-events: none; }
+  /* 3D labels sit below the panel and never take clicks (CSS2DObject turns pointer events back on per label). */
+  .labels { position: absolute; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+  .labels * { pointer-events: none !important; }
 
   header { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px;
            padding: 10px 16px; background: linear-gradient(rgba(4,3,11,.85), rgba(4,3,11,0)); z-index: 5; }
@@ -42,7 +44,13 @@
   select { flex: 1; min-width: 0; background: rgba(255,255,255,.06); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 4px; font: inherit; }
   label { cursor: pointer; }
   .seg { gap: 4px; } .seg .btn { flex: 1; }
-  .btn[aria-pressed="true"] { background: var(--accent); color: #061036; font-weight: 600; border-color: transparent; }
+  .pick { display: flex; flex-direction: column; gap: 2px; margin: 6px 0; }
+  .pick button { text-align: left; background: none; border: 1px solid transparent; color: var(--text); border-radius: 6px;
+                 padding: 5px 8px; cursor: pointer; font: inherit; font-variant-numeric: tabular-nums; display: flex; justify-content: space-between; gap: 8px; }
+  .pick button:hover { background: rgba(255,255,255,.07); }
+  .pick button[aria-selected="true"] { background: rgba(106,168,255,.2); border-color: rgba(106,168,255,.5); }
+  .pick button span:last-child { color: var(--muted); }
+  button.btn[aria-pressed="true"], button.btn[aria-pressed="true"]:hover { background: var(--accent); color: #061036; font-weight: 600; border-color: transparent; }
   [data-mode] { display: none; }
   body[data-active="sim"] [data-mode~="sim"],
   body[data-active="box"] [data-mode~="box"],
@@ -78,6 +86,23 @@
 </style>
 </head>
 <body data-active="sim">
+<script>
+  // Opened straight from disk (file://)? Browsers block loading ../data from there, so nothing would work.
+  if (location.protocol === 'file:') {
+    const page = location.pathname.split('/').pop() || 'index.html';
+    const url = 'http://localhost:8000/viewer/' + page;
+    document.addEventListener('DOMContentLoaded', () => {
+      const d = document.createElement('div');
+      d.setAttribute('role', 'alert');
+      d.style.cssText = 'position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(4,3,11,.94);color:#e8ecff;font:15px/1.5 system-ui,sans-serif;text-align:center';
+      d.innerHTML = '<div style="max-width:460px"><div style="font-size:20px;font-weight:650;margin-bottom:8px">Open this page through the local server</div>' +
+        'This file was opened straight from disk, and browsers won\'t let it load the map data from there.<br><br>' +
+        'In the repo folder, run <code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px">python3 serve.py</code>, then open<br>' +
+        '<a style="color:#6aa8ff" href="' + url + '">' + url + '</a></div>';
+      document.body.appendChild(d);
+    });
+  }
+</script>
 <header>
   <div class="brand">Penumbra <span>· Cosmic Web</span></div>
   <nav role="tablist">
@@ -102,6 +127,7 @@
   <div data-mode="box">
     <h2>Data</h2>
     <div class="row seg"><button class="btn" data-src="cosmos" aria-pressed="true">COSMOS (real)</button><button class="btn" data-src="sim" aria-pressed="false">Simulation</button></div>
+    <div class="hint cosmos-only">Click COSMOS again to fly to the strongest structure.</div>
   </div>
 
   <div data-mode="sim box" class="cosmo">
@@ -126,7 +152,7 @@
 
   <div data-mode="slices">
     <h2>Sky region</h2>
-    <div class="row"><select id="region"></select></div>
+    <div id="region" class="pick" role="listbox" aria-label="Sky region"></div>
     <div class="hint">The same patch of sky in every slice, centred on one of the strongest mass peaks inside the survey.</div>
     <h2>Slices</h2>
     <div class="row"><span>Spacing</span><input id="gap" type="range" min="1.5" max="5" step="0.1" value="3"></div>
@@ -153,6 +179,7 @@ import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
 
 const $ = id => document.getElementById(id);
 const DATA = '../data/';
+const getData = (path) => fetch(DATA + path, { cache: 'no-cache' });
 
 // =====================================================================
 // Cosmology helpers (flat ΛCDM, h = 0.674)
@@ -504,7 +531,7 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
       items.push(l);
     }
     const ax = label('<span class="axis">nearer · more recent  ←  distance from Earth  →  farther · earlier</span>');
-    ax.position.set(0, -hy - 1.15, hz); items.push(ax);
+    ax.position.set(0, -hy - 1.6, hz); items.push(ax);
     const ra = label('<span class="axis">right ascension</span>'); ra.position.set(-hw - 0.2, -hy, 0); items.push(ra);
     const dec = label('<span class="axis">declination</span>'); dec.position.set(-hw - 0.2, 0, hz + 0.2); items.push(dec);
     items.forEach(o => box.scene.add(o));
@@ -588,8 +615,8 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   box.scene.add(peakMarker, peakLabel);
   async function loadCosmos() {
     try {
-      cosmosMeta = await (await fetch(DATA + 'cosmos/cosmos_3d.json')).json();
-      const data = new Float32Array(await (await fetch(DATA + 'cosmos/cosmos_3d.f32.bin')).arrayBuffer());
+      cosmosMeta = await (await getData('cosmos/cosmos_3d.json')).json();
+      const data = new Float32Array(await (await getData('cosmos/cosmos_3d.f32.bin')).arrayBuffer());
       const [ny, nx, nd] = cosmosMeta.shape;          // stored [y, x, depth], depth fastest
       // Box axes: X = redshift (long), Y = declination (up), Z = right ascension.
       grids.cosmos = { NX: nd, NY: ny, NZ: nx, data, get: (X, Y, Z) => data[X + nd * (Z + nx * Y)] };
@@ -623,7 +650,26 @@ const box = makeView(0x0a0f33, 40, 0.1, 200);
   }
   box.rebuild = () => setSource(src);   // first show
   box.onCosmo = async () => { grids.sim = null; if (src === 'sim') { await buildSim(); drawClumps(); } };
-  document.querySelectorAll('[data-src]').forEach(b => { b.onclick = () => setSource(b.dataset.src); });
+  let flight = null;
+  function flyToPeak() {
+    const t = peakMarker.position.clone();
+    flight = { t0: performance.now(), p0: box.camera.position.clone(), p1: t.clone().add(new THREE.Vector3(-1.2, 1.4, 3.6)),
+               q0: box.controls.target.clone(), q1: t };
+  }
+  box.tick = now => {
+    if (!flight) return;
+    const k = Math.min(1, (now - flight.t0) / 1200), e = k < 0.5 ? 4 * k ** 3 : 1 - (-2 * k + 2) ** 3 / 2;
+    box.camera.position.lerpVectors(flight.p0, flight.p1, e);
+    box.controls.target.lerpVectors(flight.q0, flight.q1, e);
+    if (k === 1) flight = null;
+  };
+  document.querySelectorAll('[data-src]').forEach(b => {
+    b.onclick = async () => {
+      const again = b.dataset.src === src;
+      await setSource(b.dataset.src);
+      if (again && src === 'cosmos') flyToPeak();
+    };
+  });
   $('frac').oninput = () => drawClumps();
   $('sig').oninput = () => drawClumps();
 
@@ -717,9 +763,9 @@ const slices = makeView(0x0a0f33, 42, 0.1, 200);
   async function load() {
     if (loaded) return; loaded = true;
     busy(true);
-    manifest = await (await fetch(DATA + 'manifest.json')).json();
+    manifest = await (await getData('manifest.json')).json();
     grids = await Promise.all(manifest.layers.map(async Lr => {
-      const u16 = new Uint16Array(await (await fetch(DATA + Lr.raw)).arrayBuffer());
+      const u16 = new Uint16Array(await (await getData(Lr.raw)).arrayBuffer());
       const out = new Float32Array(u16.length);
       for (let i = 0; i < u16.length; i++) out[i] = halfToFloat(u16[i]);
       return out;
@@ -739,15 +785,35 @@ const slices = makeView(0x0a0f33, 42, 0.1, 200);
       for (let r = 0; r < S0; r += 8) for (let c = 0; c < S0; c += 8, n++) if (Number.isNaN(grids[0][(r0 + r) * w + c0 + c])) nan++;
       return nan / n;
     };
-    const top = [...manifest.peaks].filter(p => maskedShare(p) < 0.02).sort((a, b) => b.snr - a.snr).slice(0, 10);
-    if (!top.length) top.push(...[...manifest.peaks].sort((a, b) => b.snr - a.snr).slice(0, 10));
-    top.forEach((p, i) => sel.add(new Option(`Peak ${i + 1}: RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}° (${p.snr.toFixed(1)}σ)`, i)));
-    sel.add(new Option('Middle of the survey', 'mid'));
-    sel.onchange = () => {
-      center = sel.value === 'mid' ? [w / 2, h * 0.62] : toPix(top[+sel.value].ra, top[+sel.value].dec);
+    // Strongest peaks inside the survey, one per location (the same cluster shows up in several bins).
+    // Prefer patches that are mostly inside the survey (the real mask has small holes everywhere).
+    const sameSpot = (q, p) => Math.abs(q.dec - p.dec) < 1.5 && Math.abs(((q.ra - p.ra + 540) % 360) - 180) < 1.5;
+    const byHeight = [...manifest.peaks].sort((a, b) => b.snr - a.snr);
+    const top = [];
+    for (const maxMasked of [0.1, 0.3, 1.01]) {
+      for (const p of byHeight) {
+        if (top.length >= 8) break;
+        if (maskedShare(p) < maxMasked && !top.some(q => sameSpot(q, p))) top.push(p);
+      }
+    }
+    // A list of buttons rather than a <select>: native dropdowns don't open in some embedded browsers.
+    const choices = top.map((p, i) => ({ text: `Peak ${i + 1} · RA ${p.ra.toFixed(1)}°, Dec ${p.dec.toFixed(1)}°`, tag: `${p.snr.toFixed(1)}σ`,
+                                         at: () => toPix(p.ra, p.dec) }));
+    choices.push({ text: 'Middle of the survey', tag: '', at: () => [w / 2, h * 0.62] });
+    const pick = i => {
+      center = choices[i].at();
+      [...sel.children].forEach((b, k) => b.setAttribute('aria-selected', String(k === i)));
       paint();
     };
-    center = toPix(top[0].ra, top[0].dec);
+    choices.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.type = 'button'; b.setAttribute('role', 'option');
+      b.innerHTML = `<span>${c.text}</span><span>${c.tag}</span>`;
+      b.onclick = () => pick(i);
+      sel.appendChild(b);
+    });
+    sel.children[0].setAttribute('aria-selected', 'true');
+    center = choices[0].at();
 
     manifest.layers.forEach((Lr, b) => {
       const plane = new THREE.Mesh(new THREE.PlaneGeometry(SIZE, SIZE),

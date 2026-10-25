@@ -71,10 +71,10 @@ What they do:
 
 ## Running the viewer
 
-Serve the repo root (the viewer loads `../data/`), then open the viewer page:
+Serve the repo root (the viewer loads `../data/`), then open the viewer page. `serve.py` turns off browser caching, so you always see the latest exported data:
 
 ```bash
-python3 -m http.server 8000
+python3 serve.py
 ```
 
 Open http://localhost:8000/viewer/ for the layer viewer, or http://localhost:8000/viewer/cosmic-web.html for the cosmic web simulator.
