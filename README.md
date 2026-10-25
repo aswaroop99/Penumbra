@@ -17,7 +17,8 @@ The viewer puts three datasets on one shared sky:
 | `guide.html`, `src/tour/` | The Tour page: lensing demo, 7 tour stops, the 2026 cosmology status board and the team's progress. Edit progress in `src/tour/team_status.json` |
 | `src/collab/`, `spacetimedb/` | SpacetimeDB client and server module (shared by both pages) |
 | `viewer/index.html`, `viewer/cosmic-web.html` | The original standalone pages (no build step, no multiplayer, three from a CDN). Kept as reference; `viewer/des-volume.html` is an experimental DES depth-inversion viewer |
-| `data/` | Exported viewer data: the real DES Y3 layers (PNGs, float16 grids, `manifest.json`), the COSMOS 3D grids in `data/cosmos/`, and the optional `reader.json` / `inference.json`. See `data/README_for_frontend.md` |
+| `data/` | Viewer data, **built by `build_data.sh`** (not committed): the real DES Y3 layers (PNGs, float16 grids, `manifest.json`) and the COSMOS 3D grids in `data/cosmos/`. The stored `reader.json` / `inference.json` are committed. See `data/README_for_frontend.md` |
+| `build_data.sh` | Downloads the raw data and builds everything in `data/` |
 | `prep/` | Data prep: `export_des.py` (alternative DES layer export), `cosmos_3d.py` (COSMOS 3D rebuild), `deproject_des.py` / `des_volume.py` (DES depth-inversion experiments) |
 | `des_map/` | DES science pipeline and the vision-language map reader (`run-reader`, `run-vlm-demo`). See `des_map/MAP_READER.md` |
 | `inference/` | Offline SBI pipeline (Ωm, S8 from a map). Run once per dataset; the stored result is reused. See `inference/README.md` |
@@ -56,6 +57,7 @@ What you end up with:
 ## Running the app
 
 ```bash
+bash build_data.sh      # once: build data/ (see "Building the viewer data")
 npm install && (cd spacetimedb && npm install)
 npm run stdb:start      # terminal 1: local SpacetimeDB
 npm run stdb:publish    # once: publish the module as database "penumbra"
@@ -121,15 +123,17 @@ Rules that avoid conda/venv clashes:
 - Narrower pinned sets: `inference/requirements.txt` (SBI lane, same versions as the conda env) and `des_map/requirements-reader.txt` (reader only).
 - After editing `environment.yml`: `conda env update -n penumbra -f environment.yml --prune`, then regenerate the lock with `conda list -n penumbra --explicit --md5` (keep the header lines).
 
-## Rebuilding the viewer data
-`data/` is committed, so you only need this after changing the prep scripts or the raw data. Use the `penumbra` environment (see [Python environments](#python-environments)):
+## Building the viewer data
+
+The viewer data in `data/` is **not committed**. Build it once after cloning (and again after changing a prep script). It downloads the raw surveys (~0.3 GB) into `dark_universe_data/` if they're missing, then writes the DES layers, `manifest.json` and the COSMOS 3D grids into `data/` (about 30 s). It needs the Python environment from [Python environments](#python-environments):
 
 ```bash
-conda activate penumbra
-python prep/cosmos_3d.py
+bash build_data.sh
 ```
 
-The DES layers in `data/` come from the `des_map/` pipeline (`des_map/make_des_map.py` on the KaRMMa samples, 10′ smoothing). `python prep/export_des.py` writes the same files with 20′ smoothing and an extra `post_snr` per peak. After changing the DES layers, run `./run-vlm-demo` again so `data/reader.json` matches the map.
+`--skip-download` builds from the raw files already on disk. `--with-volume` also builds the experimental DES depth volume for `viewer/des-volume.html`.
+
+Only three files in `data/` are committed: `README_for_frontend.md`, and the small stored results `inference.json` (SBI; rebuild with `inference/`) and `reader.json` (AI map reading; needs an API key, see [Vision-language map reader](#vision-language-map-reader)). After the DES layers change, run the reader again so its pins line up with the map.
 
 What the prep scripts do:
 

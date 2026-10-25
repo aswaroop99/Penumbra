@@ -1,8 +1,9 @@
 # Viewer data
 
-These are the **real DES Y3 mass maps**: the mean of the 100 KaRMMa posterior samples
-(zenodo.org/records/10668943), written by the `des_map/` pipeline
-(`des_map/make_des_map.py` on the KaRMMa sample stack, which calls `des_map/pipeline/export_view.py`; 10′ display smoothing). (An earlier version of this folder
+Everything here except this file, `inference.json` and `reader.json` is **generated, not committed**:
+run `bash build_data.sh` from the repo root. The layers are the **real DES Y3 mass maps**: the mean of
+the 100 KaRMMa posterior samples (zenodo.org/records/10668943), written by `prep/export_des.py`
+(20′ display smoothing). (An earlier version of this folder
 held toy data with the same file shapes; the schema didn't change, so the viewers kept working.)
 Build to the manifest, not to the pixels.
 
@@ -15,7 +16,8 @@ Build to the manifest, not to the pixels.
 - `bounds`: `{ra_min, ra_max, dec_min, dec_max}` in degrees — the geographic extent of every layer.
 - `convention`: plate carrée; **column 0 = ra_max (east-left, astronomical), row 0 = dec_max**. RA may be negative (= RA+360). Read this before mapping pixels↔sky.
 - `layers[]`: each has `name`, `png`, `raw`, `shape:[h,w]`, `vmin`, `vmax`, `sigma`. Use vmin/vmax for colour scaling if you render from the raw grid.
-- `peaks[]`: `{ra, dec, kappa, snr, bin}`, plus optional `post_snr` — the clusters. `snr` = κ / layer sigma (peak height); `post_snr` (only written by `prep/export_des.py`) = κ / posterior std across the samples. Treat `post_snr` as optional. Label/flag these in the UI; they're the "fly to a landmark" targets and the hooks for the citizen-annotation layer.
+- `peaks[]`: `{ra, dec, kappa, snr, bin}`, plus optional `post_snr` — the clusters. `snr` = κ / layer sigma (peak height); `post_snr` = κ / posterior std across the samples (how certain the peak is, typically 2–4 for the top peaks). Treat `post_snr` as optional: the `des_map/` pipeline's exporter doesn't write it.
+- `inference` (optional): file name of the stored SBI result. `export_des.py` adds it when `data/inference.json` exists; the viewer shows it only if the result was computed from this map. Label/flag these in the UI; they're the "fly to a landmark" targets and the hooks for the citizen-annotation layer.
 - `coord`: `C` = equatorial (celestial). `smoothing_arcmin`: display smoothing applied.
 
 ## inference.json (optional): the stored cosmology result
@@ -46,10 +48,10 @@ simply hides the "Cosmology from this map" card. Parser: `src/lib/inference.ts`.
 - Masked (transparent/NaN) regions are outside the survey footprint — render them as empty space, not zero-density.
 
 ## Regenerating
-The pipeline reruns `export_view.py` and overwrites these files with the same names and schema.
-`prep/export_des.py` (Ethan's script, 20′ smoothing, adds `post_snr`) writes the same schema and can be
-used instead. Either way, viewers read `manifest.json` at load time and never hard-code bounds,
-shapes, or layer counts. **After regenerating, re-run `./run-vlm-demo`** so `reader.json` matches the new map.
+`bash build_data.sh` overwrites these files with the same names and schema. The `des_map/` pipeline
+(`des_map/pipeline/export_view.py`) writes the same schema too. Viewers read `manifest.json` at load
+time and never hard-code bounds, shapes, or layer counts. **After the layers change, re-run the map
+reader** (see `des_map/MAP_READER.md`) so `reader.json` matches the new map.
 
 ## Optional: `reader.json` (AI map-reader layer)
 
