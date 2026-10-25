@@ -126,6 +126,10 @@ def main():
         note="Layers are mass projected toward more distant sources (overlapping), not depth slices. "
              "snr = kappa / layer sigma; post_snr = kappa / posterior std across the samples.",
     )
+    # Keep the viewer's pointer to a stored SBI result (inference/ writes data/inference.json).
+    # The viewer still checks that the result was computed from this map before showing it.
+    if os.path.exists(os.path.join(OUT, "inference.json")):
+        manifest["inference"] = "inference.json"
     with open(os.path.join(OUT, "manifest.json"), "w") as f:
         json.dump(manifest, f, indent=1)
     print(f"wrote {n_bins} layers ({h}x{w}) and {len(peaks)} peaks to {OUT}")

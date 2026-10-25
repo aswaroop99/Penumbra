@@ -59,3 +59,10 @@ des_map/reader_runs/
 inference/work/
 *.pkl
 sbi-logs/
+
+# Viewer data is generated, not committed: run `bash build_data.sh`.
+# Only the docs and two small stored results stay in git.
+/data/*
+!/data/README_for_frontend.md
+!/data/inference.json
+!/data/reader.json
