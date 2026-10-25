@@ -52,6 +52,10 @@ export interface View {
   tick(now: number): void;
   /** Called each time the tab is opened (after the first `rebuild`). */
   onShow(): Promise<void> | void;
+  /** Called when another tab is opened. */
+  onHide?(): void;
+  /** Whether orbit controls should be on when the tab opens (default true). */
+  orbitEnabled?(): boolean;
   hud(): [string, string];
   /** HTML describing where this view's data comes from (empty = hide). */
   source(): string;
