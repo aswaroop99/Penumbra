@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Penumbra Tour</title>
+  </head>
+  <body>
+    <header class="site-top">
+      <div class="brand">Penumbra <span>· Tour</span></div>
+      <nav class="links">
+        <a href="./">Cosmic web</a>
+        <a href="layers.html">Layer viewer</a>
+      </nav>
+    </header>
+
+    <div class="wrap">
+      <section class="hero">
+        <div>
+          <div class="eyebrow">Cal Hacks 2026 · a guided tour</div>
+          <h1>Mapping the Dark Universe</h1>
+          <p class="lede">
+            About <em>85% of all matter</em> gives off no light at all. You can still map it, by watching how it bends light
+            from a hundred million distant galaxies. This tour walks you from that idea to the team's own measurement.
+          </p>
+          <div class="tags">
+            <span>DES Y3 mass maps</span><span>4,143 deg² of sky</span><span>~100 million galaxies</span><span>checked 24 Oct 2026</span>
+          </div>
+        </div>
+        <figure class="field">
+          <canvas id="sky" aria-label="Background galaxies bent around an invisible mass that follows your pointer"></canvas>
+          <figcaption>
+            <span>Move across the field. An invisible mass bends the galaxies behind it. The real effect is ~1%; this is exaggerated about 30×.</span>
+            <button id="reveal" type="button" aria-pressed="false">Reveal the mass</button>
+          </figcaption>
+        </figure>
+      </section>
+
+      <main class="work">
+        <section class="panel tour" aria-labelledby="tourtitle">
+          <div class="eyebrow" id="tourtitle">The tour · 7 stops</div>
+          <ol class="stops" id="stops"></ol>
+          <article class="stop" id="stop" aria-live="polite"></article>
+        </section>
+      </main>
+
+      <section class="board" aria-labelledby="boardtitle">
+        <div class="board-head">
+          <h2 id="boardtitle">Where cosmology stands</h2>
+          <span class="eyebrow">checked 24 October 2026</span>
+        </div>
+        <div class="board-grid">
+          <div class="panel chart">
+            <h3>How clumpy is the universe? (S8)</h3>
+            <p class="sub">The CMB "baby photo" predicts today's clumpiness; lensing surveys weigh it directly. Dots are best values, bars the 68% range.</p>
+            <div class="chart-scroll"><svg id="s8chart" role="img" aria-label="S8 values from Planck 2018, DES Y3, KiDS-Legacy, DES Y6 and this project"></svg></div>
+            <p class="foot">Shaded band: Planck 2018 ± 1σ. Lower means a smoother universe. Sources at the bottom of the page.</p>
+          </div>
+          <div class="cards">
+            <div class="panel card">
+              <div class="top"><h3>Clumpiness (S8) tension</h3><span class="chip warn">narrowing · survey-dependent</span></div>
+              <p>Lensing once found the universe a few percent smoother than Planck predicts. KiDS-Legacy (2025) now agrees with Planck; DES Y6 (2026) still sits 2.6σ low on S8. A 2026 review calls it probe-dependent and unresolved.</p>
+            </div>
+            <div class="panel card">
+              <div class="top"><h3>Expansion-rate (H0) tension</h3><span class="chip hot">unresolved · ~5σ</span></div>
+              <p>Nearby stars say <span class="num">73.0 ± 1.0</span> km/s/Mpc (SH0ES); the early universe implies <span class="num">67.4 ± 0.5</span>. JWST red-giant distances (CCHP) land between, at <span class="num">70.4</span>. Experts disagree on the cause.</p>
+            </div>
+            <div class="panel card">
+              <div class="top"><h3>Is dark energy changing?</h3><span class="chip info">hint · 2.8–4.2σ</span></div>
+              <p>DESI's 3D galaxy map plus the CMB and supernovae prefers dark energy that weakens over time, at 2.8–4.2σ depending on the supernova set. That is short of the 5σ discovery bar, and newer DESI Lyman-alpha results lean back toward a constant.</p>
+            </div>
+            <div class="panel card">
+              <div class="top"><h3>Bigger maps are coming</h3><span class="chip ok">underway</span></div>
+              <p>Rubin Observatory started its 10-year sky survey on 29 June 2026. Euclid releases its first raw data and calibrated images in November 2026, with full science products in mid-2027.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="project panel" aria-labelledby="projtitle">
+        <div>
+          <div class="eyebrow">The team's progress</div>
+          <h2 id="projtitle">Our measurement, right now</h2>
+          <p class="summary" id="projsummary"></p>
+          <div class="results" id="results"></div>
+          <p class="live" id="projlive"></p>
+        </div>
+        <ul class="ms" id="milestones"></ul>
+      </section>
+
+      <footer>
+        <div class="eyebrow">Sources</div>
+        <ul>
+          <li><a href="https://arxiv.org/abs/1807.06209" target="_blank" rel="noopener">Planck 2018 cosmological parameters</a></li>
+          <li><a href="https://arxiv.org/abs/2105.13539" target="_blank" rel="noopener">DES Y3 curved-sky mass maps (Jeffrey, Gatti et al.)</a></li>
+          <li><a href="https://arxiv.org/abs/2503.19441" target="_blank" rel="noopener">KiDS-Legacy cosmic shear (Wright et al. 2025)</a></li>
+          <li><a href="https://arxiv.org/abs/2601.14559" target="_blank" rel="noopener">DES Y6 clustering + weak lensing (2026)</a></li>
+          <li><a href="https://arxiv.org/abs/2602.12238" target="_blank" rel="noopener">Status of the S8 tension: a 2026 review</a></li>
+          <li><a href="https://arxiv.org/abs/2503.14738" target="_blank" rel="noopener">DESI DR2 BAO and cosmological constraints</a></li>
+          <li><a href="https://www.desi.lbl.gov/2026/07/30/new-desi-dr2-lyman-alpha-results-shed-light-on-dark-energy/" target="_blank" rel="noopener">DESI DR2 Lyman-alpha results (July 2026)</a></li>
+          <li><a href="https://arxiv.org/abs/2606.20434" target="_blank" rel="noopener">The Hubble tension: a decade review (2026)</a></li>
+          <li><a href="https://arxiv.org/abs/2408.06153" target="_blank" rel="noopener">CCHP status report (Freedman et al.)</a></li>
+          <li><a href="https://www.cosmos.esa.int/web/euclid/dr1-timeline" target="_blank" rel="noopener">Euclid DR1 timeline (ESA)</a></li>
+          <li><a href="https://www.rubin.community/t/2026-07-10-early-operations-update-start-of-lsst/12280" target="_blank" rel="noopener">Rubin: start of LSST</a></li>
+          <li><a href="https://arxiv.org/abs/2209.04662" target="_blank" rel="noopener">CosmoGridV1 simulations</a></li>
+          <li><a href="https://arxiv.org/abs/2309.11425" target="_blank" rel="noopener">Galaxy Zoo DESI</a></li>
+          <li><a href="https://www.zooniverse.org/projects/zookeeperblog/galaxy-zoo" target="_blank" rel="noopener">Join Galaxy Zoo on Zooniverse</a></li>
+        </ul>
+      </footer>
+    </div>
+    <script type="module" src="/src/tour/main.ts"></script>
+  </body>
+</html>

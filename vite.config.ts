@@ -89,7 +89,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       // Two pages: the cosmic-web app (index.html) and the sky-layer viewer (layers.html).
-      input: { main: resolve(ROOT, 'index.html'), layers: resolve(ROOT, 'layers.html') },
+      input: { main: resolve(ROOT, 'index.html'), layers: resolve(ROOT, 'layers.html'), guide: resolve(ROOT, 'guide.html') },
     },
   },
   test: {

@@ -1,0 +1,23 @@
+# Conda environment for Penumbra (Python analysis + Node for the viewer).
+#   conda env create -f environment.yml
+#   conda activate penumbra
+# Everything comes from conda-forge (no pip section) so one solver keeps
+# numpy / astropy / torch / sbi consistent. Verified to solve on osx-arm64.
+name: penumbra
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - scipy
+  - healpy
+  - astropy
+  - pandas
+  - pillow
+  - matplotlib
+  - scikit-learn
+  - emcee
+  - pytest
+  - pytorch
+  - sbi
+  - nodejs=22

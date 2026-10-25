@@ -292,7 +292,7 @@ export function createSliceView(ctx: Ctx, manifest: Manifest): SliceView {
   return {
     ...base,
     caption:
-      'The same patch of sky in four DES-style lensing layers. Each layer is the mass projected toward more distant galaxies, so the layers overlap; they are not separate slices of space. Times are approximate. The current files are toy data until the real DES export lands.',
+      'The same patch of sky in the four DES Y3 lensing layers. Each layer is the mass projected toward more distant galaxies, so the layers overlap; they are not separate slices of space. Times are approximate.',
     tick: () => {},
     async onShow() {
       await ensureLoaded();
