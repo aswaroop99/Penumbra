@@ -4,9 +4,11 @@ import { initialProfile, saveProfile } from '../collab/profile';
 import type { Annotation } from '../generated/types';
 import { el } from '../lib/dom';
 import { loadManifest, manifestVersion, type Manifest } from '../lib/manifest';
+import { loadReader, type FeatureKind, type ReaderTarget } from '../lib/reader';
 import { cleanRoomName } from '../lib/room';
 import { throttle } from '../lib/throttle';
 import { binColor, FlyViewer, hex, type HoverInfo, type PlaceInfo } from '../viewer/FlyViewer';
+import { citationsById, kindLabel, renderReaderPanel, type ReaderPanel } from './readerPanel';
 
 const $ = <T extends HTMLElement>(id: string): T => {
   const el = document.getElementById(id);
@@ -54,12 +56,15 @@ async function start() {
   let lastSent: SharedView | null = null;
   // Assigned once the backend is wired up; the viewer can emit view changes before that.
   let publish: () => void = () => {};
+  // Optional AI map-reader layer (data/reader.json), loaded after the map is up.
+  let readerPanel: ReaderPanel | null = null;
+  let readerCites = new Map<string, FeatureKind[]>();
 
   // ---------------------------------------------------------------- viewer
   const viewer = new FlyViewer(manifest, $('app'), {
     onViewChange: () => publish(),
     onInteract: () => setFollowing(false),
-    onHover: (h) => ($('readout').textContent = describeHover(manifest, h)),
+    onHover: (h) => ($('readout').textContent = describeHover(manifest, h, readerCites)),
     onFocusChange: (i) => {
       syncFocusRadios(i);
       lastSent = null;
@@ -76,6 +81,7 @@ async function start() {
       renderComposer();
     },
     onFlagClick: (a) => flyToFlag(a),
+    onReaderClick: (t) => flyToReaderTarget(t),
     onError: (m) => setNotice(m),
   });
   try {
@@ -162,6 +168,32 @@ async function start() {
         viewer.flyToPeak(p);
       };
       $('peaks').append(li);
+    });
+
+  // ------------------------------------------------------ AI map reading
+  function flyToReaderTarget(t: ReaderTarget) {
+    setFollowing(false);
+    viewer.flyToSky(t.ra, t.dec, t.bin);
+    readerPanel?.focusTarget(t.id);
+  }
+
+  loadReader(manifest.peaks.length)
+    .then((reader) => {
+      if (!reader) return; // no reader.json: the section stays hidden
+      readerCites = citationsById(reader);
+      readerPanel = renderReaderPanel($('reader'), reader, manifest.layers.length, {
+        onTarget: flyToReaderTarget,
+        onHighlight: (ids) => viewer.setReaderTargets(readerPanel?.targets ?? [], ids),
+        onTogglePins: (visible) => viewer.setReaderVisible(visible),
+      });
+      viewer.setReaderTargets(readerPanel.targets);
+    })
+    .catch((e: unknown) => {
+      const box = $('reader');
+      box.hidden = false;
+      $('readerBody').replaceChildren(
+        el('p', { className: 'small error-text', textContent: `Couldn’t read the AI map reading: ${e instanceof Error ? e.message : String(e)}` })
+      );
     });
 
   // -------------------------------------------------------------- backend
@@ -464,7 +496,7 @@ async function start() {
   renderCollab();
 }
 
-function describeHover(manifest: Manifest, h: HoverInfo | null): string {
+function describeHover(manifest: Manifest, h: HoverInfo | null, cites: Map<string, FeatureKind[]>): string {
   if (!h) return DEFAULT_READOUT;
   switch (h.kind) {
     case 'peak': {
@@ -473,6 +505,12 @@ function describeHover(manifest: Manifest, h: HoverInfo | null): string {
     }
     case 'flag':
       return `Flag by ${h.annotation.authorName}: ${h.annotation.text}`;
+    case 'reader': {
+      const t = h.target;
+      const kinds = [...new Set(cites.get(t.id) ?? [])].map(kindLabel).join(', ');
+      return `AI pin · measured ${t.type} · bin ${t.bin} · RA ${t.ra.toFixed(2)}°, Dec ${t.dec.toFixed(2)}° · κ ${t.kappa.toFixed(4)}` +
+        (kinds ? ` · cited as: ${kinds}` : '');
+    }
     case 'loading':
       return `Loading ${manifest.layers[h.layer].name} values…`;
     case 'outside':

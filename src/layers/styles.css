@@ -77,6 +77,31 @@ textarea { width: 100%; resize: vertical; }
 }
 #peaks li:hover { background: rgba(255, 255, 255, 0.08); }
 
+/* ---- AI map reading ---- */
+#reader { margin: 12px 0; padding: 4px 0 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); user-select: text; }
+.reader-overview { margin: 4px 0 6px; }
+.reader-warn { color: #ffd38a; }
+.reader-features { list-style: none; margin: 6px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.reader-features li { border: 1px solid var(--line); border-radius: 8px; padding: 6px; }
+.reader-features li.focus { border-color: #c9a7ff; background: rgba(201, 167, 255, 0.08); }
+.reader-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 4px; }
+.tag { font-size: 10px; padding: 1px 6px; border-radius: 999px; background: rgba(255, 255, 255, 0.08); color: var(--muted); }
+.tag-measured_extremum { background: rgba(74, 222, 128, 0.15); color: #86efac; }
+.tag-visual_hypothesis { background: rgba(201, 167, 255, 0.18); color: #d8c2ff; }
+.tag-quality_concern { background: rgba(250, 204, 21, 0.15); color: #fde68a; }
+.reader-text { display: block; width: 100%; text-align: left; background: none; border: none; padding: 0; line-height: 1.4; }
+.reader-text:hover:not(:disabled) { background: none; color: #fff; }
+.reader-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.chip { font-size: 11px; padding: 1px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.chip-peak { border-color: rgba(226, 200, 255, 0.5); }
+.chip-trough { border-color: rgba(124, 200, 255, 0.5); }
+.reader-legend { display: inline-flex; align-items: center; gap: 4px; }
+.diamond { display: inline-block; width: 8px; height: 8px; transform: rotate(45deg); border: 2px solid; }
+.diamond.peak { border-color: #e2c8ff; }
+.diamond.trough { border-color: #7cc8ff; margin-left: 4px; }
+.reader-disclaimer { font-style: italic; }
+#reader details ul { margin: 4px 0; padding-left: 16px; }
+
 /* ---- collab panel ---- */
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; }
 .dot.connected { background: #4ade80; }

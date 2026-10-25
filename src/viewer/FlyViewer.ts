@@ -34,7 +34,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import type { Annotation, Presence } from '../generated/types';
 import type { SharedView } from '../collab/client';
 import type { Manifest, Peak } from '../lib/manifest';
-import { loadRawGrid, planeToSky, sampleGrid, skyToPlane, type RawGrid } from '../lib/sky';
+import type { ReaderTarget } from '../lib/reader';
+import { loadRawGrid, planeToSky, sampleGrid, skyToPlane, skyToUV, uvInside, type RawGrid } from '../lib/sky';
 
 export const BIN_COLORS = [0x7fd8ff, 0x9dff8a, 0xffd34d, 0xff6b9e, 0xb388ff, 0xff9f68];
 export const binColor = (i: number) => BIN_COLORS[i % BIN_COLORS.length];
@@ -46,6 +47,7 @@ const W = 24;
 export type HoverInfo =
   | { kind: 'peak'; peak: Peak }
   | { kind: 'flag'; annotation: Annotation }
+  | { kind: 'reader'; target: ReaderTarget }
   | { kind: 'layer'; layer: number; ra: number; dec: number; kappa: number; sigma: number }
   | { kind: 'loading'; layer: number }
   | { kind: 'outside' };
@@ -65,6 +67,8 @@ export interface ViewerEvents {
   /** A click while annotate mode is on, on an unmasked part of a layer. */
   onPlace?: (p: PlaceInfo) => void;
   onFlagClick?: (a: Annotation) => void;
+  /** A click on an AI map-reader pin (outside annotate mode). */
+  onReaderClick?: (t: ReaderTarget) => void;
   /** The focus layer changed programmatically (peak fly-to, follow, reset). */
   onFocusChange?: (layer: number) => void;
   /** A layer was made visible programmatically (e.g. flying to a peak on a hidden layer). */
@@ -99,6 +103,10 @@ export class FlyViewer {
   private readonly flagGroups: Group[] = [];
   private readonly peakGroups: Group[] = [];
   private readonly peakMeshes: Mesh[] = [];
+  private readonly readerGroups: Group[] = [];
+  private readerMeshes: { mesh: Mesh; hot: boolean }[] = [];
+  /** Diamond outline: visually distinct from peak spheres, flags and people rings. */
+  private readonly readerGeo = new RingGeometry(0.17, 0.25, 4, 1, 0);
   private readonly grids = new Map<number, RawGrid>();
   private readonly inflight = new Map<number, Promise<RawGrid>>();
   private readonly width: number;
@@ -202,12 +210,14 @@ export class FlyViewer {
                 const group = new Group();
                 const peaks = new Group();
                 const flags = new Group();
-                group.add(mesh, frame, peaks, flags);
+                const reader = new Group();
+                group.add(mesh, frame, peaks, flags, reader);
                 group.userData = { mesh };
                 this.scene.add(group);
                 this.layerGroups[i] = group;
                 this.peakGroups[i] = peaks;
                 this.flagGroups[i] = flags;
+                this.readerGroups[i] = reader;
                 resolve();
               },
               undefined,
@@ -442,6 +452,42 @@ export class FlyViewer {
     }
   }
 
+  /**
+   * AI map-reader pins at the reader's measured positions. Pins outside the site map's
+   * bounds, or on bins this site does not have, are skipped. `hot` ids are emphasised.
+   */
+  setReaderTargets(targets: readonly ReaderTarget[], hot: ReadonlySet<string> = new Set()) {
+    for (const g of this.readerGroups) {
+      for (const c of [...g.children]) {
+        g.remove(c);
+        (c as Mesh<BufferGeometry, MeshBasicMaterial>).material.dispose();
+      }
+    }
+    this.readerMeshes = [];
+    const seen = new Set<string>();
+    for (const t of targets) {
+      const group = this.readerGroups[t.bin];
+      if (!group || seen.has(t.id) || !uvInside(skyToUV(this.manifest.bounds, t.ra, t.dec))) continue;
+      seen.add(t.id);
+      const isHot = hot.has(t.id);
+      const color = t.type === 'peak' ? 0xe2c8ff : 0x7cc8ff;
+      const m = new Mesh(
+        this.readerGeo,
+        new MeshBasicMaterial({ color, side: DoubleSide, transparent: true, opacity: isHot ? 1 : 0.8, depthTest: false })
+      );
+      const { x, y } = this.skyToXY(t.ra, t.dec);
+      m.position.set(x, y, 0.1);
+      m.renderOrder = 9;
+      m.userData.readerTarget = t;
+      group.add(m);
+      this.readerMeshes.push({ mesh: m, hot: isHot });
+    }
+  }
+
+  setReaderVisible(visible: boolean) {
+    for (const g of this.readerGroups) g.visible = visible;
+  }
+
   setDraft(d: PlaceInfo | null) {
     if (!d) {
       this.draftMarker.visible = false;
@@ -557,11 +603,19 @@ export class FlyViewer {
     return hit ? (this.flagById.get(hit.object.id) ?? null) : null;
   }
 
+  private pickReader(): ReaderTarget | null {
+    const meshes = this.readerGroups.flatMap((g, i) => (g.visible && this.layerGroups[i]?.visible ? g.children : []));
+    const hit = this.raycaster.intersectObjects(meshes)[0];
+    return hit ? ((hit.object.userData.readerTarget as ReaderTarget | undefined) ?? null) : null;
+  }
+
   private onPointerMove = (e: PointerEvent) => {
     if (e.buttons) return; // dragging: don't spend time raycasting
     this.setRay(e);
     const flag = this.pickFlag();
     if (flag) return void this.events.onHover?.({ kind: 'flag', annotation: flag });
+    const target = this.pickReader();
+    if (target) return void this.events.onHover?.({ kind: 'reader', target });
     const visiblePeaks = this.peakMeshes.filter((s) => s.parent?.visible && s.parent.parent?.visible);
     const ph = this.raycaster.intersectObjects(visiblePeaks)[0];
     if (ph) return void this.events.onHover?.({ kind: 'peak', peak: ph.object.userData.peak as Peak });
@@ -576,7 +630,9 @@ export class FlyViewer {
     this.setRay(e);
     if (!this.annotateMode) {
       const flag = this.pickFlag();
-      if (flag) this.events.onFlagClick?.(flag);
+      if (flag) return void this.events.onFlagClick?.(flag);
+      const target = this.pickReader();
+      if (target) this.events.onReaderClick?.(target);
       return;
     }
     const resolve = (): void => {
@@ -632,6 +688,9 @@ export class FlyViewer {
     const screenScale = (at: Vector3) => Math.min(1, Math.max(0.12, cam.distanceTo(at) * 0.05));
     for (const f of this.flagMeshes) {
       f.mesh.scale.setScalar(screenScale(f.mesh.getWorldPosition(this.tmp)) * (f.hot ? 1.6 : 1));
+    }
+    for (const r of this.readerMeshes) {
+      r.mesh.scale.setScalar(screenScale(r.mesh.getWorldPosition(this.tmp)) * (r.hot ? 1.7 : 1));
     }
     for (const e of this.others.values()) {
       const k = screenScale(e.at);
