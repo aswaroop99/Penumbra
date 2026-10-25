@@ -38,3 +38,5 @@ node_modules/
 
 # Large survey / CMB datasets (download locally)
 dark_universe_data/
+
+.cursor/
