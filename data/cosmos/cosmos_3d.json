@@ -50,6 +50,8 @@
   128
  ],
  "layout": "float32, index = depth + nd*(x + nx*y)",
+ "faint_file": "cosmos_3d_faint.f32.bin",
+ "faint_note": "Same lens placement drawn 0.12 wide in z, for showing structure below the clump threshold. Low-confidence: at 1-2 sigma much of this is shape noise.",
  "z_near": 0.05,
  "z_far": 1.35,
  "bounds": {

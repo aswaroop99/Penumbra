@@ -56,9 +56,10 @@ def growth(z):
 
 
 Z_WIDTH = 0.05   # display width (sigma) of a placed lens along redshift
+FAINT_Z_WIDTH = 0.12   # same, for the low-confidence layer
 
 
-def place_lenses(profile, zc):
+def place_lenses(profile, zc, width=None):
     """Matched-filter significance vs. lens redshift is very broad, so drawing it directly gives
     long tubes. Instead put each local maximum of the profile at its most likely redshift
     (parabolic refinement between planes) as a Gaussian of height = its significance."""
@@ -75,7 +76,7 @@ def place_lenses(profile, zc):
             if den < 0:
                 off = 0.5 * (left - right) / den
                 z_pk += off * (LENS_Z[1] - LENS_Z[0]); h = p[l] - 0.25 * (left - right) * off
-        out = np.maximum(out, h * np.exp(-0.5 * ((zc - z_pk) / Z_WIDTH) ** 2))
+        out = np.maximum(out, h * np.exp(-0.5 * ((zc - z_pk) / (width or Z_WIDTH)) ** 2))
     return out
 
 
@@ -203,15 +204,23 @@ def main():
         small[l] = sm[np.ix_(np.round(yy).astype(int), np.round(xx).astype(int))]
     cov_small = cov[np.ix_(np.round(yy).astype(int), np.round(xx).astype(int))]
     view = np.empty((VIEW_SIDE, VIEW_SIDE, VIEW_DEPTH), dtype=np.float32)   # [y, x, depth]
+    # Low-confidence layer: same peak placement, but drawn wider in redshift (closer to the real depth
+    # uncertainty) so weak neighbouring structures can overlap. Viewer shows it below the clump threshold.
+    # (Interpolating the raw profile instead gives tubes through the whole box: it barely varies with z.)
+    faint = np.zeros_like(view)
     for j in range(VIEW_SIDE):
         for i in range(VIEW_SIDE):
             if not cov_small[j, i]:
                 view[j, i] = 0
-            elif METHOD == "wiener":
-                view[j, i] = np.interp(zc, LENS_Z, small[:, j, i])
+                continue
+            prof = small[:, j, i]
+            if METHOD == "wiener":
+                view[j, i] = faint[j, i] = np.interp(zc, LENS_Z, prof)
             else:
-                view[j, i] = place_lenses(small[:, j, i], zc)
+                view[j, i] = place_lenses(prof, zc)
+                faint[j, i] = place_lenses(prof, zc, FAINT_Z_WIDTH)
     view.tofile(os.path.join(OUT, "cosmos_3d.f32.bin"))
+    faint.tofile(os.path.join(OUT, "cosmos_3d_faint.f32.bin"))
 
     meta = dict(
         source="COSMOS HST weak-lensing catalog (Leauthaud et al. 2007), our 3D rebuild",
@@ -224,6 +233,9 @@ def main():
         lens_planes=LENS_Z.tolist(), smoothing_arcmin=SMOOTH_ARCMIN, shear_signs=[s1, s2],
         eb_ratio_all_sources=round(tests[(s1, s2)][0], 2),
         shape=[VIEW_SIDE, VIEW_SIDE, VIEW_DEPTH], layout="float32, index = depth + nd*(x + nx*y)",
+        faint_file="cosmos_3d_faint.f32.bin",
+        faint_note=("Same lens placement drawn %.2f wide in z, for showing structure below the clump threshold. "
+                    "Low-confidence: at 1-2 sigma much of this is shape noise." % FAINT_Z_WIDTH),
         z_near=z_near, z_far=z_far,
         bounds=dict(ra_min=round(ra0 - ycen[c1 - 1] / 60 / np.cos(np.radians(dec0)), 4),
                     ra_max=round(ra0 - ycen[c0] / 60 / np.cos(np.radians(dec0)), 4),
