@@ -1,0 +1,140 @@
+{
+ "source": "COSMOS HST weak-lensing catalog (Leauthaud et al. 2007), our 3D rebuild",
+ "source_url": "https://doi.org/10.26131/IRSA163",
+ "method": "Kaiser-Squires per photo-z slice, then a tomographic matched filter per pixel",
+ "value": "significance (sigma) of a single lens at that redshift",
+ "n_galaxies": 195716,
+ "source_slices": [
+  0.2,
+  0.45,
+  0.7,
+  0.95,
+  1.2,
+  1.6,
+  2.2,
+  3.0
+ ],
+ "galaxies_per_slice": [
+  28606,
+  33942,
+  38892,
+  30280,
+  30761,
+  21950,
+  11285
+ ],
+ "lens_planes": [
+  0.1,
+  0.2,
+  0.3,
+  0.4,
+  0.5,
+  0.6,
+  0.7,
+  0.8,
+  0.9,
+  1.0,
+  1.1,
+  1.2,
+  1.3
+ ],
+ "smoothing_arcmin": 2.0,
+ "shear_signs": [
+  1,
+  1
+ ],
+ "eb_ratio_all_sources": 1.24,
+ "shape": [
+  40,
+  40,
+  128
+ ],
+ "layout": "float32, index = depth + nd*(x + nx*y)",
+ "faint_file": "cosmos_3d_faint.f32.bin",
+ "faint_note": "Same lens placement drawn 0.12 wide in z, for showing structure below the clump threshold. Low-confidence: at 1-2 sigma much of this is shape noise.",
+ "z_near": 0.05,
+ "z_far": 1.35,
+ "bounds": {
+  "ra_min": 149.4134,
+  "ra_max": 150.8072,
+  "dec_min": 1.548,
+  "dec_max": 2.9076
+ },
+ "convention": "x: column 0 = ra_max (east left); y: row 0 = dec_min; depth 0 = z_near",
+ "width_arcmin": 84.5,
+ "peaks": [
+  {
+   "ra": 149.9278,
+   "dec": 2.5097,
+   "z": 0.7,
+   "value": 4.18
+  },
+  {
+   "ra": 149.9278,
+   "dec": 2.5014,
+   "z": 1.3,
+   "value": 3.83
+  },
+  {
+   "ra": 149.9361,
+   "dec": 2.6091,
+   "z": 0.7,
+   "value": 3.399
+  },
+  {
+   "ra": 150.1933,
+   "dec": 1.6558,
+   "z": 0.6,
+   "value": 3.397
+  },
+  {
+   "ra": 149.8365,
+   "dec": 2.1615,
+   "z": 1.3,
+   "value": 3.365
+  },
+  {
+   "ra": 150.4007,
+   "dec": 2.4351,
+   "z": 0.1,
+   "value": 3.328
+  },
+  {
+   "ra": 150.6495,
+   "dec": 1.6807,
+   "z": 0.1,
+   "value": 3.234
+  },
+  {
+   "ra": 150.185,
+   "dec": 2.5262,
+   "z": 0.4,
+   "value": 3.233
+  },
+  {
+   "ra": 150.1933,
+   "dec": 1.6475,
+   "z": 1.0,
+   "value": 3.188
+  },
+  {
+   "ra": 149.9527,
+   "dec": 2.8081,
+   "z": 0.1,
+   "value": 3.113
+  },
+  {
+   "ra": 150.5749,
+   "dec": 1.946,
+   "z": 0.1,
+   "value": 3.077
+  },
+  {
+   "ra": 150.5085,
+   "dec": 2.1615,
+   "z": 0.9,
+   "value": 2.999
+  }
+ ],
+ "note": "Line-of-sight resolution is poor. In the viewer grid each detected lens is drawn at its most likely redshift as a Gaussian of width 0.05 in z; the real uncertainty is larger."
+}

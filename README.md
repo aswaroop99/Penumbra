@@ -12,12 +12,15 @@ The viewer puts three datasets on one shared sky:
 
 | Path | What it is |
 |---|---|
-| `index.html`, `src/cosmic/` | **The app's frontend**: the cosmic web simulator (live Zel'dovich simulation, Massey-style 3D clump map, survey layers as line-of-sight slices) with SpacetimeDB rooms, presenter/follow and flags |
-| `layers.html`, `src/layers/`, `src/viewer/` | The sky-sphere layer viewer, also backed by SpacetimeDB (its own default room) |
+| `index.html`, `src/cosmic/` | **The app's frontend**: the cosmic web page. *Simulate* is a live Zel'dovich toy universe; *3D map* is our rebuild of the Hubble COSMOS 3D mass map (with the simulated Massey-style box as a toggle); *Survey slices* shows the DES layers along the line of sight. SpacetimeDB rooms, presenter/follow and flags |
+| `layers.html`, `src/layers/`, `src/viewer/` | The sky-sphere layer viewer with the AI map-reading panel, also backed by SpacetimeDB (its own default room) |
 | `guide.html`, `src/tour/` | The Tour page: lensing demo, 7 tour stops, the 2026 cosmology status board and the team's progress. Edit progress in `src/tour/team_status.json` |
 | `src/collab/`, `spacetimedb/` | SpacetimeDB client and server module (shared by both pages) |
-| `viewer/index.html`, `viewer/cosmic-web.html` | The original standalone viewer pages from the viewer branch: no build step, no multiplayer, three from a CDN. Kept as reference |
-| `data/` | Exported viewer layers: PNGs, float16 grids, and `manifest.json`. See `data/README_for_frontend.md` |
+| `viewer/index.html`, `viewer/cosmic-web.html` | The original standalone pages (no build step, no multiplayer, three from a CDN). Kept as reference; `viewer/des-volume.html` is an experimental DES depth-inversion viewer |
+| `data/` | Exported viewer data: the real DES Y3 layers (PNGs, float16 grids, `manifest.json`), the COSMOS 3D grids in `data/cosmos/`, and the optional `reader.json` / `inference.json`. See `data/README_for_frontend.md` |
+| `prep/` | Data prep: `export_des.py` (alternative DES layer export), `cosmos_3d.py` (COSMOS 3D rebuild), `deproject_des.py` / `des_volume.py` (DES depth-inversion experiments) |
+| `des_map/` | DES science pipeline and the vision-language map reader (`run-reader`, `run-vlm-demo`). See `des_map/MAP_READER.md` |
+| `environment.yml`, `penumbra-osx-arm64.lock`, `requirements.txt` | Python environments; see [Python environments](#python-environments) |
 | `get_dark_matter_data.sh` | Downloads the raw survey data into `dark_universe_data/` |
 | `dark_universe_data/` | Raw data (~2.4 GB). **Git-ignored**, so each teammate fetches it with the script |
 | `CLAUDE.md`, `HANDOFF.md` | Project context and build plan for Claude Code |
