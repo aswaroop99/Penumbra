@@ -13,6 +13,7 @@ The viewer puts three datasets on one shared sky:
 | Path | What it is |
 |---|---|
 | `viewer/index.html` | three.js fly-through viewer (no build step; loads three from a CDN) |
+| `viewer/cosmic-web.html` | Cosmic web simulator in the style of NASA's Hubble cosmic-web page: a live Zel'dovich simulation, a Massey-style 3D clump map, and the survey layers as line-of-sight slices. Each view shows where its data comes from |
 | `data/` | Exported viewer layers: PNGs, float16 grids, and `manifest.json`. See `data/README_for_frontend.md` |
 | `get_dark_matter_data.sh` | Downloads the raw survey data into `dark_universe_data/` |
 | `dark_universe_data/` | Raw data (~2.4 GB). **Git-ignored**, so each teammate fetches it with the script |
@@ -51,7 +52,7 @@ Serve the repo root (the viewer loads `../data/`), then open the viewer page:
 python3 -m http.server 8000
 ```
 
-Open http://localhost:8000/viewer/.
+Open http://localhost:8000/viewer/ for the layer viewer, or http://localhost:8000/viewer/cosmic-web.html for the cosmic web simulator.
 
 ## Data sources
 
