@@ -5,9 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Penumbra — layer viewer</title>
+    <link rel="stylesheet" href="/src/styles/bridge-tokens.css" />
+    <link rel="stylesheet" href="/src/styles/topbar.css" />
+    <!-- Bridge console fonts (non-blocking; system fallbacks in bridge-tokens.css when offline). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" />
   </head>
   <body>
     <div id="app">
+      <!-- Site header: same markup/styles as index.html (see src/lib/topbar.ts). -->
+      <header class="pb-bar overlay">
+        <a class="pb-brand" href="./" title="Penumbra front page">Penumbra</a>
+        <nav class="pb-tabs" role="tablist" aria-label="Views">
+          <a class="pb-tab" role="tab" href="./?tab=sim">Simulate</a>
+          <a class="pb-tab" role="tab" href="./?tab=box">3D map</a>
+          <a class="pb-tab" role="tab" href="./?tab=slices">Survey slices</a>
+        </nav>
+        <nav class="pb-tabs pb-pages" aria-label="Pages">
+          <a class="pb-tab" href="guide.html">Tour</a>
+          <a class="pb-tab" href="web.html">DES filaments</a>
+          <a class="pb-tab" href="layers.html" aria-current="page">Layer viewer</a>
+        </nav>
+        <button id="roomToggle" class="room-toggle" aria-expanded="false" aria-controls="collab" title="Room, people and flags">
+          <span id="roomLabel">Room</span>
+          <span id="roomCount" class="count">0</span>
+        </button>
+      </header>
+
       <div id="loading" class="fullscreen-msg">Loading layers…</div>
 
       <!-- Viewer controls (from the viewer branch) -->
@@ -17,7 +42,6 @@
           <button id="collapse" aria-expanded="true">Hide</button>
         </div>
         <div id="panelBody">
-          <div class="sub"><a href="./" style="color: var(--accent)">← Cosmic web</a> · <a href="guide.html" style="color: var(--accent)">Tour</a> · <a href="web.html" style="color: var(--accent)">DES filaments</a></div>
           <div class="sub" id="source"></div>
 
           <h2>Layers (looking deeper →)</h2>
@@ -41,6 +65,11 @@
 
       <!-- Collaboration (backed by SpacetimeDB) -->
       <aside id="collab" aria-label="Collaboration" hidden>
+        <div class="row head">
+          <span>Multiplayer</span>
+          <button id="collabCollapse" aria-expanded="true" aria-controls="collabBody">Hide</button>
+        </div>
+        <div id="collabBody">
         <section>
           <h2>Room <span id="dot" class="dot connecting"></span><span id="status" class="status">Connecting…</span></h2>
           <p id="offline" class="small error-text" hidden></p>
@@ -87,6 +116,7 @@
           </form>
           <ul id="flags" class="flags"></ul>
         </section>
+        </div>
       </aside>
 
       <div id="readout">Hover over a layer to read κ</div>

@@ -365,7 +365,7 @@ export function createBoxView(ctx: Ctx): View {
     },
   });
   const shipButton = () => $<HTMLButtonElement>('shipBox');
-  const syncShipButton = () => (shipButton().textContent = ship.active ? 'Leave the spaceship' : '🚀 Fly a spaceship from Earth');
+  const syncShipButton = () => (shipButton().textContent = ship.active ? 'Leave the spaceship' : 'Fly a spaceship from Earth');
 
   /** Grid value at a world position, or null outside the grid. */
   function sample(g: BoxGrid | undefined, p: THREE.Vector3): number | null {

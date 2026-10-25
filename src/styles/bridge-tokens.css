@@ -1,0 +1,27 @@
+/* Penumbra · Bridge console theme tokens (Figma: "D / Landing (Bridge console)", collection "Bridge (D)").
+   Shared design tokens only: no selectors besides :root, so linking this file never changes layout. */
+:root {
+  --br-bg: #0B0C0E;
+  --br-panel: #111317;
+  --br-panel-raised: #16191E;
+  --br-panel-glass: rgba(17, 19, 23, 0.9);
+  --br-red: #E04B3A;
+  --br-crimson: #C0392B;
+  --br-red-dim: #7A1F1A;
+  --br-hatch-off: #2A1210;
+  --br-ice: #D6EEF7;
+  --br-ice-2: #BFE3F0;
+  --br-muted: #8B96A0;
+  /* Fonts load from Google Fonts in index.html; system fallbacks keep the app usable offline. */
+  --br-font-head: 'Rajdhani', 'Arial Narrow', system-ui, sans-serif;
+  --br-font-mono: 'Share Tech Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --br-font-label: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --br-font-body: 'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif;
+  --br-chamfer: 18px;
+  --br-chamfer-btn: 10px;
+  --br-stroke: 1px;
+  --br-inset: 5px;
+  --br-bracket: 20px;
+  --br-bracket-w: 2px;
+  --br-hatch: repeating-linear-gradient(135deg, var(--br-red) 0 1.5px, transparent 1.5px 6px);
+}

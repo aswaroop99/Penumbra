@@ -67,7 +67,7 @@ npm run dev             # terminal 2: http://localhost:5173
 - `/` is the cosmic web app. `/layers.html` is the layer viewer. `/guide.html` is the tour.
 - Without SpacetimeDB both pages still work locally; the room panel shows "Offline".
 - Open two tabs on the same `?room=` to try multiplayer: one tab clicks **Share my view**, the other **Follow presenter**.
-- The two pages use different shared-view encodings, so they never share a room: the cosmic web joins `penumbra-demo`, the layer viewer `penumbra-demo-layers`.
+- The cosmic web and the layer viewer both join `penumbra-demo` by default. They use different shared-view encodings, so presenter/follow across the two pages won't line up.
 - The standalone pages in `viewer/` still work with `python3 serve.py` from the repo root (open http://localhost:8000/viewer/).
 
 ### Cosmology result (Ωm, S8)

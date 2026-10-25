@@ -27,26 +27,8 @@ canvas { display: block; touch-action: none; }
 }
 .fullscreen-msg h1 { margin: 0; font-size: 18px; color: var(--text); }
 
-header {
-  position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; gap: 16px;
-  padding: 10px 16px; background: linear-gradient(rgba(4, 3, 11, 0.85), rgba(4, 3, 11, 0)); z-index: 6;
-}
-.brand { font-weight: 650; letter-spacing: 0.02em; white-space: nowrap; }
-.brand span { color: var(--muted); font-weight: 400; }
-nav { display: flex; gap: 4px; background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); border-radius: 999px; padding: 3px; }
-nav button { background: none; border: 0; color: var(--muted); padding: 5px 12px; border-radius: 999px; cursor: pointer; font: inherit; white-space: nowrap; }
-nav button[aria-selected='true'] { background: var(--accent); color: #061036; font-weight: 600; }
-header a { color: var(--muted); text-decoration: none; white-space: nowrap; }
-header a:hover { color: var(--text); }
-.room-toggle {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font: inherit; color: var(--text);
-  background: rgba(255, 255, 255, 0.06); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px;
-}
-.room-toggle:hover, .room-toggle[aria-expanded='true'] { background: rgba(106, 168, 255, 0.22); }
-.room-toggle .count { color: var(--muted); font-variant-numeric: tabular-nums; }
-
 #panel {
-  position: absolute; top: 60px; left: 16px; width: 280px; max-height: calc(100% - 140px); overflow: auto;
+  position: absolute; top: calc(var(--pb-bar-h, 52px) + 8px); left: 16px; width: 280px; max-height: calc(100% - 140px); overflow: auto;
   background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px;
   backdrop-filter: blur(8px); user-select: none; z-index: 4;
 }
@@ -57,6 +39,10 @@ header a:hover { color: var(--text); }
 #panel h2:first-child, #collab section:first-child h2 { margin-top: 0; }
 .row { display: flex; align-items: center; gap: 8px; margin: 7px 0; }
 .row > span:first-child { min-width: 64px; }
+#panel .row.head, #collab .row.head { justify-content: space-between; margin: 0; }
+#panel .row.head .btn, #collab .row.head .btn { padding: 3px 10px; font-size: 12px; }
+#panel .row.head + #panelBody, #collab .row.head + #collabBody { margin-top: 8px; }
+#panelBody[hidden], #collabBody[hidden] { display: none; }
 .row input[type='range'] { flex: 1; min-width: 0; accent-color: var(--accent); }
 .val { min-width: 42px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 .hint { color: var(--muted); font-size: 11px; margin: 2px 0 6px; }
@@ -134,10 +120,6 @@ button.btn[aria-pressed='true'], button.btn[aria-pressed='true']:hover { backgro
 }
 #collab section + section { margin-top: 12px; padding-top: 4px; border-top: 1px solid var(--line); }
 .status { text-transform: none; letter-spacing: 0; font-weight: 400; }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); display: inline-block; flex: none; }
-.dot.connected { background: #4ade80; }
-.dot.error { background: var(--danger); }
-.dot.connecting { background: #facc15; }
 .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .people, .flags { list-style: none; margin: 0; padding: 0; }
 .people li { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
@@ -164,7 +146,8 @@ body.collab-open #hud { right: 312px; max-width: min(380px, calc(100% - 640px));
 #hud .big { font-size: 26px; font-weight: 650; font-variant-numeric: tabular-nums; letter-spacing: 0.01em; }
 #hud .small { color: var(--muted); }
 #source {
-  margin-top: 8px; display: inline-block; text-align: left; pointer-events: auto; font-size: 11.5px;
+  display: none !important;
+  margin-top: 8px; text-align: left; pointer-events: auto; font-size: 11.5px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 9px; max-width: 100%;
 }
 #source b {
@@ -175,7 +158,7 @@ body.collab-open #hud { right: 312px; max-width: min(380px, calc(100% - 640px));
 #source b.toy { background: #ffc46b; }
 #source b.real { background: #7ee0a3; }
 #source a { color: var(--accent); }
-#caption { position: absolute; bottom: 14px; right: 18px; max-width: 420px; color: var(--muted); font-size: 11.5px; text-align: right; pointer-events: none; z-index: 3; }
+#caption { display: none; position: absolute; bottom: 14px; right: 18px; max-width: 420px; color: var(--muted); font-size: 11.5px; text-align: right; pointer-events: none; z-index: 3; }
 #busy { position: absolute; bottom: 14px; left: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; display: none; z-index: 4; }
 
 .toast {
@@ -224,9 +207,7 @@ body[data-ship='on'] #caption { display: none; }
   body.collab-open #hud { right: 18px; top: 330px; }
 }
 @media (max-width: 640px) {
-  header { flex-wrap: wrap; gap: 8px; }
-  header a { display: none; }
-  .room-toggle { margin-left: 0; }
+  .pb-bar { flex-wrap: wrap; gap: 8px; }
   #panel { top: auto; bottom: 16px; left: 16px; right: 16px; width: auto; max-height: 42%; }
   #collab { top: 100px; left: 16px; right: 16px; width: auto; max-height: 45%; }
   #hud { top: 96px; max-width: calc(100% - 32px); }
@@ -238,3 +219,133 @@ body[data-ship='on'] #caption { display: none; }
   .ship-keys { display: none; }
   .ship-nav canvas { width: 72px; height: 72px; }
 }
+
+/* =====================================================================
+   Bridge console theme (Figma "D / Landing (Bridge console)", node 41:755)
+   UI panels only: header / mode tabs, #panel, #collab, buttons, sliders,
+   badges and caption panels. The three.js canvas and labels are untouched.
+   Tokens live in src/styles/bridge-tokens.css (linked from index.html).
+   ===================================================================== */
+:root {
+  --panel: var(--br-panel-glass);
+  --line: rgba(192, 57, 43, 0.45);
+  --text: var(--br-ice);
+  --muted: var(--br-muted);
+  --accent: var(--br-ice-2);
+  --danger: #FF8A7A;
+  /* corner cuts: top-right + bottom-left */
+  --br-clip: polygon(0 0, calc(100% - var(--br-chamfer)) 0, 100% var(--br-chamfer), 100% 100%, var(--br-chamfer) 100%, 0 calc(100% - var(--br-chamfer)));
+  --br-clip-btn: polygon(0 0, 100% 0, 100% calc(100% - var(--br-chamfer-btn)), calc(100% - var(--br-chamfer-btn)) 100%, 0 100%);
+  /* diagonal edge line drawn along a cut corner (isoline of a square "to top right" gradient) */
+  --br-cut-line: linear-gradient(to top right, transparent calc(50% - 0.7px), var(--br-red-dim) calc(50% - 0.7px), var(--br-red-dim) calc(50% + 0.7px), transparent calc(50% + 0.7px));
+  --br-ice-h: linear-gradient(var(--br-ice), var(--br-ice));
+}
+html, body { background: var(--br-bg); font-family: var(--br-font-body); font-size: 14px; }
+
+/* ---- panel shell: chamfer, double outline, ice L-brackets ---- */
+#panel, #collab, .ship-hud, #source, #busy {
+  border: var(--br-stroke) solid var(--br-red-dim);
+  border-radius: 0;
+  clip-path: var(--br-clip);
+  outline: var(--br-stroke) solid rgba(192, 57, 43, 0.55);
+  outline-offset: calc(-1 * (var(--br-inset) + var(--br-stroke)));
+  /* backgrounds use attachment "scroll", so brackets stay on the box while the content scrolls */
+  background:
+    var(--br-ice-h) left top / var(--br-bracket) var(--br-bracket-w) no-repeat,
+    var(--br-ice-h) left top / var(--br-bracket-w) var(--br-bracket) no-repeat,
+    var(--br-ice-h) right bottom / var(--br-bracket) var(--br-bracket-w) no-repeat,
+    var(--br-ice-h) right bottom / var(--br-bracket-w) var(--br-bracket) no-repeat,
+    var(--br-cut-line) right top / var(--br-chamfer) var(--br-chamfer) no-repeat,
+    var(--br-cut-line) left bottom / var(--br-chamfer) var(--br-chamfer) no-repeat,
+    var(--br-panel-glass);
+}
+#panel, #collab { padding: 16px 18px; }
+#source, #busy { --br-chamfer: 10px; --br-bracket: 12px; outline: none; }
+#source { font-family: var(--br-font-body); font-size: 13px; }
+
+#panel h2, #collab h2 {
+  font-family: var(--br-font-label); font-weight: 500; font-size: 11px; letter-spacing: 0.12em;
+  color: var(--br-ice-2); margin: 16px 0 8px; padding-bottom: 5px;
+  border-bottom: var(--br-stroke) solid var(--br-red-dim);
+}
+#panel h2::before, #collab h2::before {
+  content: ''; width: 6px; height: 6px; background: var(--br-red); flex: none;
+}
+#collab .status { font-family: var(--br-font-mono); letter-spacing: 0.04em; color: var(--br-muted); }
+#collab section + section { border-top: 0; margin-top: 14px; }
+.hint { color: var(--br-muted); font-size: 12.5px; line-height: 1.4; }
+.small { font-size: 13px; }
+.row > span:first-child { font-family: var(--br-font-label); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--br-ice-2); }
+.val { font-family: var(--br-font-mono); color: var(--br-ice); }
+code { font-family: var(--br-font-mono); background: var(--br-hatch-off); border-radius: 0; }
+
+/* ---- buttons: 10px chamfer bottom-right ---- */
+button.btn, #collab button {
+  background-image: linear-gradient(to top right, transparent calc(50% - 0.7px), var(--br-red-dim) calc(50% - 0.7px), var(--br-red-dim) calc(50% + 0.7px), transparent calc(50% + 0.7px));
+  background-size: var(--br-chamfer-btn) var(--br-chamfer-btn);
+  background-position: right bottom;
+  background-repeat: no-repeat;
+}
+button.btn, #collab button {
+  font-family: var(--br-font-label); font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--br-ice); background-color: transparent; border: var(--br-stroke) solid var(--br-red-dim);
+  border-radius: 0; padding: 7px 14px; clip-path: var(--br-clip-btn);
+}
+button.btn:hover:not(:disabled), #collab button:hover:not(:disabled) { background-color: var(--br-hatch-off); border-color: var(--br-red); }
+button.primary, #collab button.primary { background-color: var(--br-hatch-off); color: var(--br-ice); border-color: var(--br-red); font-weight: 500; }
+button.primary:hover:not(:disabled), #collab button.primary:hover:not(:disabled) { background-color: var(--br-crimson); color: var(--br-ice); }
+button.btn.active, button.btn[aria-pressed='true'], button.btn[aria-pressed='true']:hover {
+  background-color: var(--br-crimson); color: var(--br-ice); border-color: var(--br-red); font-weight: 500;
+}
+#collab button.link { clip-path: none; background-image: none; text-transform: none; letter-spacing: 0; }
+#collab input, #collab textarea, select {
+  font-family: var(--br-font-mono); background: var(--br-panel-raised); color: var(--br-ice);
+  border: var(--br-stroke) solid var(--br-red-dim); border-radius: 0;
+}
+#collab input[type='color'] { background: var(--br-panel-raised); }
+input[type='checkbox'] { accent-color: var(--br-red); }
+:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 1px; }
+
+/* ---- sliders: hatch gauge with ice end cap ---- */
+.row input[type='range'] {
+  -webkit-appearance: none; appearance: none; height: 12px; margin: 0; padding: 0;
+  background: transparent; border: var(--br-stroke) solid var(--br-crimson); border-radius: 0;
+  overflow: hidden; cursor: pointer; accent-color: var(--br-red);
+}
+.row input[type='range']::-webkit-slider-runnable-track { height: 100%; background: var(--br-hatch), var(--br-hatch-off); border: 0; }
+.row input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 3px; height: 10px; background: var(--br-ice); border: 0;
+  /* covers the unfilled part of the hatch, so the hatch reads as the filled value */
+  box-shadow: 1003px 0 0 1000px var(--br-hatch-off);
+}
+.row input[type='range']::-moz-range-track { height: 10px; background: var(--br-hatch-off); border: 0; }
+.row input[type='range']::-moz-range-progress { height: 10px; background: var(--br-hatch); }
+.row input[type='range']::-moz-range-thumb { width: 3px; height: 10px; background: var(--br-ice); border: 0; border-radius: 0; }
+.row input[type='range']:focus-visible { outline: 2px solid var(--br-ice); outline-offset: 2px; }
+
+/* ---- badges / chips ---- */
+.badge, .infer-badge, #source b {
+  border-radius: 0; font-family: var(--br-font-label); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+}
+.badge { background: var(--br-hatch-off); color: var(--br-ice); border: var(--br-stroke) solid var(--br-red); }
+.infer { border-top: var(--br-stroke) solid var(--br-red-dim); }
+.infer-stat .num { font-family: var(--br-font-mono); font-weight: 400; }
+.track { border-radius: 0; background: var(--br-hatch-off); outline: var(--br-stroke) solid var(--br-red-dim); }
+.track .band, .track .mid { border-radius: 0; }
+.band.ours, .mid.ours { background: var(--br-ice-2); }
+.flags li { border-radius: 0; }
+.flags li.focus { border-color: var(--br-red); }
+#source a { color: var(--br-ice-2); }
+
+/* ---- caption / HUD text panels (text only; positions unchanged) ---- */
+#caption { font-family: var(--br-font-mono); font-size: 11.5px; letter-spacing: 0.03em; color: var(--br-muted); }
+.toast { border-radius: 0; border: var(--br-stroke) solid var(--br-red-dim); clip-path: var(--br-clip-btn); font-family: var(--br-font-label); font-size: 12px; background: var(--br-panel-glass); }
+.toast.error { color: var(--danger); border-color: var(--br-red); }
+.fullscreen-msg { background: var(--br-bg); font-family: var(--br-font-label); letter-spacing: 0.06em; }
+
+/* ---- spaceship HUD bars (panel shell set above) ---- */
+.ship-lbl { font-family: var(--br-font-label); color: var(--br-ice-2); }
+.ship-read b { font-family: var(--br-font-head); letter-spacing: 0.06em; }
+.ship-bar { border-radius: 0; background: var(--br-hatch-off); outline: var(--br-stroke) solid var(--br-crimson); }
+.ship-bar i { border-radius: 0; }
+.ship-cruise { background: var(--br-hatch); }

@@ -91,11 +91,17 @@ export class CosmicApp {
 
   async start(): Promise<void> {
     let first: Tab = 'sim';
-    try {
-      const saved = localStorage.getItem(TAB_KEY);
-      if (saved && (TABS as readonly string[]).includes(saved)) first = saved as Tab;
-    } catch {
-      /* storage unavailable */
+    // `?tab=sim|box|slices` (links from the other pages' top bar) wins over the remembered tab.
+    const requested = new URLSearchParams(location.search).get('tab');
+    if (requested && (TABS as readonly string[]).includes(requested)) {
+      first = requested as Tab;
+    } else {
+      try {
+        const saved = localStorage.getItem(TAB_KEY);
+        if (saved && (TABS as readonly string[]).includes(saved)) first = saved as Tab;
+      } catch {
+        /* storage unavailable */
+      }
     }
     this.renderer.setAnimationLoop((now) => this.frame(now));
     await this.show(first);

@@ -5,37 +5,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark" />
     <title>Penumbra Cosmic Web</title>
+    <!-- Bridge console theme: tokens + web fonts. Fonts load without blocking render; if they fail
+         (offline), the system fallbacks in bridge-tokens.css are used and the app still works. -->
+    <link rel="stylesheet" href="/src/styles/bridge-tokens.css" />
+    <link rel="stylesheet" href="/src/styles/topbar.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=JetBrains+Mono:wght@500&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&display=swap" />
   </head>
   <body data-active="sim">
     <div id="loading" class="fullscreen-msg">Loading layers…</div>
 
-    <header>
-      <div class="brand">Penumbra <span>· Cosmic Web</span></div>
-      <nav role="tablist">
-        <button role="tab" data-tab="sim" aria-selected="true">Simulate</button>
-        <button role="tab" data-tab="box" aria-selected="false">3D map</button>
-        <button role="tab" data-tab="slices" aria-selected="false">Survey slices</button>
+    <!-- Site header: shared across index, guide, web, layers (see src/lib/topbar.ts). -->
+    <header class="pb-bar overlay">
+      <a class="pb-brand" href="./" title="Penumbra front page">Penumbra</a>
+      <nav class="pb-tabs" role="tablist" aria-label="Views">
+        <button class="pb-tab" role="tab" data-tab="sim" aria-selected="true">Simulate</button>
+        <button class="pb-tab" role="tab" data-tab="box" aria-selected="false">3D map</button>
+        <button class="pb-tab" role="tab" data-tab="slices" aria-selected="false">Survey slices</button>
+      </nav>
+      <nav class="pb-tabs pb-pages" aria-label="Pages">
+        <a class="pb-tab" href="guide.html">Tour</a>
+        <a class="pb-tab" href="web.html">DES filaments</a>
+        <a class="pb-tab" href="layers.html">Layer viewer</a>
       </nav>
       <button id="roomToggle" class="room-toggle" aria-expanded="false" aria-controls="collab" title="Room, people and flags">
-        <span id="dot" class="dot connecting"></span>
         <span id="roomLabel">Room</span>
         <span id="roomCount" class="count">0</span>
       </button>
-      <a href="guide.html">Tour</a>
-      <a href="web.html">DES filaments</a>
-      <a href="layers.html">Layer viewer + AI reading →</a>
     </header>
 
     <!-- Viewer controls (from the viewer branch's cosmic-web page) -->
     <aside id="panel">
+      <div class="row head">
+        <span>Controls</span>
+        <button id="collapse" class="btn" aria-expanded="true" aria-controls="panelBody">Hide</button>
+      </div>
+      <div id="panelBody">
       <div data-mode="sim">
         <h2>Time</h2>
-        <div class="row"><button class="btn primary" id="play">▶ Play from the early universe</button></div>
+        <div class="row"><button class="btn primary" id="play">Play from the early universe</button></div>
         <div class="row">
           <span>Redshift</span><input id="zslider" type="range" min="0" max="1" step="0.001" value="1" /><span class="val" id="zval"></span>
         </div>
         <h2>Camera</h2>
-        <div class="row"><button class="btn primary wide" id="shipSim">🚀 Fly a spaceship</button></div>
+        <div class="row"><button class="btn primary wide" id="shipSim">Fly a spaceship</button></div>
         <div class="row"><label><input id="fly" type="checkbox" /> Autopilot through the web</label></div>
         <div class="row"><span>Glow</span><input id="glow" type="range" min="0.3" max="2.5" step="0.05" value="1" /></div>
         <div class="row"><button class="btn" id="reseed">Next universe</button></div>
@@ -61,7 +75,7 @@
           <button class="btn" data-src="cosmos" aria-pressed="true">COSMOS (real)</button><button class="btn" data-src="sim" aria-pressed="false">Simulation</button>
         </div>
         <div class="hint cosmos-only">Click COSMOS again to fly to the strongest structure.</div>
-        <div class="row"><button class="btn primary wide" id="shipBox">🚀 Fly a spaceship from Earth</button></div>
+        <div class="row"><button class="btn primary wide" id="shipBox">Fly a spaceship from Earth</button></div>
         <div class="hint">Steer through the map in a chase or cockpit view. Works on COSMOS and the simulation.</div>
       </div>
 
@@ -115,10 +129,16 @@
       <div id="inference" class="infer" data-mode="sim box slices" hidden></div>
 
       <div class="hint" style="margin-top: 12px">Drag to rotate · scroll or pinch to zoom · right-drag or two-finger drag to pan</div>
+      </div>
     </aside>
 
     <!-- Collaboration (backed by SpacetimeDB) -->
     <aside id="collab" aria-label="Collaboration" hidden>
+      <div class="row head">
+        <span>Multiplayer</span>
+        <button id="collabCollapse" class="btn" aria-expanded="true" aria-controls="collabBody">Hide</button>
+      </div>
+      <div id="collabBody">
       <section>
         <h2>Room <span id="status" class="status">Connecting…</span></h2>
         <p id="offline" class="small error-text" hidden></p>
@@ -165,6 +185,7 @@
         </form>
         <ul id="flags" class="flags"></ul>
       </section>
+      </div>
     </aside>
 
     <div id="hud"><div class="big" id="hudBig"></div><div class="small" id="hudSmall"></div><div id="source"></div></div>

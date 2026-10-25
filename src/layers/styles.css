@@ -1,13 +1,13 @@
 :root {
   color-scheme: dark;
-  --bg: #05040a;
+  --bg: #0B0C0E;
   --panel: rgba(16, 12, 28, 0.86);
   --text: #e9e4f5;
   --muted: #9a90b5;
-  --accent: #ffb347;
-  --line: rgba(255, 255, 255, 0.12);
+  --accent: #BFE3F0;
+  --line: rgba(192, 57, 43, 0.45);
   --danger: #ff7a8a;
-  font: 13px/1.4 system-ui, sans-serif;
+  font: 14px/1.4 var(--br-font-body);
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
@@ -24,7 +24,7 @@ canvas { display: block; touch-action: none; }
 
 /* ---- panels ---- */
 #panel, #collab {
-  position: absolute; top: 12px; max-height: calc(100% - 24px); overflow: auto;
+  position: absolute; top: calc(var(--pb-bar-h, 52px) + 12px); max-height: calc(100% - 76px); overflow: auto;
   background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px;
   backdrop-filter: blur(6px);
 }
@@ -127,7 +127,7 @@ textarea { width: 100%; resize: vertical; }
 }
 #note { position: absolute; bottom: 12px; right: 12px; max-width: 340px; color: var(--muted); font-size: 11px; text-align: right; pointer-events: none; }
 .toast {
-  position: absolute; top: 18px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 999px;
+  position: absolute; top: 66px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 999px;
   background: var(--panel); border: 1px solid var(--line); pointer-events: none;
 }
 .toast.error { color: var(--danger); }

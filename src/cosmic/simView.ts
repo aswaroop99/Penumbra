@@ -19,7 +19,7 @@ import { createShipRig } from './ship';
 import { $, getCam, label, makeBase, nextFrame, serial, type Ctx, type View } from './viewKit';
 import { UNIVERSE_SEEDS, type CosmicView } from './viewCodec';
 
-const PLAY_LABEL = '▶ Play from the early universe';
+const PLAY_LABEL = 'Play from the early universe';
 
 /** View 1: particles moved by the Zel'dovich approximation, rendered live. */
 export function createSimView(ctx: Ctx): View {
@@ -357,7 +357,7 @@ export function createSimView(ctx: Ctx): View {
   // Spaceship: the box is periodic, so there are no walls and the web repeats forever.
   let orbitCam = getCam(base);
   const shipButton = () => $<HTMLButtonElement>('shipSim');
-  const syncShipButton = () => (shipButton().textContent = ship.active ? 'Leave the spaceship' : '🚀 Fly a spaceship');
+  const syncShipButton = () => (shipButton().textContent = ship.active ? 'Leave the spaceship' : 'Fly a spaceship');
   const ship = createShipRig({
     scene: base.scene,
     camera: base.camera,
