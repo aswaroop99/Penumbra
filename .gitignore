@@ -35,3 +35,6 @@ node_modules/
 
 # Local env files
 .env.local
+
+# Large survey / CMB datasets (download locally)
+dark_universe_data/
